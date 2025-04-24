@@ -1,0 +1,13 @@
+email_adress : required
+qui fait la demande => nom / prenom (ce sera clerk) required
+Lieu de la compétition (Nom de la station) => text required
+Lien évènement (fisski.com) ex: https://beta.fis-ski.com/DB/general/event-details.html?sectorcode=AL&eventid=54647&seasoncode=2024 required
+pays : liste déroulante required
+Codex: Précises tous les CODEX de l'évènement qui concernent ta demande. format: 1234/1235/4556/4557... required
+Date de la 1ere course : date required
+Disciplines demandees : multiselect required
+Level race : multiselect + other required
+Coureurs : autocomplete database
+Nom des coachs qui doivent figurer sur le formulaire d'inscription officiel (parfois nécéssaire pour bénéficier d'un "forfait course") multiple text input optionnal
+Commentaires ou précisions supplémentaires (precisez le coach reponsable s'il n'est pas dans la liste) : text area
+Informations legales RGPD
