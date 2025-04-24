@@ -12,8 +12,8 @@ export const Header = () => {
           <h1 className="text-3xl font-bold">Gestion des Inscriptions FIS</h1>
         </div>
         <Link href="/inscriptions/new">
-          <Button className="flex items-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer">
-            <PlusCircle className="mr-2 h-4 w-4" />
+          <Button className="flex items-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-base">
+            <PlusCircle className="mr-1 h-4 w-4" />
             Nouvelle Demande
           </Button>
         </Link>
