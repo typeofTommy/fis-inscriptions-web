@@ -6,6 +6,7 @@ import {
   isServer,
 } from "@tanstack/react-query";
 import * as React from "react";
+import {Toaster} from "@/components/ui/toaster";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -34,6 +35,7 @@ export function Providers(props: {children: React.ReactNode}) {
   return (
     <QueryClientProvider client={queryClient}>
       {props.children}
+      <Toaster />
     </QueryClientProvider>
   );
 }

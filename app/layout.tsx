@@ -33,24 +33,39 @@ export default function RootLayout({
         <div className="min-h-screen bg-gradient-to-b from-[#e0f0ff] to-white pb-10">
           {/* Header avec effet de neige */}
           <div className="relative bg-[#3d7cf2] text-white">
-            <div className="absolute inset-0 opacity-20">
-              {Array.from({length: 20}).map((_, i) => (
-                <Snowflake
-                  key={i}
-                  className="absolute text-white animate-pulse-slow"
-                  style={{
-                    top: `${Math.random() * 100}%`,
-                    left: `${Math.random() * 100}%`,
-                    opacity: Math.random() * 0.5 + 0.5,
-                    transform: `scale(${Math.random() * 0.5 + 0.5})`,
-                  }}
-                />
-              ))}
+            <div className="absolute inset-0 overflow-hidden">
+              {Array.from({length: 30}).map((_, i) => {
+                const initialOpacity = Math.random() * 0.5 + 0.5;
+                const scale = Math.random() * 0.6 + 0.4;
+                const duration = Math.random() * 10 + 10;
+                const delay = Math.random() * -20;
+
+                return (
+                  <Snowflake
+                    key={i}
+                    className="absolute text-white animate-snowfall"
+                    style={
+                      {
+                        top: "-10%",
+                        left: `${Math.random() * 100}%`,
+                        "--opacity": initialOpacity,
+                        "--scale": scale,
+                        opacity: initialOpacity,
+                        transform: `scale(${scale})`,
+                        animationDuration: `${duration}s`,
+                        animationDelay: `${delay}s`,
+                      } as React.CSSProperties
+                    }
+                  />
+                );
+              })}
             </div>
             <Header />
           </div>
-          <div className="container relative z-10 py-8 px-4">
-            <Providers>{children}</Providers>
+          <div className="flex justify-center py-8 px-4">
+            <div className="w-full max-w-7xl">
+              <Providers>{children}</Providers>
+            </div>
           </div>
         </div>
       </body>
