@@ -1,15 +1,16 @@
 import {InscriptionDetails} from "./InscriptionDetails";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function InscriptionPage({params}: PageProps) {
+export default async function InscriptionPage({params}: PageProps) {
+  const resolvedParams = await params;
   return (
     <div className="container mx-auto py-8">
-      <InscriptionDetails id={params.id} />
+      <InscriptionDetails id={resolvedParams.id} />
     </div>
   );
 }
