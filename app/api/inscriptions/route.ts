@@ -49,15 +49,14 @@ export async function POST(request: Request) {
       country,
       location,
       eventLink,
-      codexNumbers: codexNumbers,
+      codexNumbers,
       // Format date *after* validation and before DB insert
-      firstRaceDate: new Date(firstRaceDate),
+      firstRaceDate,
       disciplines,
       raceLevels,
     };
 
     const result = await db
-      //@ts-expect-error jsp pourquoi il fait chier
       .insert(inscriptions)
       .values(newInscription)
       .returning();
@@ -74,7 +73,6 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  //@ts-expect-error jsp pourquoi il fait chier
   const inscripList = await db.select().from(inscriptions);
   return NextResponse.json(inscripList);
 }
