@@ -3,12 +3,16 @@ import {eq} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 
-export async function GET(request: Request, {params}: {params: {id: string}}) {
+export async function GET(
+  request: Request,
+  {params}: {params: Promise<{id: string}>}
+) {
   try {
+    const {id} = await params;
     const inscription = await db
       .select()
       .from(inscriptions)
-      .where(eq(inscriptions.id, Number(params.id)))
+      .where(eq(inscriptions.id, Number(id)))
       .limit(1);
     if (!inscription) {
       return new NextResponse("Inscription non trouvée", {status: 404});

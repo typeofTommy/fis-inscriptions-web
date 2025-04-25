@@ -52,7 +52,7 @@ function DebouncedInput({
     }, debounce);
 
     return () => clearTimeout(timeout);
-  }, [value]);
+  }, [value, onChange, debounce]);
 
   return (
     <Input
