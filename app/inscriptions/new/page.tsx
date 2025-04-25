@@ -37,7 +37,7 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {type inscriptions as InscriptionsTableType} from "@/drizzle/schemaInscriptions";
 import {useRouter} from "next/navigation";
 
-export const inscriptionFormSchema = z.object({
+const inscriptionFormSchema = z.object({
   email: z.string().email({
     message: "Veuillez entrer une adresse email valide.",
   }),
@@ -649,5 +649,4 @@ const NewInscriptionPage = () => {
     </div>
   );
 };
-
 export default NewInscriptionPage;
