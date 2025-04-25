@@ -5,6 +5,7 @@ const envVariables = z.object({
   FIS_DB_USER: z.string(),
   FIS_DB_PASS: z.string(),
   FIS_DB_NAME: z.string(),
+  NEON_DATABASE_URL: z.string(),
 });
 
 envVariables.parse(process.env);

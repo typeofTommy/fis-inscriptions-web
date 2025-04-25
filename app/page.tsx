@@ -1,7 +1,25 @@
-export default async function Home() {
+"use client";
+import {useQuery} from "@tanstack/react-query";
+import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {DataGrid, FilterPanel, SearchPanel} from "devextreme-react/data-grid";
+import "devextreme/dist/css/dx.fluent.saas.light.css";
+
+export default function Home() {
+  const {data, isLoading} = useQuery<(typeof inscriptions.$inferSelect)[]>({
+    queryKey: ["inscriptions"],
+    queryFn: () => fetch("/api/inscriptions").then((res) => res.json()),
+  });
+
+  if (isLoading) {
+    return <div>Chargement des inscriptions...</div>;
+  }
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold">Hello World</h1>
-    </div>
+    <DataGrid
+      dataSource={data} // Assign the data source
+    >
+      <FilterPanel />
+      <SearchPanel />
+    </DataGrid>
   );
 }

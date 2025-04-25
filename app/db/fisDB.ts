@@ -22,6 +22,4 @@ const poolConnection = mysql.createPool({
     createTimeout: 20000,
   },
 });
-const db = drizzle({client: poolConnection});
-
-export default db;
+export const fisDB = drizzle({client: poolConnection});

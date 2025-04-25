@@ -1,0 +1,129 @@
+{
+  "id": "c799c1cd-7684-4fe2-843f-73d8d76232dd",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "my_schema.inscriptions": {
+      "name": "inscriptions",
+      "schema": "my_schema",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_link": {
+          "name": "event_link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codex_numbers": {
+          "name": "codex_numbers",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_race_date": {
+          "name": "first_race_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "disciplines": {
+          "name": "disciplines",
+          "type": "disciplines[]",
+          "typeSchema": "my_schema",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "race_levels": {
+          "name": "race_levels",
+          "type": "race_levels[]",
+          "typeSchema": "my_schema",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "my_schema.disciplines": {
+      "name": "disciplines",
+      "schema": "my_schema",
+      "values": [
+        "SL",
+        "GS",
+        "SG",
+        "DH",
+        "AC"
+      ]
+    },
+    "my_schema.race_levels": {
+      "name": "race_levels",
+      "schema": "my_schema",
+      "values": [
+        "FIS",
+        "CIT",
+        "NJR",
+        "NJC",
+        "NC",
+        "SAC",
+        "ANC",
+        "ENL"
+      ]
+    }
+  },
+  "schemas": {
+    "my_schema": "my_schema"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
