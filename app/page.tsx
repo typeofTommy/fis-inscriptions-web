@@ -16,7 +16,7 @@ import {TableBody, TableCell, TableHead} from "@/components/ui/table";
 import {Table, TableHeader, TableRow} from "@/components/ui/table";
 import {useState, useEffect} from "react";
 import {Button} from "@/components/ui/button";
-import {ArrowUpDown} from "lucide-react";
+import {ArrowUpDown, Loader2} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {Input} from "@/components/ui/input";
 import {
@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {format} from "date-fns";
+import Link from "next/link";
 
 // Debounced input component
 function DebouncedInput({
@@ -301,6 +302,23 @@ export default function Home() {
 
   const columns: ColumnDef<typeof inscriptions.$inferSelect>[] = [
     {
+      id: "actions",
+      cell: ({row}) => {
+        return (
+          <Link href={`/inscriptions/${row.original.id}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-base"
+            >
+              Voir détails
+            </Button>
+          </Link>
+        );
+      },
+      header: "Actions",
+    },
+    {
       accessorKey: "firstRaceDate",
       cell: ({row}) => {
         return <div>{format(row.original.firstRaceDate, "dd/MM/yyyy")}</div>;
@@ -440,7 +458,11 @@ export default function Home() {
   });
 
   if (isLoading) {
-    return <div>Chargement des inscriptions...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (

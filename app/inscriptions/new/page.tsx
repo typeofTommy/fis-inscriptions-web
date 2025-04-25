@@ -36,6 +36,7 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Checkbox} from "@/components/ui/checkbox";
 import {type inscriptions as InscriptionsTableType} from "@/drizzle/schemaInscriptions";
 import {useRouter} from "next/navigation";
+import {useUser} from "@clerk/nextjs";
 
 const inscriptionFormSchema = z.object({
   email: z.string().email({
@@ -139,6 +140,11 @@ const NewInscriptionPage = () => {
     refetchOnWindowFocus: false,
   });
 
+  const {user} = useUser();
+
+  const email = user?.emailAddresses[0].emailAddress;
+  const fullName = user?.fullName;
+
   const {mutateAsync: createInscription, isPending} = useMutation({
     mutationFn: async (
       inscription: Omit<
@@ -160,8 +166,8 @@ const NewInscriptionPage = () => {
   const form = useForm<z.infer<typeof inscriptionFormSchema>>({
     resolver: zodResolver(inscriptionFormSchema),
     defaultValues: {
-      email: "",
-      fullName: "",
+      email: email,
+      fullName: fullName!,
       country: "",
       location: "",
       eventLink: "",
@@ -196,14 +202,16 @@ const NewInscriptionPage = () => {
         raceLevels: values.raceLevels,
       };
 
-      await createInscription(newInscription);
+      const {inscription: returnedInscription} = await createInscription(
+        newInscription
+      );
 
       toast({
         title: "Demande d'inscription enregistrée",
         description: "Votre demande a été sauvegardée avec succès.",
       });
       form.reset();
-      router.push("/"); //todo redirect to the newly created inscription
+      router.push(`/inscriptions/${returnedInscription.id}`);
       queryClient.invalidateQueries({queryKey: ["inscriptions"]});
     } catch (err) {
       console.error("Failed to insert inscription:", err);
@@ -228,38 +236,6 @@ const NewInscriptionPage = () => {
         </p>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({field}) => (
-                <FormItem>
-                  <FormLabel className="text-base text-[#3d7cf2]">
-                    Email <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="votre@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage className="text-red-500 text-sm" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({field}) => (
-                <FormItem>
-                  <FormLabel className="text-base text-[#3d7cf2]">
-                    Nom et prénom <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Jean Dupont" {...field} />
-                  </FormControl>
-                  <FormMessage className="text-red-500 text-sm" />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="location"
@@ -348,7 +324,7 @@ const NewInscriptionPage = () => {
                                     {frequentCountries.map((country) => (
                                       <SelectItem
                                         key={country.cca2}
-                                        value={country.cca2}
+                                        value={country.name.common}
                                         className="flex items-center gap-2"
                                       >
                                         <div className="flex items-center gap-2">
