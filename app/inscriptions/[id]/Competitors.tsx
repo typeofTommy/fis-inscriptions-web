@@ -14,11 +14,7 @@ import AddCompetitorModal from "./AddCompetitorModal";
 import {aCompetitor} from "@/drizzle/schemaFis";
 import {format} from "date-fns";
 
-export const Competitors = ({
-  codex,
-}: {
-  codex?: {number: string; discipline: string; sex: string; raceLevel: string};
-}) => {
+export const Competitors = () => {
   const [competitors, setCompetitors] = useState<
     (typeof aCompetitor.$inferSelect)[]
   >([]);

@@ -142,9 +142,6 @@ const NewInscriptionPage = () => {
 
   console.log("USER", user);
 
-  const email = user?.emailAddresses[0].emailAddress;
-  const fullName = user?.fullName;
-
   const {mutateAsync: createInscription, isPending} = useMutation({
     mutationFn: async (
       inscription: Omit<

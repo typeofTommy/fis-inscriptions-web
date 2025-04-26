@@ -61,7 +61,7 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
       </TabsList>
       {codexData.map((codex) => (
         <TabsContent key={codex.number} value={codex.number}>
-          <Competitors codex={codex} />
+          <Competitors />
         </TabsContent>
       ))}
     </Tabs>
