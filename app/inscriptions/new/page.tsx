@@ -13,15 +13,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {Input} from "@/components/ui/input";
-import {toast} from "@/components/ui/use-toast";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
+import {Input} from "@/components/ui/input";
+import {toast} from "@/components/ui/use-toast";
 import Image from "next/image";
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {Button} from "@/components/ui/button";
@@ -528,19 +530,55 @@ const NewInscriptionPage = () => {
                           </div>
                         ) : (
                           <>
-                            {stations
-                              .slice()
-                              .sort((a: {name: string}, b: {name: string}) =>
-                                a.name.localeCompare(b.name)
-                              )
-                              .map((station: {id: number; name: string}) => (
-                                <SelectItem
-                                  key={station.id}
-                                  value={station.name}
-                                >
-                                  {station.name.charAt(0).toUpperCase() +
-                                    station.name.slice(1)}
-                                </SelectItem>
+                            {Object.entries(
+                              stations
+                                .slice()
+                                .sort((a: {name: string}, b: {name: string}) =>
+                                  a.name.localeCompare(b.name)
+                                )
+                                .reduce(
+                                  (
+                                    acc: Record<
+                                      string,
+                                      {id: number; name: string}[]
+                                    >,
+                                    station: {
+                                      id: number;
+                                      name: string;
+                                      country: string;
+                                    }
+                                  ) => {
+                                    (acc[station.country] =
+                                      acc[station.country] || []).push(station);
+                                    return acc;
+                                  },
+                                  {} as Record<
+                                    string,
+                                    {id: number; name: string}[]
+                                  >
+                                )
+                            )
+                              .sort(([a], [b]) => a.localeCompare(b))
+                              .map(([country, stationsInCountry]) => (
+                                <SelectGroup key={country}>
+                                  <SelectLabel className="text-gray-500">
+                                    {country}
+                                  </SelectLabel>
+                                  {(
+                                    stationsInCountry as {
+                                      id: number;
+                                      name: string;
+                                    }[]
+                                  ).map((station) => (
+                                    <SelectItem
+                                      key={station.id}
+                                      value={station.name}
+                                    >
+                                      {station.name.charAt(0).toUpperCase() +
+                                        station.name.slice(1)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
                               ))}
                             <SelectItem value="__autre__">Autre...</SelectItem>
                           </>
