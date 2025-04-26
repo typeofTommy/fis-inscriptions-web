@@ -10,13 +10,22 @@ const inscriptionSchema = z.object({
   country: z.string(),
   location: z.string().min(2),
   eventLink: z.string().url(),
-  codexNumbers: z.array(z.string()).min(1),
-  // Receive date as string, validate, then convert
+  codexData: z
+    .array(
+      z.object({
+        number: z.string().regex(/^[0-9]+$/),
+        sex: z.enum(["M", "F"]),
+        discipline: z.string().min(1),
+        raceLevel: z.string().min(1),
+      })
+    )
+    .min(1),
   firstRaceDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),
-  disciplines: z.array(z.string()).min(1),
-  raceLevels: z.array(z.string()).min(1),
+  lastRaceDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format",
+  }),
 });
 
 export async function POST(request: Request) {
@@ -37,10 +46,9 @@ export async function POST(request: Request) {
       country,
       location,
       eventLink,
-      codexNumbers,
+      codexData,
       firstRaceDate,
-      disciplines,
-      raceLevels,
+      lastRaceDate,
     } = body.data;
 
     const newInscription = {
@@ -49,11 +57,9 @@ export async function POST(request: Request) {
       country,
       location,
       eventLink,
-      codexNumbers,
-      // Format date *after* validation and before DB insert
+      codexData,
       firstRaceDate,
-      disciplines,
-      raceLevels,
+      lastRaceDate,
     };
 
     const result = await db

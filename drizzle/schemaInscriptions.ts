@@ -1,6 +1,15 @@
-import {serial, text, pgSchema, date, timestamp} from "drizzle-orm/pg-core";
+import {
+  serial,
+  text,
+  pgSchema,
+  date,
+  timestamp,
+  jsonb,
+} from "drizzle-orm/pg-core";
 
 export const inscriptionsSchema = pgSchema("inscriptionsDB");
+
+export const sexes = inscriptionsSchema.enum("sexes", ["M", "F"]);
 
 export const disciplines = inscriptionsSchema.enum("disciplines", [
   "SL",
@@ -28,9 +37,17 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
   country: text("country").notNull(),
   location: text("location").notNull(),
   eventLink: text("event_link").notNull(),
-  codexNumbers: text("codex_numbers").array().notNull(),
   firstRaceDate: date("first_race_date").notNull(),
-  disciplines: disciplines("disciplines").array().notNull(),
-  raceLevels: raceLevels("race_levels").array().notNull(),
+  lastRaceDate: date("last_race_date").notNull(),
+  codexData: jsonb("codex_data")
+    .$type<
+      {
+        number: string;
+        discipline: (typeof disciplines.$inferSelect)[number];
+        sex: (typeof sexes.$inferSelect)[number];
+        raceLevel: (typeof raceLevels.$inferSelect)[number];
+      }[]
+    >()
+    .notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

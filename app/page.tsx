@@ -28,6 +28,10 @@ import {
 } from "@/components/ui/select";
 import {format} from "date-fns";
 import Link from "next/link";
+import {
+  colorBadgePerDiscipline,
+  colorBadgePerRaceLevel,
+} from "./lib/colorMappers";
 
 // Debounced input component
 function DebouncedInput({
@@ -64,14 +68,12 @@ function DebouncedInput({
   );
 }
 
-const translatedColumnId: Record<
-  keyof typeof inscriptions.$inferSelect,
-  string
-> = {
-  codexNumbers: "codex",
-  disciplines: "disciplines",
-  raceLevels: "raceLevels",
+const translatedColumnId: Record<string, string> = {
+  codex: "codex",
+  discipline: "discipline",
+  raceLevel: "raceLevel",
   firstRaceDate: "date",
+  lastRaceDate: "date fin",
   location: "station",
   country: "pays",
   id: "id",
@@ -103,39 +105,18 @@ function Filter({
         className="max-w-sm"
       />
     );
-  } else if (columnId === "disciplines" || columnId === "raceLevels") {
-    let options: {value: string; label: string}[] = [];
-
-    if (columnId === "disciplines") {
-      // Extract unique disciplines from data
-      const uniqueDisciplines = new Set<string>();
-      data.forEach((row) => {
-        row.disciplines.forEach((discipline: string) =>
-          uniqueDisciplines.add(discipline)
-        );
+  } else if (columnId === "discipline" || columnId === "raceLevel") {
+    // Unique disciplines/raceLevels from codexData
+    const uniqueValues = new Set<string>();
+    data.forEach((row) => {
+      row.codexData.forEach((c: any) => {
+        if (columnId === "discipline") uniqueValues.add(c.discipline);
+        if (columnId === "raceLevel") uniqueValues.add(c.raceLevel);
       });
-
-      options = Array.from(uniqueDisciplines)
-        .sort()
-        .map((discipline) => ({
-          value: discipline,
-          label: discipline,
-        }));
-    } else if (columnId === "raceLevels") {
-      // Extract unique race levels from data
-      const uniqueRaceLevels = new Set<string>();
-      data.forEach((row) => {
-        row.raceLevels.forEach((level: string) => uniqueRaceLevels.add(level));
-      });
-
-      options = Array.from(uniqueRaceLevels)
-        .sort()
-        .map((level) => ({
-          value: level,
-          label: level,
-        }));
-    }
-
+    });
+    const options = Array.from(uniqueValues)
+      .sort()
+      .map((v) => ({value: v, label: v}));
     return (
       <Select
         value={(columnFilterValue as string) ?? "all"}
@@ -145,11 +126,7 @@ function Filter({
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue
-            placeholder={`Select ${
-              translatedColumnId[
-                columnId as keyof typeof inscriptions.$inferSelect
-              ]
-            }...`}
+            placeholder={`Choisir ${translatedColumnId[columnId]}...`}
           />
         </SelectTrigger>
         <SelectContent>
@@ -204,32 +181,15 @@ function Filter({
         </SelectContent>
       </Select>
     );
-  } else if (columnId === "codexNumbers") {
-    // Create a unique list of codex numbers
+  } else if (columnId === "codex") {
+    // Unique codex numbers from codexData
     const uniqueCodex = new Set<string>();
     data.forEach((row) => {
-      row.codexNumbers.forEach((codex: string) => uniqueCodex.add(codex));
+      row.codexData.forEach((c: any) => uniqueCodex.add(c.number));
     });
-
     const options = Array.from(uniqueCodex)
-      .sort((a, b) => {
-        // Try to convert to numbers and compare numerically
-        const numA = parseInt(a, 10);
-        const numB = parseInt(b, 10);
-
-        // If both are valid numbers, compare numerically
-        if (!isNaN(numA) && !isNaN(numB)) {
-          return numA - numB;
-        }
-
-        // Fall back to string comparison
-        return a.localeCompare(b);
-      })
-      .map((value) => ({
-        value,
-        label: value,
-      }));
-
+      .sort((a, b) => parseInt(a) - parseInt(b))
+      .map((value) => ({value, label: value}));
     return (
       <Select
         value={(columnFilterValue as string) ?? "all"}
@@ -275,30 +235,6 @@ export default function Home() {
     queryKey: ["inscriptions"],
     queryFn: () => fetch("/api/inscriptions").then((res) => res.json()),
   });
-
-  const colorBadgePerDiscipline: Record<
-    (typeof inscriptions.$inferSelect)["disciplines"][number],
-    string
-  > = {
-    SL: "bg-blue-500",
-    GS: "bg-green-500",
-    SG: "bg-yellow-500",
-    DH: "bg-red-500",
-    AC: "bg-purple-500",
-  };
-  const colorBadgePerRaceLevel: Record<
-    (typeof inscriptions.$inferSelect)["raceLevels"][number],
-    string
-  > = {
-    FIS: "bg-blue-500",
-    CIT: "bg-green-500",
-    NJR: "bg-yellow-500",
-    NJC: "bg-red-500",
-    NC: "bg-orange-500",
-    SAC: "bg-black",
-    ANC: "bg-gray-500",
-    ENL: "bg-purple-500",
-  };
 
   const columns: ColumnDef<typeof inscriptions.$inferSelect>[] = [
     {
@@ -364,80 +300,70 @@ export default function Home() {
       },
     },
     {
-      accessorKey: "disciplines",
-      header: "Disciplines",
-      cell: ({row}) => {
-        return (
-          <div className="flex gap-2">
-            {row.original.disciplines.map(
-              (
-                discipline: (typeof inscriptions.$inferSelect)["disciplines"][number]
-              ) => (
-                <Badge
-                  key={discipline}
-                  className={colorBadgePerDiscipline[discipline]}
-                >
-                  {discipline}
-                </Badge>
-              )
-            )}
-          </div>
-        );
-      },
-      filterFn: (row, id, filterValue) => {
-        if (!filterValue) return true;
-        return row.original.disciplines.includes(filterValue);
-      },
-    },
-    {
-      accessorKey: "codexNumbers",
+      id: "codex",
       header: "Codex",
-      cell: ({row}) => {
-        return (
-          <div className="flex gap-2">
-            {row.original.codexNumbers.map(
-              (
-                codexNumber: (typeof inscriptions.$inferSelect)["codexNumbers"][number]
-              ) => (
-                <Badge key={codexNumber} variant={"outline"}>
-                  {codexNumber}
-                </Badge>
-              )
-            )}
-          </div>
-        );
-      },
+      cell: ({row}) => (
+        <div className="flex gap-2 flex-wrap">
+          {row.original.codexData.map((c: any, i: number) => (
+            <Badge key={c.number + i} variant={"outline"}>
+              {c.number}
+            </Badge>
+          ))}
+        </div>
+      ),
       filterFn: (row, id, filterValue) => {
         if (!filterValue) return true;
-        return row.original.codexNumbers.some((codex) =>
-          codex.toLowerCase().includes((filterValue as string).toLowerCase())
+        return row.original.codexData.some((c: any) =>
+          c.number.toLowerCase().includes((filterValue as string).toLowerCase())
         );
       },
     },
     {
-      accessorKey: "raceLevels",
-      header: "Race Levels",
-      cell: ({row}) => {
-        return (
-          <div className="flex gap-2">
-            {row.original.raceLevels.map(
-              (
-                raceLevel: (typeof inscriptions.$inferSelect)["raceLevels"][number]
-              ) => (
-                <Badge
-                  key={raceLevel}
-                  className={colorBadgePerRaceLevel[raceLevel]}
-                >
-                  {raceLevel}
-                </Badge>
-              )
-            )}
-          </div>
-        );
-      },
+      id: "discipline",
+      header: "Disciplines",
+      cell: ({row}) => (
+        <div className="flex gap-2 flex-wrap">
+          {Array.from(
+            new Set(row.original.codexData.map((c: any) => c.discipline))
+          ).map((discipline) => (
+            <Badge
+              key={discipline}
+              className={colorBadgePerDiscipline[discipline] || "bg-gray-300"}
+            >
+              {discipline}
+            </Badge>
+          ))}
+        </div>
+      ),
       filterFn: (row, id, filterValue) => {
         if (!filterValue) return true;
-        return row.original.raceLevels.includes(filterValue);
+        return row.original.codexData.some(
+          (c: any) => c.discipline === filterValue
+        );
+      },
+    },
+    {
+      id: "raceLevel",
+      header: "Race Levels",
+      cell: ({row}) => (
+        <div className="flex gap-2 flex-wrap">
+          {Array.from(
+            new Set(row.original.codexData.map((c: any) => c.raceLevel))
+          ).map((raceLevel) => (
+            <Badge
+              key={raceLevel}
+              className={colorBadgePerRaceLevel[raceLevel] || "bg-gray-300"}
+            >
+              {raceLevel}
+            </Badge>
+          ))}
+        </div>
+      ),
+      filterFn: (row, id, filterValue) => {
+        if (!filterValue) return true;
+        return row.original.codexData.some(
+          (c: any) => c.raceLevel === filterValue
+        );
       },
     },
   ];

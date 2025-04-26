@@ -1,4 +1,5 @@
 import {InscriptionDetails} from "./InscriptionDetails";
+import {CodexTabs} from "./CodexTabs";
 
 interface PageProps {
   params: Promise<{
@@ -11,6 +12,7 @@ export default async function InscriptionPage({params}: PageProps) {
   return (
     <div className="container mx-auto py-8">
       <InscriptionDetails id={resolvedParams.id} />
+      <CodexTabs inscriptionId={resolvedParams.id} />
     </div>
   );
 }

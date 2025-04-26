@@ -15,6 +15,13 @@
       "when": 1745538496291,
       "tag": "0001_whole_betty_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1745676789318,
+      "tag": "0002_nappy_darwin",
+      "breakpoints": true
     }
   ]
 }

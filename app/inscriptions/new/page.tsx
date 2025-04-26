@@ -33,10 +33,10 @@ import {Calendar as CalendarIcon} from "lucide-react";
 import {cn} from "@/lib/utils";
 import {Calendar} from "@/components/ui/calendar";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {Checkbox} from "@/components/ui/checkbox";
 import {type inscriptions as InscriptionsTableType} from "@/drizzle/schemaInscriptions";
 import {useRouter} from "next/navigation";
 import {useUser} from "@clerk/nextjs";
+import {useEffect} from "react";
 
 const inscriptionFormSchema = z.object({
   email: z.string().email({
@@ -57,34 +57,32 @@ const inscriptionFormSchema = z.object({
   codexNumbers: z
     .array(
       z.object({
-        value: z
+        number: z
           .string()
-          .regex(/^\d+$/, {message: "Chaque codex doit être un nombre."}),
+          .regex(/^[0-9]+$/, {message: "Chaque codex doit être un nombre."}),
+        sex: z.enum(["M", "F"], {required_error: "Le sexe est requis."}),
+        discipline: z.string().min(1, {message: "La discipline est requise."}),
+        raceLevel: z
+          .string()
+          .min(1, {message: "Le niveau de course est requis."}),
       })
     )
     .min(1, {message: "Au moins un codex est requis."}),
   firstRaceDate: z.date({
     required_error: "La date de la première course est requise.",
   }),
-  disciplines: z
-    .array(z.string())
-    .refine((value) => value.some((item) => item), {
-      message: "Vous devez sélectionner au moins une discipline.",
-    }),
-  raceLevels: z
-    .array(z.string())
-    .refine((value) => value.some((item) => item), {
-      message: "Vous devez sélectionner au moins un niveau de course.",
-    }),
+  lastRaceDate: z.date({
+    required_error: "La date de la dernière course est requise.",
+  }),
 });
 
 // Define discipline options
 const disciplines = [
-  {id: "SL", label: "Slalom (SL)"},
-  {id: "GS", label: "Giant Slalom (GS)"},
-  {id: "SG", label: "Super-G (SG)"},
-  {id: "DH", label: "Downhill (DH)"},
-  {id: "AC", label: "Alpine Combined (AC)"},
+  {id: "SL", label: "SL"},
+  {id: "GS", label: "GS"},
+  {id: "SG", label: "SG"},
+  {id: "DH", label: "DH"},
+  {id: "AC", label: "AC"},
 ] as const; // Use 'as const' for stricter typing
 
 // Define race level options
@@ -142,6 +140,8 @@ const NewInscriptionPage = () => {
 
   const {user} = useUser();
 
+  console.log("USER", user);
+
   const email = user?.emailAddresses[0].emailAddress;
   const fullName = user?.fullName;
 
@@ -166,17 +166,25 @@ const NewInscriptionPage = () => {
   const form = useForm<z.infer<typeof inscriptionFormSchema>>({
     resolver: zodResolver(inscriptionFormSchema),
     defaultValues: {
-      email: email,
-      fullName: fullName!,
+      email: "",
+      fullName: "",
       country: "",
       location: "",
       eventLink: "",
-      codexNumbers: [{value: ""}],
+      codexNumbers: [
+        {number: "", sex: "M", discipline: "SL", raceLevel: "FIS"},
+      ],
       firstRaceDate: undefined,
-      disciplines: [],
-      raceLevels: [],
+      lastRaceDate: undefined,
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      form.setValue("email", user.emailAddresses[0].emailAddress || "");
+      form.setValue("fullName", user.fullName || "");
+    }
+  }, [user, form]);
 
   // Hook for managing dynamic codex fields
   const {fields, append, remove} = useFieldArray({
@@ -187,19 +195,15 @@ const NewInscriptionPage = () => {
   // Fonction de soumission du formulaire
   async function onSubmit(values: z.infer<typeof inscriptionFormSchema>) {
     try {
-      const newInscription: Omit<
-        typeof InscriptionsTableType.$inferInsert,
-        "id" | "createdAt"
-      > = {
+      const newInscription = {
         email: values.email,
         fullName: values.fullName,
         country: values.country,
         location: values.location,
         eventLink: values.eventLink,
-        codexNumbers: values.codexNumbers.map((c) => c.value),
+        codexData: values.codexNumbers,
         firstRaceDate: values.firstRaceDate.toISOString(),
-        disciplines: values.disciplines,
-        raceLevels: values.raceLevels,
+        lastRaceDate: values.lastRaceDate.toISOString(),
       };
 
       const {inscription: returnedInscription} = await createInscription(
@@ -235,7 +239,12 @@ const NewInscriptionPage = () => {
           règlementaire pour une demande d&apos;invitation en NC)
         </p>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              console.log("ZOD ERRORS", errors);
+            })}
+            className="space-y-6"
+          >
             <FormField
               control={form.control}
               name="location"
@@ -402,41 +411,118 @@ const NewInscriptionPage = () => {
                 Codex <span className="text-red-500">*</span>
               </FormLabel>
               {fields.map((field, index) => (
-                <FormField
+                <div
                   key={field.id}
-                  control={form.control}
-                  name={`codexNumbers.${index}.value`}
-                  render={({field: itemField}) => (
-                    <FormItem>
-                      <div className="flex items-center space-x-2">
-                        <FormControl>
-                          <Input placeholder="1234" {...itemField} />
-                        </FormControl>
-                        {fields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(index)}
-                          >
-                            <MinusCircleIcon className="h-5 w-5 text-red-500" />
-                          </Button>
+                  className="border p-2 rounded-md bg-gray-50"
+                >
+                  <div className="flex justify-between items-end w-full">
+                    <div className="flex items-center gap-x-6 flex-wrap">
+                      <FormField
+                        control={form.control}
+                        name={`codexNumbers.${index}.number`}
+                        render={({field: itemField}) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Codex</FormLabel>
+                            <FormControl>
+                              <Input placeholder="1234" {...itemField} />
+                            </FormControl>
+                            <FormMessage className="text-red-500 text-sm" />
+                          </FormItem>
                         )}
-                        {index === fields.length - 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => append({value: ""})}
-                          >
-                            <PlusCircleIcon className="h-5 w-5 text-green-500" />
-                          </Button>
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`codexNumbers.${index}.sex`}
+                        render={({field: sexField}) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Sexe</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={sexField.onChange}
+                                value={sexField.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sexe" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="M">M</SelectItem>
+                                  <SelectItem value="F">F</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage className="text-red-500 text-sm" />
+                          </FormItem>
                         )}
-                      </div>
-                      <FormMessage className="text-red-500 text-sm" />
-                    </FormItem>
-                  )}
-                />
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`codexNumbers.${index}.discipline`}
+                        render={({field: disciplineField}) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Discipline</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={disciplineField.onChange}
+                                value={disciplineField.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Discipline" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {disciplines.map((d) => (
+                                    <SelectItem key={d.id} value={d.id}>
+                                      {d.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage className="text-red-500 text-sm" />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`codexNumbers.${index}.raceLevel`}
+                        render={({field: raceLevelField}) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Race Level</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={raceLevelField.onChange}
+                                value={raceLevelField.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Race Level" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {raceLevels.map((r) => (
+                                    <SelectItem key={r.id} value={r.id}>
+                                      {r.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage className="text-red-500 text-sm" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="flex items-center gap-2 text-red-700 border-red-500 hover:bg-red-50 cursor-pointer"
+                        onClick={() => remove(index)}
+                      >
+                        <MinusCircleIcon className="h-5 w-5 text-red-500 " />
+                        Supprimer
+                      </Button>
+                    )}
+                  </div>
+                </div>
               ))}
               {/* Move description outside the loop to appear only once */}
               <FormDescription className="text-base mt-1">
@@ -451,6 +537,26 @@ const NewInscriptionPage = () => {
               />
             </div>
             {/* End Codex Dynamic Fields */}
+
+            {/* Bouton Ajouter un autre codex sous la liste */}
+            <div className="flex justify-center mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex items-center gap-2 text-green-700 border-green-500 hover:bg-green-50  cursor-pointer"
+                onClick={() =>
+                  append({
+                    number: "",
+                    sex: "M",
+                    discipline: "SL",
+                    raceLevel: "FIS",
+                  })
+                }
+              >
+                <PlusCircleIcon className="h-5 w-5 text-green-500" />
+                Ajouter un autre codex
+              </Button>
+            </div>
 
             {/* Date Picker */}
             <FormField
@@ -473,7 +579,54 @@ const NewInscriptionPage = () => {
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(field.value, "dd/MM/yyyy")
+                          ) : (
+                            <span>Choisissez une date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        fromDate={new Date()}
+                        disabled={(date) => date < new Date("1900-01-01")}
+                        initialFocus
+                        weekStartsOn={1}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage className="text-red-500 text-sm" />
+                </FormItem>
+              )}
+            />
+            {/* End Date Picker */}
+
+            {/* Last Race Date Picker */}
+            <FormField
+              control={form.control}
+              name="lastRaceDate"
+              render={({field}) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="text-base text-[#3d7cf2]">
+                    Date de la dernière course{" "}
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "dd/MM/yyyy")
                           ) : (
                             <span>Choisissez une date</span>
                           )}
@@ -487,6 +640,7 @@ const NewInscriptionPage = () => {
                         selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) => date < new Date("1900-01-01")}
+                        fromDate={form.watch("firstRaceDate")}
                         initialFocus
                       />
                     </PopoverContent>
@@ -495,115 +649,7 @@ const NewInscriptionPage = () => {
                 </FormItem>
               )}
             />
-            {/* End Date Picker */}
-
-            {/* Disciplines Checkboxes */}
-            <FormField
-              control={form.control}
-              name="disciplines"
-              render={({field}) => (
-                <FormItem>
-                  <div className="mb-4">
-                    <FormLabel className="text-base text-[#3d7cf2]">
-                      Disciplines demandées{" "}
-                      <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormDescription className="text-base">
-                      Sélectionnez les disciplines concernées.
-                    </FormDescription>
-                  </div>
-                  {/* Flex container for the checkboxes */}
-                  <div className="flex flex-row flex-wrap gap-x-6 gap-y-3">
-                    {disciplines.map((item) => (
-                      // Each checkbox is its own FormItem for layout/accessibility
-                      <FormItem
-                        key={item.id}
-                        className="flex flex-row items-start space-x-3 space-y-0"
-                      >
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value?.includes(item.id)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? field.onChange([
-                                    ...(field.value || []),
-                                    item.id,
-                                  ])
-                                : field.onChange(
-                                    (field.value || []).filter(
-                                      (value) => value !== item.id
-                                    )
-                                  );
-                            }}
-                          />
-                        </FormControl>
-                        {/* Use a standard label associated with the checkbox */}
-                        <FormLabel className="font-normal text-base">
-                          {" "}
-                          {/* Adjusted font size */}
-                          {item.id}
-                        </FormLabel>
-                      </FormItem>
-                    ))}
-                  </div>
-                  {/* Error message for the group */}
-                  <FormMessage className="text-red-500 text-sm" />
-                </FormItem>
-              )}
-            />
-            {/* End Disciplines Checkboxes */}
-
-            {/* Race Level Checkboxes */}
-            <FormField
-              control={form.control}
-              name="raceLevels"
-              render={({field}) => (
-                <FormItem>
-                  <div className="mb-4">
-                    <FormLabel className="text-base text-[#3d7cf2]">
-                      Level Race <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormDescription className="text-base">
-                      Précisez bien car il peut y avoir plusieurs niveaux dans
-                      le même évènement... ex: FIS+NJR
-                    </FormDescription>
-                  </div>
-                  {/* Flex container for the checkboxes */}
-                  <div className="flex flex-row flex-wrap gap-x-6 gap-y-3">
-                    {raceLevels.map((item) => (
-                      <FormItem
-                        key={item.id}
-                        className="flex flex-row items-start space-x-3 space-y-0"
-                      >
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value?.includes(item.id)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? field.onChange([
-                                    ...(field.value || []),
-                                    item.id,
-                                  ])
-                                : field.onChange(
-                                    (field.value || []).filter(
-                                      (value) => value !== item.id
-                                    )
-                                  );
-                            }}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal text-base">
-                          {item.label}
-                        </FormLabel>
-                      </FormItem>
-                    ))}
-                  </div>
-                  {/* Error message for the group */}
-                  <FormMessage className="text-red-500 text-sm" />
-                </FormItem>
-              )}
-            />
-            {/* End Race Level Checkboxes */}
+            {/* End Last Race Date Picker */}
 
             {/* Info text about next step */}
             <p className="text-base text-center text-gray-600 mt-4 mb-2">

@@ -1,0 +1,38 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Utilisation de TanStack Query (react-query)
+
+Le projet utilise [TanStack Query](mdc:https:/tanstack.com/query/latest) (anciennement react-query) pour la gestion des requêtes asynchrones côté client.
+
+- Le `QueryClient` et le `QueryClientProvider` doivent être placés au niveau racine de l'application (souvent dans `_app.tsx` ou un layout global).
+- Utilisez `useQuery` pour les requêtes GET (lecture de données).
+- Utilisez `useMutation` pour les actions POST, PUT, DELETE (modification de données).
+- Les hooks de query permettent la gestion automatique du cache, du refetch, du loading et des erreurs.
+
+## Exemple : Fetcher des compétiteurs dans une modale
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+
+function useCompetitors(search: string) {
+  return useQuery({
+    queryKey: ['competitors', search],
+    queryFn: async () => {
+      if (search.length < 5) return [];
+      const res = await fetch(`/api/competitors?searchString=${encodeURIComponent(search)}`);
+      if (!res.ok) throw new Error('Erreur API');
+      return res.json();
+    },
+    enabled: search.length >= 5,
+  });
+}
+
+// Dans le composant :
+const { data, isLoading, error } = useCompetitors(search);
+```
+
+- Privilégiez l'utilisation de ces hooks pour toute récupération de données côté client.
+- Pour les mutations (ajout, suppression, modification), utilisez `useMutation` et pensez à invalider les queries concernées avec `queryClient.invalidateQueries`.
