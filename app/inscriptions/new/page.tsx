@@ -140,8 +140,6 @@ const NewInscriptionPage = () => {
 
   const {user} = useUser();
 
-  console.log("USER", user);
-
   const {mutateAsync: createInscription, isPending} = useMutation({
     mutationFn: async (
       inscription: Omit<
