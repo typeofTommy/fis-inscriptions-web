@@ -530,7 +530,9 @@ const NewInscriptionPage = () => {
                           <>
                             {stations
                               .slice()
-                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .sort((a: {name: string}, b: {name: string}) =>
+                                a.name.localeCompare(b.name)
+                              )
                               .map((station: {id: number; name: string}) => (
                                 <SelectItem
                                   key={station.id}
