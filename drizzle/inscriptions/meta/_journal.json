@@ -22,6 +22,20 @@
       "when": 1745676789318,
       "tag": "0002_nappy_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1745689322736,
+      "tag": "0003_soft_annihilus",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1745689884229,
+      "tag": "0004_unique_agent_zero",
+      "breakpoints": true
     }
   ]
 }

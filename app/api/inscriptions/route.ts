@@ -1,7 +1,7 @@
 import {NextResponse} from "next/server";
 import * as z from "zod";
 import {db} from "@/app/db/inscriptionsDB";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {inscriptions, stations} from "@/drizzle/schemaInscriptions";
 
 // Define the schema for the request body (matching the form schema)
 const inscriptionSchema = z.object({
@@ -66,6 +66,16 @@ export async function POST(request: Request) {
       .insert(inscriptions)
       .values(newInscription)
       .returning();
+
+    // insert the station
+
+    await db
+      .insert(stations)
+      .values({
+        name: location.toLowerCase(),
+        country,
+      })
+      .onConflictDoNothing();
 
     return NextResponse.json({
       message: "Inscription created successfully",

@@ -1,0 +1,161 @@
+{
+  "id": "f3d4efd7-1635-4150-a8c5-269155d898ab",
+  "prevId": "2641d794-740e-4e37-85d7-1b4511d004a7",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "inscriptionsDB.inscriptions": {
+      "name": "inscriptions",
+      "schema": "inscriptionsDB",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_link": {
+          "name": "event_link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_race_date": {
+          "name": "first_race_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_race_date": {
+          "name": "last_race_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codex_data": {
+          "name": "codex_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "inscriptionsDB.stations": {
+      "name": "stations",
+      "schema": "inscriptionsDB",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "inscriptionsDB.disciplines": {
+      "name": "disciplines",
+      "schema": "inscriptionsDB",
+      "values": [
+        "SL",
+        "GS",
+        "SG",
+        "DH",
+        "AC"
+      ]
+    },
+    "inscriptionsDB.race_levels": {
+      "name": "race_levels",
+      "schema": "inscriptionsDB",
+      "values": [
+        "FIS",
+        "CIT",
+        "NJR",
+        "NJC",
+        "NC",
+        "SAC",
+        "ANC",
+        "ENL"
+      ]
+    },
+    "inscriptionsDB.sexes": {
+      "name": "sexes",
+      "schema": "inscriptionsDB",
+      "values": [
+        "M",
+        "F"
+      ]
+    }
+  },
+  "schemas": {
+    "inscriptionsDB": "inscriptionsDB"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

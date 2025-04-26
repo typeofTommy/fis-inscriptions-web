@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm, useFieldArray} from "react-hook-form";
 import * as z from "zod";
@@ -18,9 +18,7 @@ import {toast} from "@/components/ui/use-toast";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -36,7 +34,8 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {type inscriptions as InscriptionsTableType} from "@/drizzle/schemaInscriptions";
 import {useRouter} from "next/navigation";
 import {useUser} from "@clerk/nextjs";
-import {useEffect} from "react";
+import {Combobox, ComboboxOption} from "@/components/ui/combobox";
+import {CheckCircle2, XCircle, Loader2} from "lucide-react";
 
 const inscriptionFormSchema = z.object({
   email: z.string().email({
@@ -74,6 +73,7 @@ const inscriptionFormSchema = z.object({
   lastRaceDate: z.date({
     required_error: "La date de la dernière course est requise.",
   }),
+  customStation: z.string().optional(),
 });
 
 // Define discipline options
@@ -124,6 +124,206 @@ const fetchCountries = async (): Promise<Country[]> => {
   );
 };
 
+// Hook utilitaire pour debounce
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [debounced, setDebounced] = useState(value);
+  React.useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+}
+
+// Hook pour vérifier un codex
+function useCodexCheck(codex: string) {
+  const debouncedCodex = useDebouncedValue(codex, 400);
+  const query = useQuery({
+    queryKey: ["codex-check", debouncedCodex],
+    queryFn: async () => {
+      if (!debouncedCodex || debouncedCodex.length < 3) return {exists: false};
+      const res = await fetch(
+        `/api/codex/check?number=${encodeURIComponent(debouncedCodex)}`
+      );
+      if (!res.ok) throw new Error("Erreur API");
+      return res.json();
+    },
+    enabled: !!debouncedCodex && debouncedCodex.length >= 3,
+    staleTime: 1000 * 60,
+  });
+  return {...query, debouncedCodex};
+}
+
+// Composant enfant pour un champ codex
+function CodexField({
+  index,
+  form,
+  onDuplicateChange,
+  remove,
+  fieldsLength,
+}: {
+  index: number;
+  form: any;
+  onDuplicateChange: (index: number, isDuplicate: boolean) => void;
+  remove: (index: number) => void;
+  fieldsLength: number;
+}) {
+  const codex = form.watch(`codexNumbers.${index}.number`);
+  const {
+    data: codexCheck,
+    isLoading: codexChecking,
+    debouncedCodex,
+  } = useCodexCheck(codex);
+  useEffect(() => {
+    onDuplicateChange(
+      index,
+      !!(debouncedCodex && debouncedCodex.length >= 3 && codexCheck?.exists)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedCodex, codexCheck, index]);
+  return (
+    <div className="border p-2 rounded-md bg-gray-50">
+      <div className="flex justify-between items-end w-full">
+        <div className="flex items-center gap-x-6 flex-wrap">
+          <FormField
+            control={form.control}
+            name={`codexNumbers.${index}.number`}
+            render={({field: itemField}) => (
+              <FormItem className="flex-1 relative">
+                <FormLabel>Codex</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input placeholder="ex: 1234" {...itemField} />
+                    {/* Indicateur visuel à droite */}
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2">
+                      {codexChecking ? (
+                        <Loader2 className="animate-spin text-gray-400 w-5 h-5" />
+                      ) : debouncedCodex && debouncedCodex.length >= 3 ? (
+                        codexCheck?.exists ? (
+                          <XCircle className="text-red-500 w-5 h-5" />
+                        ) : (
+                          <CheckCircle2 className="text-green-500 w-5 h-5" />
+                        )
+                      ) : null}
+                    </span>
+                  </div>
+                </FormControl>
+                <FormMessage className="text-red-500 text-sm" />
+                {/* Message d'erreur + lien si doublon */}
+                {debouncedCodex &&
+                  debouncedCodex.length >= 3 &&
+                  codexCheck?.exists &&
+                  codexCheck.inscriptionId && (
+                    <div className="text-red-600 text-xs mt-1">
+                      Ce codex est déjà présent dans une{" "}
+                      <a
+                        href={`/inscriptions/${codexCheck.inscriptionId}`}
+                        className="underline text-blue-600"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        autre l&apos;inscription
+                      </a>
+                    </div>
+                  )}
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={`codexNumbers.${index}.sex`}
+            render={({field: sexField}) => (
+              <FormItem className="flex-1">
+                <FormLabel>Sexe</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={sexField.onChange}
+                    value={sexField.value}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sexe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">M</SelectItem>
+                      <SelectItem value="F">F</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage className="text-red-500 text-sm" />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={`codexNumbers.${index}.discipline`}
+            render={({field: disciplineField}) => (
+              <FormItem className="flex-1">
+                <FormLabel>Discipline</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={disciplineField.onChange}
+                    value={disciplineField.value}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Discipline" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {disciplines.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage className="text-red-500 text-sm" />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={`codexNumbers.${index}.raceLevel`}
+            render={({field: raceLevelField}) => (
+              <FormItem className="flex-1">
+                <FormLabel>Race Level</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={raceLevelField.onChange}
+                    value={raceLevelField.value}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Race Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {raceLevels.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage className="text-red-500 text-sm" />
+              </FormItem>
+            )}
+          />
+        </div>
+        {fieldsLength > 1 && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-2 text-red-700 border-red-500 hover:bg-red-50 cursor-pointer"
+            onClick={() => remove(index)}
+          >
+            <MinusCircleIcon className="h-5 w-5 text-red-500 " />
+            Supprimer
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const NewInscriptionPage = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -139,6 +339,17 @@ const NewInscriptionPage = () => {
   });
 
   const {user} = useUser();
+
+  const {
+    data: stations = [],
+    isLoading: stationsLoading,
+    error: stationsError,
+  } = useQuery({
+    queryKey: ["stations"],
+    queryFn: () => fetch("/api/stations").then((res) => res.json()),
+    staleTime: 1000 * 60 * 60, // 1 heure
+    refetchOnWindowFocus: false,
+  });
 
   const {mutateAsync: createInscription, isPending} = useMutation({
     mutationFn: async (
@@ -171,6 +382,7 @@ const NewInscriptionPage = () => {
       ],
       firstRaceDate: undefined,
       lastRaceDate: undefined,
+      customStation: "",
     },
   });
 
@@ -187,14 +399,35 @@ const NewInscriptionPage = () => {
     name: "codexNumbers",
   });
 
-  // Fonction de soumission du formulaire
-  async function onSubmit(values: z.infer<typeof inscriptionFormSchema>) {
+  // Etat pour suivre les doublons codex
+  const [codexDuplicates, setCodexDuplicates] = useState<boolean[]>([]);
+  // Callback pour mettre à jour l'état de doublon d'un champ
+  const handleCodexDuplicateChange = (index: number, isDuplicate: boolean) => {
+    setCodexDuplicates((prev) => {
+      const arr = [...prev];
+      arr[index] = isDuplicate;
+      return arr;
+    });
+  };
+
+  // Use form.watch to get the current location value
+  const locationValue = form.watch("location");
+  const isOtherStation = locationValue === "__autre__";
+
+  // When submitting, if 'Autre' is selected, use customStation from form values
+  async function onSubmit(
+    values: z.infer<typeof inscriptionFormSchema> & {customStation?: string}
+  ) {
     try {
+      const locationValue =
+        values.location === "__autre__"
+          ? values.customStation || ""
+          : values.location || "";
       const newInscription = {
         email: values.email,
         fullName: values.fullName,
         country: values.country,
-        location: values.location,
+        location: locationValue,
         eventLink: values.eventLink,
         codexData: values.codexNumbers,
         firstRaceDate: values.firstRaceDate.toISOString(),
@@ -212,6 +445,7 @@ const NewInscriptionPage = () => {
       form.reset();
       router.push(`/inscriptions/${returnedInscription.id}`);
       queryClient.invalidateQueries({queryKey: ["inscriptions"]});
+      queryClient.invalidateQueries({queryKey: ["stations"]});
     } catch (err) {
       console.error("Failed to insert inscription:", err);
       toast({
@@ -221,6 +455,9 @@ const NewInscriptionPage = () => {
       });
     }
   }
+
+  // State for country search
+  const [countrySearch] = React.useState("");
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -249,8 +486,85 @@ const NewInscriptionPage = () => {
                     Lieu de compétition <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Nom de la station" {...field} />
+                    <Select
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                        if (val !== "__autre__") {
+                          // Préremplir le pays selon la station sélectionnée
+                          const selectedStation = stations.find(
+                            (s: {id: number; name: string; country: string}) =>
+                              s.name === val
+                          );
+                          if (selectedStation && selectedStation.country) {
+                            form.setValue("country", selectedStation.country);
+                          }
+                          (form.setValue as any)("customStation", "");
+                        } else {
+                          // Si "Autre" est choisi, vider le pays
+                          form.setValue("country", "");
+                        }
+                      }}
+                      value={field.value}
+                      defaultValue={field.value}
+                      disabled={!!stationsLoading || !!stationsError}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={
+                            stationsLoading
+                              ? "Chargement..."
+                              : "Sélectionnez une station"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {stationsLoading ? (
+                          <div className="px-2 py-4 text-center">
+                            Chargement des stations...
+                          </div>
+                        ) : stationsError ? (
+                          <div className="px-2 py-4 text-center text-red-500">
+                            Erreur de chargement
+                          </div>
+                        ) : (
+                          <>
+                            {stations
+                              .slice()
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((station: {id: number; name: string}) => (
+                                <SelectItem
+                                  key={station.id}
+                                  value={station.name}
+                                >
+                                  {station.name.charAt(0).toUpperCase() +
+                                    station.name.slice(1)}
+                                </SelectItem>
+                              ))}
+                            <SelectItem value="__autre__">Autre...</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
+                  {isOtherStation && (
+                    <FormField
+                      control={form.control}
+                      name="customStation"
+                      render={({field}) => (
+                        <FormItem className="mt-2">
+                          <FormControl>
+                            <Input
+                              placeholder="Nom de la station"
+                              {...field}
+                              required
+                              value={field.value ?? ""}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-500 text-sm" />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormMessage className="text-red-500 text-sm" />
                 </FormItem>
               )}
@@ -259,125 +573,101 @@ const NewInscriptionPage = () => {
             <FormField
               control={form.control}
               name="country"
-              render={({field}) => (
-                <FormItem>
-                  <FormLabel className="text-base text-[#3d7cf2]">
-                    Pays <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+              render={({field}) => {
+                // Prépare les options pour la Combobox
+                const frequentCountryCodes = [
+                  "AD",
+                  "AR",
+                  "AT",
+                  "BE",
+                  "CL",
+                  "CA",
+                  "ES",
+                  "GB",
+                  "DE",
+                  "FI",
+                  "FR",
+                  "IT",
+                  "NZ",
+                  "NO",
+                  "SI",
+                  "CH",
+                  "SE",
+                  "US",
+                ];
+                const filterFn = (country: Country) =>
+                  country.name.common
+                    .toLowerCase()
+                    .includes(countrySearch.toLowerCase());
+                const frequentCountries = countries
+                  .filter((country) =>
+                    frequentCountryCodes.includes(country.cca2)
+                  )
+                  .filter(filterFn)
+                  .sort((a, b) => a.name.common.localeCompare(b.name.common));
+                const otherCountries = countries
+                  .filter(
+                    (country) => !frequentCountryCodes.includes(country.cca2)
+                  )
+                  .filter(filterFn);
+                // Construit la liste des options (avec un séparateur virtuel)
+                const options: ComboboxOption[] = [
+                  ...frequentCountries.map((country) => ({
+                    value: country.name.common,
+                    label: country.name.common,
+                    icon: (
+                      <Image
+                        src={country.flags.svg}
+                        alt={country.name.common}
+                        width={20}
+                        height={15}
+                        className="rounded"
+                      />
+                    ),
+                  })),
+                  ...(frequentCountries.length && otherCountries.length
+                    ? [{value: "__separator__", label: "", icon: null}]
+                    : []),
+                  ...otherCountries.map((country) => ({
+                    value: country.cca2,
+                    label: country.name.common,
+                    icon: (
+                      <Image
+                        src={country.flags.svg}
+                        alt={country.name.common}
+                        width={20}
+                        height={15}
+                        className="rounded"
+                      />
+                    ),
+                  })),
+                ];
+                return (
+                  <FormItem>
+                    <FormLabel className="text-base text-[#3d7cf2]">
+                      Pays <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Sélectionnez un pays" />
-                      </SelectTrigger>
+                      <Combobox
+                        options={options.filter(
+                          (o) => o.value !== "__separator__"
+                        )}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Sélectionnez un pays"
+                        disabled={isLoading || !!error}
+                        renderOption={(option) => (
+                          <div className="flex items-center gap-2">
+                            {option.icon}
+                            {option.label}
+                          </div>
+                        )}
+                      />
                     </FormControl>
-                    <SelectContent className="max-h-[300px]">
-                      {isLoading ? (
-                        <div className="px-2 py-4 text-center">
-                          Chargement des pays...
-                        </div>
-                      ) : error ? (
-                        <div className="px-2 py-4 text-center text-red-500">
-                          Erreur de chargement
-                        </div>
-                      ) : (
-                        <>
-                          {(() => {
-                            const frequentCountryCodes = [
-                              "AD",
-                              "AR",
-                              "AT",
-                              "BE",
-                              "CL",
-                              "CA",
-                              "ES",
-                              "GB",
-                              "DE",
-                              "FI",
-                              "FR",
-                              "IT",
-                              "NZ",
-                              "NO",
-                              "SI",
-                              "CH",
-                              "SE",
-                              "US",
-                            ]; // Updated list
-                            const frequentCountries = countries
-                              .filter((country) =>
-                                frequentCountryCodes.includes(country.cca2)
-                              )
-                              .sort((a, b) =>
-                                a.name.common.localeCompare(b.name.common)
-                              ); // Sort frequent countries too
-
-                            const otherCountries = countries.filter(
-                              (country) =>
-                                !frequentCountryCodes.includes(country.cca2)
-                            ); // Already sorted alphabetically from fetch
-
-                            return (
-                              <>
-                                {frequentCountries.length > 0 && (
-                                  <SelectGroup>
-                                    <SelectLabel className="text-gray-500">
-                                      Pays fréquents
-                                    </SelectLabel>
-                                    {frequentCountries.map((country) => (
-                                      <SelectItem
-                                        key={country.cca2}
-                                        value={country.name.common}
-                                        className="flex items-center gap-2"
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <Image
-                                            src={country.flags.svg}
-                                            alt={`Drapeau ${country.name.common}`}
-                                            width={20}
-                                            height={15}
-                                            className="rounded"
-                                          />
-                                          {country.name.common}
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                )}
-                                <SelectGroup>
-                                  <SelectLabel className="text-gray-500">
-                                    Autres pays
-                                  </SelectLabel>
-                                  {otherCountries.map((country) => (
-                                    <SelectItem
-                                      key={country.cca2}
-                                      value={country.cca2}
-                                      className="flex items-center gap-2"
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <Image
-                                          src={country.flags.svg}
-                                          alt={`Drapeau ${country.name.common}`}
-                                          width={20}
-                                          height={15}
-                                          className="rounded"
-                                        />
-                                        {country.name.common}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </>
-                            );
-                          })()}
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage className="text-red-500 text-sm" />
-                </FormItem>
-              )}
+                    <FormMessage className="text-red-500 text-sm" />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
@@ -406,118 +696,14 @@ const NewInscriptionPage = () => {
                 Codex <span className="text-red-500">*</span>
               </FormLabel>
               {fields.map((field, index) => (
-                <div
+                <CodexField
                   key={field.id}
-                  className="border p-2 rounded-md bg-gray-50"
-                >
-                  <div className="flex justify-between items-end w-full">
-                    <div className="flex items-center gap-x-6 flex-wrap">
-                      <FormField
-                        control={form.control}
-                        name={`codexNumbers.${index}.number`}
-                        render={({field: itemField}) => (
-                          <FormItem className="flex-1">
-                            <FormLabel>Codex</FormLabel>
-                            <FormControl>
-                              <Input placeholder="1234" {...itemField} />
-                            </FormControl>
-                            <FormMessage className="text-red-500 text-sm" />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`codexNumbers.${index}.sex`}
-                        render={({field: sexField}) => (
-                          <FormItem className="flex-1">
-                            <FormLabel>Sexe</FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={sexField.onChange}
-                                value={sexField.value}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Sexe" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="M">M</SelectItem>
-                                  <SelectItem value="F">F</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage className="text-red-500 text-sm" />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`codexNumbers.${index}.discipline`}
-                        render={({field: disciplineField}) => (
-                          <FormItem className="flex-1">
-                            <FormLabel>Discipline</FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={disciplineField.onChange}
-                                value={disciplineField.value}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Discipline" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {disciplines.map((d) => (
-                                    <SelectItem key={d.id} value={d.id}>
-                                      {d.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage className="text-red-500 text-sm" />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`codexNumbers.${index}.raceLevel`}
-                        render={({field: raceLevelField}) => (
-                          <FormItem className="flex-1">
-                            <FormLabel>Race Level</FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={raceLevelField.onChange}
-                                value={raceLevelField.value}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Race Level" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {raceLevels.map((r) => (
-                                    <SelectItem key={r.id} value={r.id}>
-                                      {r.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage className="text-red-500 text-sm" />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    {fields.length > 1 && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="flex items-center gap-2 text-red-700 border-red-500 hover:bg-red-50 cursor-pointer"
-                        onClick={() => remove(index)}
-                      >
-                        <MinusCircleIcon className="h-5 w-5 text-red-500 " />
-                        Supprimer
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                  index={index}
+                  form={form}
+                  onDuplicateChange={handleCodexDuplicateChange}
+                  remove={remove}
+                  fieldsLength={fields.length}
+                />
               ))}
               {/* Move description outside the loop to appear only once */}
               <FormDescription className="text-base mt-1">
@@ -655,7 +841,7 @@ const NewInscriptionPage = () => {
               <button
                 type="submit"
                 className="bg-[#3d7cf2] hover:bg-[#3369d6] text-white px-8 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                disabled={isPending}
+                disabled={isPending || codexDuplicates.some(Boolean)}
               >
                 {isPending ? "Soumission en cours..." : "Soumettre"}
               </button>

@@ -51,3 +51,10 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
     .notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const stations = inscriptionsSchema.table("stations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  country: text("country").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
