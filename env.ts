@@ -1,10 +1,6 @@
 import {z} from "zod";
 
 const envVariables = z.object({
-  FIS_DB_HOST: z.string(),
-  FIS_DB_USER: z.string(),
-  FIS_DB_PASS: z.string(),
-  FIS_DB_NAME: z.string(),
   NEON_DATABASE_URL: z.string(),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string(),
   CLERK_SECRET_KEY: z.string(),

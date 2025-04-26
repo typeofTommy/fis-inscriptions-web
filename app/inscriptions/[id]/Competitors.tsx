@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState} from "react";
+import React from "react";
 import {
   Table,
   TableHeader,
@@ -10,33 +10,53 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import AddCompetitorModal from "./AddCompetitorModal";
-
 import {aCompetitor} from "@/drizzle/schemaFis";
 import {format} from "date-fns";
+import {useQuery} from "@tanstack/react-query";
 
-export const Competitors = () => {
-  const [competitors, setCompetitors] = useState<
-    (typeof aCompetitor.$inferSelect)[]
-  >([]);
+function useInscriptionCompetitors(inscriptionId: string, codexNumber: string) {
+  return useQuery({
+    queryKey: ["inscription-competitors", inscriptionId, codexNumber],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/inscriptions/${inscriptionId}/competitors?codexNumber=${codexNumber}`
+      );
+      if (!res.ok) throw new Error("Erreur lors du chargement des coureurs");
+      return res.json();
+    },
+  });
+}
 
-  const handleAddCompetitor = (competitor: typeof aCompetitor.$inferSelect) => {
-    setCompetitors((prev) => [...prev, competitor]);
-  };
+export const Competitors = ({
+  inscriptionId,
+  codexNumber,
+}: {
+  inscriptionId: string;
+  codexNumber: string;
+}) => {
+  const {
+    data: competitors = [],
+    isLoading,
+    error,
+  } = useInscriptionCompetitors(inscriptionId, codexNumber);
+
+  if (isLoading) {
+    return <div>Chargement des compétiteurs...</div>;
+  }
+  if (error) {
+    return <div>Erreur lors du chargement des compétiteurs.</div>;
+  }
 
   if (!competitors?.length) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p>Aucun compétiteur présent pour cette inscription pour le moment</p>
-        <AddCompetitorModal onAdd={handleAddCompetitor} />
+        <p>Aucun compétiteur présent pour ce codex pour le moment</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <AddCompetitorModal onAdd={handleAddCompetitor} />
-      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -49,7 +69,7 @@ export const Competitors = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(competitors || []).map((c) => (
+          {(competitors || []).map((c: typeof aCompetitor.$inferSelect) => (
             <TableRow key={c.competitorid}>
               <TableCell>{c.lastname}</TableCell>
               <TableCell>{c.firstname}</TableCell>

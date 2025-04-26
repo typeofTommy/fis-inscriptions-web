@@ -6,6 +6,8 @@ import {Badge} from "@/components/ui/badge";
 import {Competitors} from "./Competitors";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
+import AddCompetitorModal from "./AddCompetitorModal";
+import React from "react";
 
 interface CodexTabsProps {
   inscriptionId: string;
@@ -30,17 +32,30 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
     queryFn: () => fetchInscription(inscriptionId),
   });
 
+  const [activeCodex, setActiveCodex] = React.useState<string | undefined>(
+    undefined
+  );
+  const codexData = inscription?.codexData || [];
+  React.useEffect(() => {
+    if (!activeCodex && codexData.length > 0) {
+      setActiveCodex(codexData[0].number);
+    }
+  }, [activeCodex, codexData]);
+
   if (isLoading) return <div>Chargement...</div>;
   if (error || !inscription)
     return <div>Erreur lors du chargement des codex</div>;
-
-  const codexData = inscription.codexData || [];
   if (!Array.isArray(codexData) || codexData.length === 0) {
     return <div>Aucun codex pour cette inscription.</div>;
   }
 
   return (
-    <Tabs defaultValue={codexData[0].number} className="mt-8">
+    <Tabs
+      defaultValue={codexData[0].number}
+      className="mt-8"
+      onValueChange={setActiveCodex}
+      value={activeCodex}
+    >
       <TabsList>
         {codexData.map((codex) => (
           <TabsTrigger
@@ -59,9 +74,19 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
           </TabsTrigger>
         ))}
       </TabsList>
+      <div className="flex justify-end mb-4">
+        <AddCompetitorModal
+          inscriptionId={inscriptionId}
+          codexList={codexData.map((c) => c.number)}
+          defaultCodex={activeCodex || codexData[0].number}
+        />
+      </div>
       {codexData.map((codex) => (
         <TabsContent key={codex.number} value={codex.number}>
-          <Competitors />
+          <Competitors
+            inscriptionId={inscriptionId}
+            codexNumber={codex.number}
+          />
         </TabsContent>
       ))}
     </Tabs>

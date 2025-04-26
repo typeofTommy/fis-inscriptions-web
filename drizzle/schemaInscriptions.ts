@@ -5,6 +5,7 @@ import {
   date,
   timestamp,
   jsonb,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const inscriptionsSchema = pgSchema("inscriptionsDB");
@@ -57,4 +58,54 @@ export const stations = inscriptionsSchema.table("stations", {
   name: text("name").notNull(),
   country: text("country").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const inscriptionCompetitors = inscriptionsSchema.table(
+  "inscription_competitors",
+  {
+    id: serial("id").primaryKey(),
+    inscriptionId: integer("inscription_id")
+      .notNull()
+      .references(() => inscriptions.id),
+    competitorId: integer("competitor_id")
+      .notNull()
+      .references(() => competitors.competitorid),
+    codexNumber: text("codex_number").notNull(),
+  }
+);
+
+export const competitors = inscriptionsSchema.table("competitors", {
+  listid: integer("listid"),
+  listname: text("listname"),
+  listpublished: integer("listpublished"),
+  published: integer("published"),
+  sectorcode: text("sectorcode"),
+  status: text("status"),
+  competitorid: integer("competitorid").primaryKey(),
+  fiscode: text("fiscode"),
+  lastname: text("lastname"),
+  firstname: text("firstname"),
+  nationcode: text("nationcode"),
+  gender: text("gender"),
+  birthdate: text("birthdate"),
+  skiclub: text("skiclub"),
+  nationalcode: text("nationalcode"),
+  competitorname: text("competitorname"),
+  birthyear: integer("birthyear"),
+  calculationdate: text("calculationdate"),
+  dhpoints: text("dhpoints"),
+  dhpos: text("dhpos"),
+  dhsta: text("dhsta"),
+  slpoints: text("slpoints"),
+  slpos: text("slpos"),
+  slsta: text("slsta"),
+  gspoints: text("gspoints"),
+  gspos: text("gspos"),
+  gssta: text("gssta"),
+  sgpoints: text("sgpoints"),
+  sgpos: text("sgpos"),
+  sgsta: text("sgsta"),
+  acpoints: text("acpoints"),
+  acpos: text("acpos"),
+  acsta: text("acsta"),
 });

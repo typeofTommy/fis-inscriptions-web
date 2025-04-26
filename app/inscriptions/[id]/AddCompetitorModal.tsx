@@ -17,8 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {Button} from "@/components/ui/button";
-import {useQuery} from "@tanstack/react-query";
+import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {aCompetitor} from "@/drizzle/schemaFis";
+import {Checkbox} from "@/components/ui/checkbox";
+import AsyncCompetitorCombobox from "./AsyncCompetitorCombobox";
 
 const MIN_SEARCH_LENGTH = 7;
 
@@ -48,33 +50,73 @@ function useCompetitors(search: string) {
   });
 }
 
+function useSaveCompetitors(inscriptionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      competitorIds,
+      codexNumbers,
+    }: {
+      competitorIds: string[];
+      codexNumbers: string[];
+    }) => {
+      const res = await fetch(
+        `/api/inscriptions/${inscriptionId}/save-competitors`,
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({competitorIds, codexNumbers}),
+        }
+      );
+      if (!res.ok) throw new Error("Erreur lors de l'enregistrement");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["inscription-competitors", inscriptionId],
+      });
+    },
+  });
+}
+
 export default function AddCompetitorModal({
-  onAdd,
+  inscriptionId,
+  codexList,
+  defaultCodex,
 }: {
-  onAdd: (competitor: typeof aCompetitor.$inferSelect) => void;
+  inscriptionId: string;
+  codexList: string[];
+  defaultCodex: string;
 }) {
   type Competitor = typeof aCompetitor.$inferSelect;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
-  const [selectedId, setSelectedId] = useState<
-    Competitor["competitorid"] | undefined
-  >();
+  const [selectedId, setSelectedId] = useState<string | undefined>();
+  const [selectedCodex, setSelectedCodex] = useState<string[]>([defaultCodex]);
+
+  useEffect(() => {
+    setSelectedCodex([defaultCodex]);
+  }, [defaultCodex]);
 
   const {data: results = [], isLoading: loading} =
     useCompetitors(debouncedSearch);
+  const {mutate: saveCompetitors, isLoading: saving} =
+    useSaveCompetitors(inscriptionId);
 
-  const handleAdd = useCallback(() => {
-    const competitor = results.find(
-      (c: Competitor) => c.competitorid === selectedId
+  const handleSave = useCallback(() => {
+    if (!selectedId || selectedCodex.length === 0) return;
+    saveCompetitors(
+      {competitorIds: [selectedId], codexNumbers: selectedCodex},
+      {
+        onSuccess: () => {
+          setOpen(false);
+          setSearch("");
+          setSelectedId(undefined);
+        },
+      }
     );
-    if (competitor) {
-      onAdd(competitor);
-      setOpen(false);
-      setSearch("");
-      setSelectedId(undefined);
-    }
-  }, [onAdd, results, selectedId]);
+  }, [selectedId, selectedCodex, saveCompetitors]);
 
   return (
     <Dialog
@@ -100,42 +142,41 @@ export default function AddCompetitorModal({
           <DialogTitle>Ajouter un compétiteur</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <Input
-            placeholder={`Nom ou prénom (${MIN_SEARCH_LENGTH} caractères min)`}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            autoFocus
+          <AsyncCompetitorCombobox
+            value={selectedId}
+            onChange={setSelectedId}
+            placeholder="Sélectionner un compétiteur"
           />
-          {loading && <div>Recherche...</div>}
-          {results.length > 0 && (
-            <div>{results.length} compétiteur(s) trouvé(s)</div>
-          )}
-          <Select
-            value={selectedId?.toString()}
-            onValueChange={(value) => setSelectedId(Number(value))}
-            disabled={results.length === 0}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Sélectionner un compétiteur" />
-            </SelectTrigger>
-            <SelectContent>
-              {results.map((c: Competitor) => (
-                <SelectItem
-                  key={c.competitorid}
-                  value={c.competitorid.toString()}
-                >
-                  {c.firstname} {c.lastname}
-                </SelectItem>
+          <div>
+            <div className="mb-2 font-medium">Pour quels codex ?</div>
+            <div className="flex flex-wrap gap-2">
+              {codexList.map((codex) => (
+                <label key={codex} className="flex items-center gap-2">
+                  <Checkbox
+                    checked={selectedCodex.includes(codex)}
+                    onCheckedChange={(checked) => {
+                      setSelectedCodex((prev) =>
+                        checked
+                          ? [...prev, codex]
+                          : prev.filter((c) => c !== codex)
+                      );
+                    }}
+                  />
+                  {codex}
+                </label>
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="ghost">Annuler</Button>
           </DialogClose>
-          <Button onClick={handleAdd} disabled={!selectedId}>
-            OK
+          <Button
+            onClick={handleSave}
+            disabled={!selectedId || selectedCodex.length === 0 || saving}
+          >
+            {saving ? "Ajout..." : "OK"}
           </Button>
         </DialogFooter>
       </DialogContent>
