@@ -1,7 +1,7 @@
 import fs from "fs";
 import {parse} from "csv-parse";
-import {db} from "../app/db/inscriptionsDB.js"; // Adjust path and add .js extension if needed
-import {competitors} from "../drizzle/schemaInscriptions.js"; // Adjust path and add .js extension if needed
+import {db} from "../app/db/inscriptionsDB"; // Removed .js extension
+import {competitors} from "../drizzle/schemaInscriptions"; // Removed .js extension
 
 const csvFilePath = process.argv[2];
 
