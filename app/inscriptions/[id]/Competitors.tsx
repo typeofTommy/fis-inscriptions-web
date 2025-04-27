@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import {format} from "date-fns";
 import {useQuery} from "@tanstack/react-query";
+import {Loader2} from "lucide-react";
 
 function useInscriptionCompetitors(inscriptionId: string, codexNumber: string) {
   return useQuery({
@@ -39,7 +40,12 @@ export const Competitors = ({
   } = useInscriptionCompetitors(inscriptionId, codexNumber);
 
   if (isLoading) {
-    return <div>Chargement des compétiteurs...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <p>Chargement des compétiteurs...</p>
+      </div>
+    );
   }
   if (error) {
     return <div>Erreur lors du chargement des compétiteurs.</div>;

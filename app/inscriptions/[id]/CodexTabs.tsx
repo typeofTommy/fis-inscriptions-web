@@ -43,12 +43,12 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
     }
   }, [activeCodex, codexData]);
 
-  if (isLoading) return <div>Chargement...</div>;
-  if (error || !inscription)
-    return <div>Erreur lors du chargement des codex</div>;
-  if (!Array.isArray(codexData) || codexData.length === 0) {
+  if (error) return <div>Erreur lors du chargement des codex</div>;
+  if ((!Array.isArray(codexData) || codexData.length === 0) && !isLoading) {
     return <div>Aucun codex pour cette inscription.</div>;
   }
+
+  if (isLoading) return null;
 
   return (
     <Tabs
@@ -62,7 +62,7 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
           <TabsTrigger
             key={codex.number}
             value={codex.number}
-            className="min-w-[140px] h-12 text-lg px-6 py-3"
+            className="min-w-[140px] h-12 text-lg px-6 py-3 cursor-pointer"
           >
             Codex {codex.number}
             <Badge
