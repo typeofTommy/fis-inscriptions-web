@@ -7,7 +7,7 @@ import {Competitors} from "./Competitors";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
-import React from "react";
+import React, {useMemo} from "react";
 
 interface CodexTabsProps {
   inscriptionId: string;
@@ -35,7 +35,8 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
   const [activeCodex, setActiveCodex] = React.useState<string | undefined>(
     undefined
   );
-  const codexData = inscription?.codexData || [];
+  const codexData = useMemo(() => inscription?.codexData || [], [inscription]);
+
   React.useEffect(() => {
     if (!activeCodex && codexData.length > 0) {
       setActiveCodex(codexData[0].number);
@@ -71,14 +72,21 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
             >
               {codex.discipline}
             </Badge>
+            <Badge className={`ml-2 text-base px-3 py-1 `}>{codex.sex}</Badge>
           </TabsTrigger>
         ))}
       </TabsList>
       <div className="flex justify-end mb-4">
         <AddCompetitorModal
           inscriptionId={inscriptionId}
-          codexList={codexData.map((c) => c.number)}
           defaultCodex={activeCodex || codexData[0].number}
+          gender={
+            inscription.codexData.find((c) => c.number === activeCodex)?.sex ===
+            "F"
+              ? "W"
+              : "M"
+          }
+          codexData={codexData}
         />
       </div>
       {codexData.map((codex) => (

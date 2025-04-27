@@ -11,8 +11,10 @@ import {
 import {Button} from "@/components/ui/button";
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {Checkbox} from "@/components/ui/checkbox";
+import {Badge} from "@/components/ui/badge";
+import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 
-const MIN_SEARCH_LENGTH = 0;
+const MIN_SEARCH_LENGTH = 3;
 
 // Hook debounce simple
 function useDebounce<T>(value: T, delay: number): T {
@@ -25,18 +27,19 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // Remplace le useEffect par un hook react-query
-function useCompetitors(search: string) {
+function useCompetitors(search: string, gender: "W" | "M") {
   return useQuery({
-    queryKey: ["competitors", search],
+    queryKey: ["competitors", search, gender],
     queryFn: async () => {
       if (search.length < MIN_SEARCH_LENGTH) return [];
       const res = await fetch(
-        `/api/competitors?search=${encodeURIComponent(search)}`
+        `/api/competitors?search=${encodeURIComponent(search)}&gender=${gender}`
       );
       if (!res.ok) throw new Error("Erreur API");
       return res.json();
     },
-    enabled: search.length >= MIN_SEARCH_LENGTH,
+    enabled:
+      search.length >= MIN_SEARCH_LENGTH && (gender === "W" || gender === "M"),
   });
 }
 
@@ -71,12 +74,14 @@ function useSaveCompetitors(inscriptionId: string) {
 
 export default function AddCompetitorModal({
   inscriptionId,
-  codexList,
   defaultCodex,
+  gender,
+  codexData,
 }: {
   inscriptionId: string;
-  codexList: string[];
   defaultCodex: string;
+  gender: "W" | "M";
+  codexData: {number: string; sex: string; discipline: string}[];
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -88,10 +93,11 @@ export default function AddCompetitorModal({
     setSelectedCodex([defaultCodex]);
   }, [defaultCodex]);
 
-  const {data: results = [], isLoading: loading} =
-    useCompetitors(debouncedSearch);
+  const {data: results = [], isLoading: loading} = useCompetitors(
+    debouncedSearch,
+    gender
+  );
 
-  console.log(results, loading);
   const {mutate: saveCompetitors, isPending: saving} =
     useSaveCompetitors(inscriptionId);
 
@@ -160,25 +166,34 @@ export default function AddCompetitorModal({
               </option>
             ))}
           </select>
-          <div>
-            <div className="mb-2 font-medium">Pour quels codex ?</div>
-            <div className="flex flex-wrap gap-2">
-              {codexList.map((codex) => (
-                <label key={codex} className="flex items-center gap-2">
+          <div className="mb-2 font-medium">
+            Pour quels codex ? (courses {gender === "W" ? "F" : "M"})
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {codexData
+              .filter((c) => (gender === "W" ? c.sex === "F" : c.sex === "M"))
+              .map((c) => (
+                <label key={c.number} className="flex items-center gap-2">
                   <Checkbox
-                    checked={selectedCodex.includes(codex)}
+                    checked={selectedCodex.includes(c.number)}
                     onCheckedChange={(checked) => {
                       setSelectedCodex((prev) =>
                         checked
-                          ? [...prev, codex]
-                          : prev.filter((c) => c !== codex)
+                          ? [...prev, c.number]
+                          : prev.filter((cod) => cod !== c.number)
                       );
                     }}
                   />
-                  {codex}
+                  {c.number}
+                  <Badge
+                    className={`ml-1 text-xs px-2 py-1 ${
+                      colorBadgePerDiscipline[c.discipline] || ""
+                    }`}
+                  >
+                    {c.discipline}
+                  </Badge>
                 </label>
               ))}
-            </div>
           </div>
         </div>
         <DialogFooter>

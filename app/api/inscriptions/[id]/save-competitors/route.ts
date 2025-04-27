@@ -1,5 +1,4 @@
 import {NextRequest, NextResponse} from "next/server";
-import {eq, inArray, and} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptionCompetitors} from "@/drizzle/schemaInscriptions";
 
@@ -21,17 +20,7 @@ export async function POST(
     return NextResponse.json({error: "Invalid payload"}, {status: 400});
   }
 
-  // Supprimer les anciennes liaisons pour ces codex/inscription
-  await db
-    .delete(inscriptionCompetitors)
-    .where(
-      and(
-        eq(inscriptionCompetitors.inscriptionId, inscriptionId),
-        inArray(inscriptionCompetitors.codexNumber, codexNumbers)
-      )
-    );
-
-  // Créer les nouvelles liaisons
+  // Créer les nouvelles liaisons sans supprimer les anciennes
   const toInsert = [];
   for (const competitorId of competitorIds) {
     for (const codexNumber of codexNumbers) {
@@ -43,7 +32,10 @@ export async function POST(
     }
   }
   if (toInsert.length > 0) {
-    await db.insert(inscriptionCompetitors).values(toInsert);
+    await db
+      .insert(inscriptionCompetitors)
+      .values(toInsert)
+      .onConflictDoNothing();
   }
 
   return NextResponse.json({success: true});
