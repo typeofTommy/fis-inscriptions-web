@@ -8,17 +8,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import {Input} from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
 import {Button} from "@/components/ui/button";
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
-import {aCompetitor} from "@/drizzle/schemaFis";
 import {Checkbox} from "@/components/ui/checkbox";
 import AsyncCompetitorCombobox from "./AsyncCompetitorCombobox";
 
@@ -88,7 +79,6 @@ export default function AddCompetitorModal({
   codexList: string[];
   defaultCodex: string;
 }) {
-  type Competitor = typeof aCompetitor.$inferSelect;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
@@ -101,7 +91,9 @@ export default function AddCompetitorModal({
 
   const {data: results = [], isLoading: loading} =
     useCompetitors(debouncedSearch);
-  const {mutate: saveCompetitors, isLoading: saving} =
+
+  console.log(results, loading);
+  const {mutate: saveCompetitors, isPending: saving} =
     useSaveCompetitors(inscriptionId);
 
   const handleSave = useCallback(() => {
