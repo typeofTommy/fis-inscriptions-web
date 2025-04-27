@@ -1,7 +1,7 @@
 import {NextResponse} from "next/server";
 import {like, or} from "drizzle-orm";
-import {fisDB} from "@/app/db/fisDB";
-import {aCompetitor} from "@/drizzle/schemaFis";
+import {db} from "@/app/db/inscriptionsDB";
+import {competitors} from "@/drizzle/schemaInscriptions";
 
 export async function GET(request: Request) {
   try {
@@ -12,20 +12,20 @@ export async function GET(request: Request) {
       return new NextResponse("Recherche trop courte", {status: 400});
     }
 
-    const competitors = await fisDB
+    const c = await db
       .select()
-      .from(aCompetitor)
+      .from(competitors)
       .where(
         or(
-          like(aCompetitor.lastname, `%${search}%`),
-          like(aCompetitor.firstname, `%${search}%`)
+          like(competitors.lastname, `%${search}%`),
+          like(competitors.firstname, `%${search}%`)
         )
       );
-    if (!competitors) {
+    if (!c) {
       return new NextResponse("Inscription non trouvée", {status: 404});
     }
 
-    return NextResponse.json(competitors);
+    return NextResponse.json(c);
   } catch (error) {
     console.error("Erreur lors de la récupération des compétiteurs:", error);
     return new NextResponse("Erreur interne du serveur", {status: 500});

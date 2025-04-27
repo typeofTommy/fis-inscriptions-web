@@ -1,9 +1,10 @@
 import {NextRequest, NextResponse} from "next/server";
 import {eq, and, inArray} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
-import {fisDB} from "@/app/db/fisDB";
-import {inscriptionCompetitors} from "@/drizzle/schemaInscriptions";
-import {aCompetitor} from "@/drizzle/schemaFis";
+import {
+  competitors,
+  inscriptionCompetitors,
+} from "@/drizzle/schemaInscriptions";
 
 export async function GET(req: NextRequest, {params}: {params: {id: string}}) {
   const inscriptionId = Number(params.id);
@@ -31,10 +32,10 @@ export async function GET(req: NextRequest, {params}: {params: {id: string}}) {
   }
 
   // 2. Récupérer les infos des coureurs dans la base FIS
-  const competitors = await fisDB
+  const c = await db
     .select()
-    .from(aCompetitor)
-    .where(inArray(aCompetitor.competitorid, competitorIds.map(Number)));
+    .from(competitors)
+    .where(inArray(competitors.competitorid, competitorIds.map(Number)));
 
-  return NextResponse.json(competitors);
+  return NextResponse.json(c);
 }
