@@ -1,14 +1,14 @@
-import {NextResponse} from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 import {eq} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 
 export async function GET(
-  request: Request,
-  context: {params: {id: string}}
-): Promise<Response> {
+  req: NextRequest,
+  {params}: {params: Promise<{id: string}>}
+) {
   try {
-    const {id} = context.params;
+    const {id} = await params;
     const inscription = await db
       .select()
       .from(inscriptions)
