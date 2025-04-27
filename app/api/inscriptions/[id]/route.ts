@@ -24,3 +24,36 @@ export async function GET(
     return new NextResponse("Erreur interne du serveur", {status: 500});
   }
 }
+
+export async function PATCH(
+  req: NextRequest,
+  {params}: {params: Promise<{id: string}>}
+) {
+  try {
+    const {id} = await params;
+    const json = await req.json();
+    const {status} = json;
+    const allowedStatuses = ["open", "frozen", "validated"];
+    if (!allowedStatuses.includes(status)) {
+      return NextResponse.json({error: "Statut invalide"}, {status: 400});
+    }
+    const updated = await db
+      .update(inscriptions)
+      .set({status})
+      .where(eq(inscriptions.id, Number(id)))
+      .returning();
+    if (!updated.length) {
+      return NextResponse.json(
+        {error: "Inscription non trouvée"},
+        {status: 404}
+      );
+    }
+    return NextResponse.json(updated[0]);
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du statut:", error);
+    return NextResponse.json(
+      {error: "Erreur interne du serveur"},
+      {status: 500}
+    );
+  }
+}

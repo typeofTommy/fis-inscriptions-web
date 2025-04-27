@@ -3,6 +3,7 @@
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {useQuery} from "@tanstack/react-query";
 import {Loader2, MapPinIcon, CalendarIcon, LinkIcon} from "lucide-react";
+import {InscriptionActionsMenu} from "./InscriptionActionsMenu";
 
 interface InscriptionDetailsProps {
   id: string;
@@ -53,9 +54,35 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
       {/* Header */}
       <header className="w-full bg-white border-b border-slate-200 shadow-sm">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-2xl font-medium text-slate-800 mb-4">
-            Détails de l&apos;inscription
-          </h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1
+              className="text-2xl font-medium text-slate-800 flex items-center gap-4"
+              style={{lineHeight: 1}}
+            >
+              Détails de l&apos;inscription
+              <span
+                className={
+                  `px-3 py-0.5 rounded-full text-xs font-semibold flex items-center` +
+                  (inscription.status === "open"
+                    ? " bg-sky-100 text-sky-700 border border-sky-300"
+                    : inscription.status === "frozen"
+                    ? " bg-gray-200 text-gray-600 border border-gray-300"
+                    : " bg-emerald-100 text-emerald-700 border border-emerald-300")
+                }
+                style={{minHeight: "2rem"}}
+              >
+                {inscription.status === "open"
+                  ? "Ouverte"
+                  : inscription.status === "frozen"
+                  ? "Gelée"
+                  : "Validée"}
+              </span>
+            </h1>
+            <InscriptionActionsMenu
+              id={inscription.id.toString()}
+              currentStatus={inscription.status}
+            />
+          </div>
 
           {/* First Row */}
           <div className="flex flex-wrap justify-around items-start gap-x-12 gap-y-6">
@@ -116,13 +143,6 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-col items-end justify-end pr-4 mb-4 text-sm text-slate-500">
-          <p>
-            Demande formulée le{" "}
-            {new Date(inscription.createdAt).toLocaleDateString("fr-FR")} par{" "}
-            {inscription.fullName}
-          </p>
         </div>
       </header>
 
