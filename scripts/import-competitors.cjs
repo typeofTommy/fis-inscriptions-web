@@ -1,7 +1,6 @@
 // CommonJS script for FIS competitors import
 const fs = require("fs");
 const {parse} = require("csv-parse");
-const {drizzle} = require("drizzle-orm/neon-http");
 const {neon} = require("@neondatabase/serverless");
 
 // Get the path to the CSV file from command-line arguments
@@ -22,7 +21,6 @@ if (!process.env.NEON_DATABASE_URL) {
 // Database connection setup
 console.log("Connecting to database...");
 const sql = neon(process.env.NEON_DATABASE_URL);
-// const db = drizzle(sql);
 
 // Define the competitors table schema
 const competitors = {
