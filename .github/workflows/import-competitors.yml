@@ -21,4 +21,4 @@ jobs:
       - name: Run import script
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node scripts/import-competitors.js FIS-points-list.csv
+        run: npx ts-node scripts/import-competitors.js FIS-points-list.csv
