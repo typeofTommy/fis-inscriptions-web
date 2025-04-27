@@ -4,7 +4,7 @@ import {useQuery} from "@tanstack/react-query";
 import {Loader2} from "lucide-react";
 import {competitors} from "@/drizzle/schemaInscriptions";
 
-const MIN_SEARCH_LENGTH = 7;
+const MIN_SEARCH_LENGTH = 4;
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
