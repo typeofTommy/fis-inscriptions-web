@@ -518,8 +518,8 @@ export default function Home() {
                       className={
                         cell.column.id === "actions" ||
                         cell.column.id === "status"
-                          ? "w-auto min-w-[60px] max-w-[100px] whitespace-nowrap px-2 text-sm"
-                          : "w-auto min-w-[100px] max-w-[200px] whitespace-nowrap px-2 text-sm"
+                          ? "whitespace-nowrap px-2 text-sm"
+                          : "whitespace-nowrap px-2 text-sm"
                       }
                     >
                       {flexRender(
