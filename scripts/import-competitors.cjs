@@ -14,13 +14,13 @@ if (!csvFilePath) {
 
 // Check for database URL
 if (!process.env.DATABASE_URL) {
-  console.error("Error: NEON_DATABASE_URL environment variable is not set.");
+  console.error("Error: DATABASE_URL environment variable is not set.");
   process.exit(1);
 }
 
 // Database connection setup
 console.log("Connecting to database...");
-const sql = neon(process.env.NEON_DATABASE_URL);
+const sql = neon(process.env.DATABASE_URL);
 
 // Define the competitors table schema
 const competitors = {
