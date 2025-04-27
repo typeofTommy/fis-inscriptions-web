@@ -81,8 +81,8 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
           inscriptionId={inscriptionId}
           defaultCodex={activeCodex || codexData[0].number}
           gender={
-            inscription.codexData.find((c) => c.number === activeCodex)?.sex ===
-            "F"
+            inscription?.codexData.find((c) => c.number === activeCodex)
+              ?.sex === "F"
               ? "W"
               : "M"
           }
