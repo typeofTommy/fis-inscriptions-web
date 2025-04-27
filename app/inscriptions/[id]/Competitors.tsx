@@ -9,8 +9,6 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import AddCompetitorModal from "./AddCompetitorModal";
-import {aCompetitor} from "@/drizzle/schemaFis";
 import {format} from "date-fns";
 import {useQuery} from "@tanstack/react-query";
 
@@ -69,7 +67,7 @@ export const Competitors = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(competitors || []).map((c: typeof aCompetitor.$inferSelect) => (
+          {(competitors || []).map((c: typeof competitors.$inferSelect) => (
             <TableRow key={c.competitorid}>
               <TableCell>{c.lastname}</TableCell>
               <TableCell>{c.firstname}</TableCell>
