@@ -1,8 +1,8 @@
 import React, {useState} from "react";
 import {Combobox, ComboboxOption} from "@/components/ui/combobox";
 import {useQuery} from "@tanstack/react-query";
-import {aCompetitor} from "@/drizzle/schemaFis";
 import {Loader2} from "lucide-react";
+import {competitors} from "@/drizzle/schemaInscriptions";
 
 const MIN_SEARCH_LENGTH = 7;
 
@@ -47,7 +47,7 @@ export default function AsyncCompetitorCombobox({
 
   // Adapter les résultats au format ComboboxOption
   const options: ComboboxOption[] = results.map(
-    (c: typeof aCompetitor.$inferSelect) => ({
+    (c: typeof competitors.$inferSelect) => ({
       value: c.competitorid.toString(),
       label: `${c.firstname} ${c.lastname} (${c.nationcode})`,
     })
