@@ -3,8 +3,12 @@ import {eq, inArray, and} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptionCompetitors} from "@/drizzle/schemaInscriptions";
 
-export async function POST(req: NextRequest, {params}: {params: {id: string}}) {
-  const inscriptionId = Number(params.id);
+export async function POST(
+  req: NextRequest,
+  {params}: {params: Promise<{id: string}>}
+) {
+  const {id} = await params;
+  const inscriptionId = Number(id);
   const {competitorIds, codexNumbers} = await req.json();
 
   if (
