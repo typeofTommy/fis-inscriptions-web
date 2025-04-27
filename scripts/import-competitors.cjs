@@ -163,7 +163,7 @@ async function processFile() {
             }
 
             // Construct SQL for upsert
-            const query = `
+            const query = sql`
               INSERT INTO "${competitors.schema}"."${competitors.tableName}" (
                 listid, listname, listpublished, published, sectorcode, status, competitorid,
                 fiscode, lastname, firstname, nationcode, gender, birthdate, skiclub,
@@ -171,57 +171,28 @@ async function processFile() {
                 dhsta, slpoints, slpos, slsta, gspoints, gspos, gssta, sgpoints, sgpos,
                 sgsta, acpoints, acpos, acsta
               ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
-                $29, $30, $31, $32, $33
+                ${record.listid}, ${record.listname}, ${record.listpublished}, ${record.published},
+                ${record.sectorcode}, ${record.status}, ${record.competitorid}, ${record.fiscode},
+                ${record.lastname}, ${record.firstname}, ${record.nationcode}, ${record.gender},
+                ${record.birthdate}, ${record.skiclub}, ${record.nationalcode}, ${record.competitorname},
+                ${record.birthyear}, ${record.calculationdate}, ${record.dhpoints}, ${record.dhpos},
+                ${record.dhsta}, ${record.slpoints}, ${record.slpos}, ${record.slsta}, ${record.gspoints},
+                ${record.gspos}, ${record.gssta}, ${record.sgpoints}, ${record.sgpos}, ${record.sgsta},
+                ${record.acpoints}, ${record.acpos}, ${record.acsta}
               )
               ON CONFLICT (competitorid) DO UPDATE SET
-                listid = $1, listname = $2, listpublished = $3, published = $4,
-                sectorcode = $5, status = $6, fiscode = $8, lastname = $9,
-                firstname = $10, nationcode = $11, gender = $12, birthdate = $13,
-                skiclub = $14, nationalcode = $15, competitorname = $16, birthyear = $17,
-                calculationdate = $18, dhpoints = $19, dhpos = $20, dhsta = $21,
-                slpoints = $22, slpos = $23, slsta = $24, gspoints = $25, gspos = $26,
-                gssta = $27, sgpoints = $28, sgpos = $29, sgsta = $30, acpoints = $31,
-                acpos = $32, acsta = $33
+                listid = ${record.listid}, listname = ${record.listname}, listpublished = ${record.listpublished}, published = ${record.published},
+                sectorcode = ${record.sectorcode}, status = ${record.status}, fiscode = ${record.fiscode}, lastname = ${record.lastname},
+                firstname = ${record.firstname}, nationcode = ${record.nationcode}, gender = ${record.gender}, birthdate = ${record.birthdate},
+                skiclub = ${record.skiclub}, nationalcode = ${record.nationalcode}, competitorname = ${record.competitorname}, birthyear = ${record.birthyear},
+                calculationdate = ${record.calculationdate}, dhpoints = ${record.dhpoints}, dhpos = ${record.dhpos}, dhsta = ${record.dhsta},
+                slpoints = ${record.slpoints}, slpos = ${record.slpos}, slsta = ${record.slsta}, gspoints = ${record.gspoints}, gspos = ${record.gspos},
+                gssta = ${record.gssta}, sgpoints = ${record.sgpoints}, sgpos = ${record.sgpos}, sgsta = ${record.sgsta}, acpoints = ${record.acpoints},
+                acpos = ${record.acpos}, acsta = ${record.acsta}
             `;
 
-            // Execute the query with parameters
-            await sql(query, [
-              record.listid,
-              record.listname,
-              record.listpublished,
-              record.published,
-              record.sectorcode,
-              record.status,
-              record.competitorid,
-              record.fiscode,
-              record.lastname,
-              record.firstname,
-              record.nationcode,
-              record.gender,
-              record.birthdate,
-              record.skiclub,
-              record.nationalcode,
-              record.competitorname,
-              record.birthyear,
-              record.calculationdate,
-              record.dhpoints,
-              record.dhpos,
-              record.dhsta,
-              record.slpoints,
-              record.slpos,
-              record.slsta,
-              record.gspoints,
-              record.gspos,
-              record.gssta,
-              record.sgpoints,
-              record.sgpos,
-              record.sgsta,
-              record.acpoints,
-              record.acpos,
-              record.acsta,
-            ]);
+            // Execute the query (no separate parameters needed with tagged template)
+            await query;
           }
         }
 
