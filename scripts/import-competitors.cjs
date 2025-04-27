@@ -13,7 +13,7 @@ if (!csvFilePath) {
 }
 
 // Check for database URL
-if (!process.env.NEON_DATABASE_URL) {
+if (!process.env.DATABASE_URL) {
   console.error("Error: NEON_DATABASE_URL environment variable is not set.");
   process.exit(1);
 }
