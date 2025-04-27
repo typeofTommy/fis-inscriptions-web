@@ -13,7 +13,7 @@ if (!csvFilePath) {
 }
 
 const processFile = async () => {
-  const records = [];
+  const records: any[] = [];
   const parser = fs.createReadStream(csvFilePath).pipe(
     parse({
       columns: true, // Use the first row as header
@@ -28,7 +28,7 @@ const processFile = async () => {
           "competitorid",
           "birthyear",
         ];
-        if (integerColumns.includes(context.column) && value === "") {
+        if (integerColumns.includes(String(context.column)) && value === "") {
           return null;
         }
         // Attempt to cast birthyear to integer, handle potential errors
