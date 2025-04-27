@@ -6,14 +6,8 @@ import {
   inscriptionCompetitors,
 } from "@/drizzle/schemaInscriptions";
 
-type RouteParams = {
-  params: {
-    id: string;
-  };
-};
-
-export async function GET(req: NextRequest, context: RouteParams) {
-  const inscriptionId = Number(context.params.id);
+export async function GET(req: NextRequest, {params}: {params: {id: string}}) {
+  const inscriptionId = Number(params.id);
   const {searchParams} = new URL(req.url);
   const codexNumber = searchParams.get("codexNumber");
 

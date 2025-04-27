@@ -22,5 +22,5 @@ jobs:
         run: curl -o FIS-points-list.csv 'https://data.fis-ski.com/fis_athletes/ajax/fispointslistfunctions/export_fispointslist.html?export_csv=true&sectorcode=AL&seasoncode=2025&listid=412'
       - name: Run import script
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: node scripts/import-competitors.cjs FIS-points-list.csv

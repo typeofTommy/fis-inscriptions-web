@@ -13,55 +13,16 @@ if (!csvFilePath) {
 }
 
 // Check for database URL
-if (!process.env.DATABASE_URL) {
-  console.error("Error: DATABASE_URL environment variable is not set.");
+if (!process.env.NEON_DATABASE_URL) {
+  console.error(
+    "Error: No database URL environment variable is set. Need NEON_DATABASE_URL or NEON_DATABASE_URL."
+  );
   process.exit(1);
 }
 
 // Database connection setup
 console.log("Connecting to database...");
-const sql = neon(process.env.DATABASE_URL);
-
-// Define the competitors table schema
-const competitors = {
-  tableName: "competitors",
-  schema: "inscriptionsDB",
-  columns: {
-    listid: {name: "listid"},
-    listname: {name: "listname"},
-    listpublished: {name: "listpublished"},
-    published: {name: "published"},
-    sectorcode: {name: "sectorcode"},
-    status: {name: "status"},
-    competitorid: {name: "competitorid"},
-    fiscode: {name: "fiscode"},
-    lastname: {name: "lastname"},
-    firstname: {name: "firstname"},
-    nationcode: {name: "nationcode"},
-    gender: {name: "gender"},
-    birthdate: {name: "birthdate"},
-    skiclub: {name: "skiclub"},
-    nationalcode: {name: "nationalcode"},
-    competitorname: {name: "competitorname"},
-    birthyear: {name: "birthyear"},
-    calculationdate: {name: "calculationdate"},
-    dhpoints: {name: "dhpoints"},
-    dhpos: {name: "dhpos"},
-    dhsta: {name: "dhsta"},
-    slpoints: {name: "slpoints"},
-    slpos: {name: "slpos"},
-    slsta: {name: "slsta"},
-    gspoints: {name: "gspoints"},
-    gspos: {name: "gspos"},
-    gssta: {name: "gssta"},
-    sgpoints: {name: "sgpoints"},
-    sgpos: {name: "sgpos"},
-    sgsta: {name: "sgsta"},
-    acpoints: {name: "acpoints"},
-    acpos: {name: "acpos"},
-    acsta: {name: "acsta"},
-  },
-};
+const sql = neon(process.env.NEON_DATABASE_URL);
 
 // Process the CSV file and update the database
 async function processFile() {
@@ -162,9 +123,9 @@ async function processFile() {
               continue;
             }
 
-            // Construct SQL for upsert
+            // Construct SQL for upsert - hardcode the schema and table names rather than using parameterized values
             const query = sql`
-              INSERT INTO "${competitors.schema}"."${competitors.tableName}" (
+              INSERT INTO inscriptionsDB.competitors (
                 listid, listname, listpublished, published, sectorcode, status, competitorid,
                 fiscode, lastname, firstname, nationcode, gender, birthdate, skiclub,
                 nationalcode, competitorname, birthyear, calculationdate, dhpoints, dhpos,

@@ -3,12 +3,9 @@ import {eq} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 
-export async function GET(
-  request: Request,
-  {params}: {params: Promise<{id: string}>}
-) {
+export async function GET(request: Request, {params}: {params: {id: string}}) {
   try {
-    const {id} = await params;
+    const {id} = params;
     const inscription = await db
       .select()
       .from(inscriptions)
