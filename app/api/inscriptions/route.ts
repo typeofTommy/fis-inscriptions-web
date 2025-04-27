@@ -89,6 +89,9 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const inscripList = await db.select().from(inscriptions);
+  const inscripList = (await db.select().from(inscriptions)).sort(
+    (a, b) =>
+      new Date(a.firstRaceDate).getTime() - new Date(b.firstRaceDate).getTime()
+  );
   return NextResponse.json(inscripList);
 }
