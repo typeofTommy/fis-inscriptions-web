@@ -128,13 +128,13 @@
       opacity: var(--opacity);
     }
     50% {
-      transform: translateY(50vh) translateX(calc(var(--scale) * 50px))
-        rotate(180deg) scale(var(--scale));
+      transform: translateY(50vh) translateX(calc(var(--x-amplitude) / 2))
+        rotate(calc(var(--rotation) / 2)) scale(var(--scale));
       opacity: calc(var(--opacity) * 0.9);
     }
     100% {
-      transform: translateY(100vh) translateX(calc(var(--scale) * -50px))
-        rotate(360deg) scale(var(--scale));
+      transform: translateY(100vh) translateX(var(--x-amplitude))
+        rotate(var(--rotation)) scale(var(--scale));
       opacity: 0;
     }
   }
