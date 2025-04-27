@@ -123,9 +123,9 @@ async function processFile() {
               continue;
             }
 
-            // Construct SQL for upsert - hardcode the schema and table names rather than using parameterized values
+            // Construct SQL for upsert - use double quotes for schema and table names
             const query = sql`
-              INSERT INTO inscriptionsDB.competitors (
+              INSERT INTO "inscriptionsDB"."competitors" (
                 listid, listname, listpublished, published, sectorcode, status, competitorid,
                 fiscode, lastname, firstname, nationcode, gender, birthdate, skiclub,
                 nationalcode, competitorname, birthyear, calculationdate, dhpoints, dhpos,
