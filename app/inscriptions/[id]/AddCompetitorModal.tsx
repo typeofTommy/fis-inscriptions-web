@@ -11,9 +11,8 @@ import {
 import {Button} from "@/components/ui/button";
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {Checkbox} from "@/components/ui/checkbox";
-import AsyncCompetitorCombobox from "./AsyncCompetitorCombobox";
 
-const MIN_SEARCH_LENGTH = 7;
+const MIN_SEARCH_LENGTH = 0;
 
 // Hook debounce simple
 function useDebounce<T>(value: T, delay: number): T {
@@ -134,11 +133,33 @@ export default function AddCompetitorModal({
           <DialogTitle>Ajouter un compétiteur</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <AsyncCompetitorCombobox
-            value={selectedId}
-            onChange={setSelectedId}
-            placeholder="Sélectionner un compétiteur"
+          {/* Search input for competitors */}
+          <input
+            className="w-full px-3 py-2 border rounded"
+            placeholder="Nom ou prénom (7 caractères min)"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
+          {/* Select dropdown for competitors */}
+          <select
+            className="w-full px-3 py-2 border rounded"
+            value={selectedId || ""}
+            onChange={(e) => setSelectedId(e.target.value)}
+            disabled={loading || results.length === 0}
+          >
+            <option value="" disabled>
+              {loading
+                ? "Chargement..."
+                : results.length === 0
+                ? "Aucun compétiteur trouvé"
+                : "Sélectionner un compétiteur"}
+            </option>
+            {results.map((c: any) => (
+              <option key={c.competitorid} value={c.competitorid}>
+                {c.firstname} {c.lastname} ({c.nationcode})
+              </option>
+            ))}
+          </select>
           <div>
             <div className="mb-2 font-medium">Pour quels codex ?</div>
             <div className="flex flex-wrap gap-2">

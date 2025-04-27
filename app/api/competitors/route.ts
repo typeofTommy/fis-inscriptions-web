@@ -8,9 +8,9 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const search = url.searchParams.get("search") ?? "";
 
-    if (search.length < 7) {
-      return new NextResponse("Recherche trop courte", {status: 400});
-    }
+    // if (search.length < 1) {
+    //   return new NextResponse("Recherche trop courte", {status: 400});
+    // }
 
     const c = await db
       .select()
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
         )
       );
     if (!c) {
-      return new NextResponse("Inscription non trouvée", {status: 404});
+      return new NextResponse("Compétiteurs non trouvés", {status: 404});
     }
 
     return NextResponse.json(c);
