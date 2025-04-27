@@ -107,54 +107,84 @@ async function processFile() {
         // Process records in batches to avoid overwhelming the database
         const batchSize = 100;
         for (let i = 0; i < records.length; i += batchSize) {
-          const batch = records.slice(i, i + batchSize);
+          const batch = records
+            .slice(i, i + batchSize)
+            .filter((r) => r.competitorid);
           console.log(
             `Processing batch ${i / batchSize + 1} of ${Math.ceil(
               records.length / batchSize
             )}...`
           );
 
-          for (const record of batch) {
-            if (!record.competitorid) {
-              console.warn(
-                "Skipping record due to missing competitorid:",
-                record
-              );
-              continue;
-            }
+          if (batch.length === 0) continue;
 
-            // Construct SQL for upsert - use double quotes for schema and table names
-            const query = sql`
-              INSERT INTO "inscriptionsDB"."competitors" (
-                listid, listname, listpublished, published, sectorcode, status, competitorid,
-                fiscode, lastname, firstname, nationcode, gender, birthdate, skiclub,
-                nationalcode, competitorname, birthyear, calculationdate, dhpoints, dhpos,
-                dhsta, slpoints, slpos, slsta, gspoints, gspos, gssta, sgpoints, sgpos,
-                sgsta, acpoints, acpos, acsta
-              ) VALUES (
-                ${record.listid}, ${record.listname}, ${record.listpublished}, ${record.published},
-                ${record.sectorcode}, ${record.status}, ${record.competitorid}, ${record.fiscode},
-                ${record.lastname}, ${record.firstname}, ${record.nationcode}, ${record.gender},
-                ${record.birthdate}, ${record.skiclub}, ${record.nationalcode}, ${record.competitorname},
-                ${record.birthyear}, ${record.calculationdate}, ${record.dhpoints}, ${record.dhpos},
-                ${record.dhsta}, ${record.slpoints}, ${record.slpos}, ${record.slsta}, ${record.gspoints},
-                ${record.gspos}, ${record.gssta}, ${record.sgpoints}, ${record.sgpos}, ${record.sgsta},
-                ${record.acpoints}, ${record.acpos}, ${record.acsta}
-              )
-              ON CONFLICT (competitorid) DO UPDATE SET
-                listid = ${record.listid}, listname = ${record.listname}, listpublished = ${record.listpublished}, published = ${record.published},
-                sectorcode = ${record.sectorcode}, status = ${record.status}, fiscode = ${record.fiscode}, lastname = ${record.lastname},
-                firstname = ${record.firstname}, nationcode = ${record.nationcode}, gender = ${record.gender}, birthdate = ${record.birthdate},
-                skiclub = ${record.skiclub}, nationalcode = ${record.nationalcode}, competitorname = ${record.competitorname}, birthyear = ${record.birthyear},
-                calculationdate = ${record.calculationdate}, dhpoints = ${record.dhpoints}, dhpos = ${record.dhpos}, dhsta = ${record.dhsta},
-                slpoints = ${record.slpoints}, slpos = ${record.slpos}, slsta = ${record.slsta}, gspoints = ${record.gspoints}, gspos = ${record.gspos},
-                gssta = ${record.gssta}, sgpoints = ${record.sgpoints}, sgpos = ${record.sgpos}, sgsta = ${record.sgsta}, acpoints = ${record.acpoints},
-                acpos = ${record.acpos}, acsta = ${record.acsta}
-            `;
+          // Prepare the columns and values for bulk insert
+          const columns = [
+            "listid",
+            "listname",
+            "listpublished",
+            "published",
+            "sectorcode",
+            "status",
+            "competitorid",
+            "fiscode",
+            "lastname",
+            "firstname",
+            "nationcode",
+            "gender",
+            "birthdate",
+            "skiclub",
+            "nationalcode",
+            "competitorname",
+            "birthyear",
+            "calculationdate",
+            "dhpoints",
+            "dhpos",
+            "dhsta",
+            "slpoints",
+            "slpos",
+            "slsta",
+            "gspoints",
+            "gspos",
+            "gssta",
+            "sgpoints",
+            "sgpos",
+            "sgsta",
+            "acpoints",
+            "acpos",
+            "acsta",
+          ];
 
-            // Execute the query (no separate parameters needed with tagged template)
-            await query;
-          }
+          // Build the VALUES part
+          const values = batch.map((record) =>
+            columns.map((col) => record[col])
+          );
+
+          // Build the ON CONFLICT update part
+          const updateSet = columns
+            .filter((col) => col !== "competitorid")
+            .map((col) => `"${col}" = EXCLUDED."${col}"`)
+            .join(", ");
+
+          // Use parameterized query for all values
+          const flatValues = values.flat();
+          const valuePlaceholders = values
+            .map(
+              (_, rowIdx) =>
+                `(${columns
+                  .map(
+                    (_, colIdx) => `$${rowIdx * columns.length + colIdx + 1}`
+                  )
+                  .join(", ")})`
+            )
+            .join(", ");
+
+          const sqlText = `INSERT INTO "inscriptionsDB"."competitors" (
+            ${columns.map((col) => `"${col}"`).join(", ")}
+          ) VALUES ${valuePlaceholders}
+          ON CONFLICT (competitorid) DO UPDATE SET ${updateSet}`;
+
+          await sql(sqlText, flatValues);
         }
 
         console.log(`Successfully processed ${records.length} records.`);
