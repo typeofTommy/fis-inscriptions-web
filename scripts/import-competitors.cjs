@@ -184,7 +184,7 @@ async function processFile() {
           ) VALUES ${valuePlaceholders}
           ON CONFLICT (competitorid) DO UPDATE SET ${updateSet}`;
 
-          await sql(sqlText, flatValues);
+          await sql.query(sqlText, flatValues);
         }
 
         console.log(`Successfully processed ${records.length} records.`);
