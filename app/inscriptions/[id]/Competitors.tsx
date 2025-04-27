@@ -67,6 +67,12 @@ function useRemoveCompetitor(inscriptionId: string) {
           queryKey: ["inscription-competitors", inscriptionId, codexNumber],
         });
       });
+      // Invalider la liste des inscriptions du compétiteur (onglet Compétiteurs)
+      if (variables && variables.competitorId) {
+        queryClient.invalidateQueries({
+          queryKey: ["competitor-inscriptions", variables.competitorId],
+        });
+      }
     },
   });
 }

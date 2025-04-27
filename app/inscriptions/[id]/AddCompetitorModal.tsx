@@ -64,10 +64,22 @@ function useSaveCompetitors(inscriptionId: string) {
       if (!res.ok) throw new Error("Erreur lors de l'enregistrement");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["inscription-competitors", inscriptionId],
       });
+      // Invalider la liste des inscriptions du compétiteur (onglet Compétiteurs)
+      if (
+        variables &&
+        variables.competitorIds &&
+        variables.competitorIds.length > 0
+      ) {
+        variables.competitorIds.forEach((competitorId) => {
+          queryClient.invalidateQueries({
+            queryKey: ["competitor-inscriptions", competitorId],
+          });
+        });
+      }
     },
   });
 }
