@@ -11,6 +11,11 @@ import {
 export const inscriptionsSchema = pgSchema("inscriptionsDB");
 
 export const sexes = inscriptionsSchema.enum("sexes", ["M", "F"]);
+export const inscriptionStatus = inscriptionsSchema.enum("status", [
+  "open",
+  "frozen",
+  "validated",
+]);
 
 export const disciplines = inscriptionsSchema.enum("disciplines", [
   "SL",
@@ -50,6 +55,7 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
       }[]
     >()
     .notNull(),
+  status: inscriptionStatus("status").notNull().default("open"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
