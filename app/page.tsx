@@ -177,57 +177,63 @@ function CompetitorEventsTab() {
             Évènements et codex où le compétiteur est inscrit :
           </h3>
           <ul className="space-y-4">
-            {inscriptions.map((insc: any) => (
-              <li
-                key={insc.inscriptionId}
-                className="border rounded p-3 bg-white"
-              >
-                <div className="font-medium text-base mb-1">
-                  <a
-                    href={`/inscriptions/${insc.inscriptionId}`}
-                    className="underline text-blue-600"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {insc.location}
-                    {insc.firstRaceDate
-                      ? ` – ${(() => {
-                          try {
-                            return new Date(
-                              insc.firstRaceDate
-                            ).toLocaleDateString("fr-FR");
-                          } catch {
-                            return insc.firstRaceDate;
-                          }
-                        })()}`
-                      : ""}
-                  </a>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {insc.codexList.map((codex: any) => (
-                    <span
-                      key={codex.number}
-                      className="flex items-center gap-1"
+            {[...inscriptions]
+              .sort(
+                (a, b) =>
+                  new Date(a.firstRaceDate).getTime() -
+                  new Date(b.firstRaceDate).getTime()
+              )
+              .map((insc: any) => (
+                <li
+                  key={insc.inscriptionId}
+                  className="border rounded p-3 bg-white"
+                >
+                  <div className="font-medium text-base mb-1">
+                    <a
+                      href={`/inscriptions/${insc.inscriptionId}`}
+                      className="underline text-blue-600"
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <Badge
-                        className={`text-xs px-2 py-1 ${
-                          colorBadgePerDiscipline[codex.discipline] || ""
-                        }`}
+                      {insc.location}
+                      {insc.firstRaceDate
+                        ? ` – ${(() => {
+                            try {
+                              return new Date(
+                                insc.firstRaceDate
+                              ).toLocaleDateString("fr-FR");
+                            } catch {
+                              return insc.firstRaceDate;
+                            }
+                          })()}`
+                        : ""}
+                    </a>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {insc.codexList.map((codex: any) => (
+                      <span
+                        key={codex.number}
+                        className="flex items-center gap-1"
                       >
-                        {codex.number}
-                      </Badge>
-                      <Badge
-                        className={`text-xs px-2 py-1 ${
-                          colorBadgePerDiscipline[codex.discipline] || ""
-                        }`}
-                      >
-                        {codex.discipline}
-                      </Badge>
-                    </span>
-                  ))}
-                </div>
-              </li>
-            ))}
+                        <Badge
+                          className={`text-xs px-2 py-1 ${
+                            colorBadgePerDiscipline[codex.discipline] || ""
+                          }`}
+                        >
+                          {codex.number}
+                        </Badge>
+                        <Badge
+                          className={`text-xs px-2 py-1 ${
+                            colorBadgePerDiscipline[codex.discipline] || ""
+                          }`}
+                        >
+                          {codex.discipline}
+                        </Badge>
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              ))}
           </ul>
         </div>
       )}
@@ -255,6 +261,12 @@ export default function Home() {
     queryFn: () => fetch("/api/inscriptions").then((res) => res.json()),
   });
 
+  const sortedData = (data ?? []).slice().sort((a, b) => {
+    const dateA = new Date(a.firstRaceDate).getTime();
+    const dateB = new Date(b.firstRaceDate).getTime();
+    return dateA - dateB;
+  });
+
   const columns: ColumnDef<typeof inscriptions.$inferSelect>[] = [
     {
       id: "actions",
@@ -278,15 +290,18 @@ export default function Home() {
       cell: ({row}) => {
         return <div>{format(row.original.firstRaceDate, "dd/MM/yyyy")}</div>;
       },
-      header: ({column}) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Date
-          </Button>
-        );
+      header: ({column}) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date
+        </Button>
+      ),
+      sortingFn: (rowA, rowB, columnId) => {
+        const a = new Date(rowA.original.firstRaceDate).getTime();
+        const b = new Date(rowB.original.firstRaceDate).getTime();
+        return a - b;
       },
     },
     {
@@ -417,7 +432,7 @@ export default function Home() {
   ];
 
   const table = useReactTable({
-    data: data ?? [],
+    data: sortedData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
