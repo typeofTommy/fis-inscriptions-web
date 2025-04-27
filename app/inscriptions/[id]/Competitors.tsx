@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, {useState, useEffect} from "react";
 import {
   Table,
   TableHeader,
@@ -10,8 +10,21 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {format} from "date-fns";
-import {useQuery} from "@tanstack/react-query";
-import {Loader2} from "lucide-react";
+import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
+import {Loader2, Trash2} from "lucide-react";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {Button} from "@/components/ui/button";
+import {Checkbox} from "@/components/ui/checkbox";
+import {Badge} from "@/components/ui/badge";
+import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 
 function useInscriptionCompetitors(inscriptionId: string, codexNumber: string) {
   return useQuery({
@@ -22,6 +35,38 @@ function useInscriptionCompetitors(inscriptionId: string, codexNumber: string) {
       );
       if (!res.ok) throw new Error("Erreur lors du chargement des coureurs");
       return res.json();
+    },
+  });
+}
+
+function useRemoveCompetitor(inscriptionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      competitorId,
+      codexNumbers,
+    }: {
+      competitorId: number;
+      codexNumbers: string[];
+    }) => {
+      const res = await fetch(
+        `/api/inscriptions/${inscriptionId}/competitors`,
+        {
+          method: "DELETE",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({competitorId, codexNumbers}),
+        }
+      );
+      if (!res.ok) throw new Error("Erreur lors de la désinscription");
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      // Invalider tous les codex concernés
+      (variables.codexNumbers || []).forEach((codexNumber) => {
+        queryClient.invalidateQueries({
+          queryKey: ["inscription-competitors", inscriptionId, codexNumber],
+        });
+      });
     },
   });
 }
@@ -38,6 +83,24 @@ export const Competitors = ({
     isLoading,
     error,
   } = useInscriptionCompetitors(inscriptionId, codexNumber);
+  const {data: inscription} = useQuery({
+    queryKey: ["inscription", inscriptionId],
+    queryFn: () =>
+      fetch(`/api/inscriptions/${inscriptionId}`).then((r) => r.json()),
+  });
+
+  // Dialog state
+  const [openDialog, setOpenDialog] = React.useState<null | number>(null); // competitorId
+  const [selectedCodex, setSelectedCodex] = React.useState<string[]>([]);
+  const {mutate: removeCompetitor, isPending: removing} =
+    useRemoveCompetitor(inscriptionId);
+
+  // Quand on ouvre le dialog, on coche par défaut le codex courant
+  React.useEffect(() => {
+    if (openDialog !== null) {
+      setSelectedCodex([codexNumber]);
+    }
+  }, [openDialog, codexNumber]);
 
   if (isLoading) {
     return (
@@ -54,6 +117,12 @@ export const Competitors = ({
   if (!competitors?.length) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        {inscription?.status !== "open" && (
+          <div className="text-xs text-slate-400 italic select-none">
+            L&apos;inscription / désincription n&apos;est possible que lorsque
+            l&apos;inscription est <b>ouverte</b>.
+          </div>
+        )}
         <p>Aucun compétiteur présent pour ce codex pour le moment</p>
       </div>
     );
@@ -61,6 +130,12 @@ export const Competitors = ({
 
   return (
     <div className="space-y-6">
+      {inscription?.status !== "open" && (
+        <div className="text-xs text-slate-400 italic select-none">
+          L&apos;inscription / désincription n&apos;est possible que lorsque
+          l&apos;inscription est <b>ouverte</b>.
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
@@ -70,10 +145,11 @@ export const Competitors = ({
             <TableHead>Date de naissance</TableHead>
             <TableHead>Nation</TableHead>
             <TableHead>Club</TableHead>
+            <TableHead>Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(competitors || []).map((c: typeof competitors.$inferSelect) => (
+          {(competitors || []).map((c: any) => (
             <TableRow key={c.competitorid}>
               <TableCell>{c.lastname}</TableCell>
               <TableCell>{c.firstname}</TableCell>
@@ -83,6 +159,60 @@ export const Competitors = ({
               </TableCell>
               <TableCell>{c.nationcode}</TableCell>
               <TableCell>{c.skiclub}</TableCell>
+              <TableCell>
+                <Dialog
+                  open={openDialog === c.competitorid}
+                  onOpenChange={(o) => setOpenDialog(o ? c.competitorid : null)}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Désinscrire"
+                      className="cursor-pointer"
+                      disabled={inscription?.status !== "open"}
+                    >
+                      <Trash2 className="w-5 h-5 text-red-500" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>
+                        Confirmer la désinscription de {c.firstname}{" "}
+                        {c.lastname} ?
+                      </DialogTitle>
+                    </DialogHeader>
+                    <DesinscriptionCodexList
+                      inscriptionId={inscriptionId}
+                      competitorId={c.competitorid}
+                      selectedCodex={selectedCodex}
+                      setSelectedCodex={setSelectedCodex}
+                      currentCodex={codexNumber}
+                    />
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="ghost" className="cursor-pointer">
+                          Annuler
+                        </Button>
+                      </DialogClose>
+                      <Button
+                        onClick={() => {
+                          removeCompetitor({
+                            competitorId: c.competitorid,
+                            codexNumbers: selectedCodex,
+                          });
+                          setOpenDialog(null);
+                        }}
+                        disabled={removing || selectedCodex.length === 0}
+                        variant="destructive"
+                        className="cursor-pointer"
+                      >
+                        {removing ? "Suppression..." : "Confirmer"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -90,3 +220,71 @@ export const Competitors = ({
     </div>
   );
 };
+
+// Composant pour afficher la liste des codex où le compétiteur est inscrit
+function DesinscriptionCodexList({
+  inscriptionId,
+  competitorId,
+  selectedCodex,
+  setSelectedCodex,
+  currentCodex,
+}: {
+  inscriptionId: string;
+  competitorId: number;
+  selectedCodex: string[];
+  setSelectedCodex: (v: string[]) => void;
+  currentCodex: string;
+}) {
+  const [codexList, setCodexList] = useState<
+    {number: string; discipline: string; sex: string}[]
+  >([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    setLoading(true);
+    fetch(
+      `/api/inscriptions/${inscriptionId}/competitors?competitorId=${competitorId}`
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        setCodexList(data);
+        // Par défaut, coche uniquement le codex courant
+        setSelectedCodex(
+          data.some((c: any) => c.number === currentCodex) ? [currentCodex] : []
+        );
+      })
+      .finally(() => setLoading(false));
+  }, [inscriptionId, competitorId, setSelectedCodex, currentCodex]);
+
+  if (loading) return <div>Chargement des codex...</div>;
+  if (!codexList.length)
+    return <div>Aucun codex trouvé pour ce compétiteur.</div>;
+  return (
+    <div className="space-y-2">
+      <div className="mb-2">Sur quels codex ?</div>
+      <div className="flex flex-wrap gap-2">
+        {codexList.map((codex) => (
+          <label key={codex.number} className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedCodex.includes(codex.number)}
+              onCheckedChange={(checked) => {
+                setSelectedCodex(
+                  checked
+                    ? [...selectedCodex, codex.number]
+                    : selectedCodex.filter((n: string) => n !== codex.number)
+                );
+              }}
+            />
+            {codex.number}
+            <Badge
+              className={`ml-1 text-xs px-2 py-1 ${
+                colorBadgePerDiscipline[codex.discipline] || ""
+              }`}
+            >
+              {codex.discipline}
+            </Badge>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}

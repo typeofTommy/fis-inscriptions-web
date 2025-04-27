@@ -91,7 +91,7 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
           />
         ) : (
           <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
-            L&apos;ajout de compétiteurs n&apos;est possible que lorsque
+            L&apos;inscription / désincription n&apos;est possible que lorsque
             l&apos;inscription est <b>ouverte</b>.
           </div>
         )}

@@ -131,12 +131,12 @@ export default function AddCompetitorModal({
           variant="outline"
           className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-base"
         >
-          Ajouter un compétiteur
+          Inscrire un compétiteur
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Ajouter un compétiteur</DialogTitle>
+          <DialogTitle>Inscrire un compétiteur</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Search input for competitors */}
