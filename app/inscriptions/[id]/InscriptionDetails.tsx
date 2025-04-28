@@ -4,6 +4,7 @@ import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {useQuery} from "@tanstack/react-query";
 import {Loader2, MapPinIcon, CalendarIcon, LinkIcon} from "lucide-react";
 import {InscriptionActionsMenu} from "./InscriptionActionsMenu";
+import {usePermissionToEdit} from "./usePermissionToEdit";
 
 interface InscriptionDetailsProps {
   id: string;
@@ -28,6 +29,10 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
     queryKey: ["inscription", id],
     queryFn: () => fetchInscription(id),
   });
+
+  const permissionToEdit = usePermissionToEdit(inscription);
+
+  console.log({permissionToEdit});
 
   if (isLoading) {
     return (
@@ -78,10 +83,13 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                   : "Validée"}
               </span>
             </h1>
-            <InscriptionActionsMenu
-              id={inscription.id.toString()}
-              currentStatus={inscription.status}
-            />
+            {permissionToEdit && (
+              <InscriptionActionsMenu
+                id={inscription.id.toString()}
+                currentStatus={inscription.status}
+                readonly={!permissionToEdit}
+              />
+            )}
           </div>
 
           {/* First Row */}
@@ -145,9 +153,6 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
           </div>
         </div>
       </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6"></main>
     </div>
   );
 };

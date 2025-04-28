@@ -9,11 +9,13 @@ import {Zap} from "lucide-react";
 interface InscriptionActionsMenuProps {
   id: string;
   currentStatus: string;
+  readonly: boolean;
 }
 
 export function InscriptionActionsMenu({
   id,
   currentStatus,
+  readonly,
 }: InscriptionActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -62,7 +64,7 @@ export function InscriptionActionsMenu({
             variant="ghost"
             className="justify-start w-full"
             onClick={() => handleStatus("open")}
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || readonly}
           >
             Ouvrir
           </Button>
@@ -71,7 +73,9 @@ export function InscriptionActionsMenu({
           variant="ghost"
           className="justify-start w-full cursor-pointer"
           onClick={() => handleStatus("frozen")}
-          disabled={mutation.isPending || currentStatus === "frozen"}
+          disabled={
+            mutation.isPending || currentStatus === "frozen" || readonly
+          }
         >
           Geler
         </Button>
@@ -79,7 +83,9 @@ export function InscriptionActionsMenu({
           variant="ghost"
           className="justify-start w-full cursor-pointer"
           onClick={() => handleStatus("validated")}
-          disabled={mutation.isPending || currentStatus === "validated"}
+          disabled={
+            mutation.isPending || currentStatus === "validated" || readonly
+          }
         >
           Valider
         </Button>
@@ -87,6 +93,7 @@ export function InscriptionActionsMenu({
           variant="ghost"
           className="justify-start w-full cursor-pointer"
           onClick={handleGeneratePDF}
+          disabled={readonly}
         >
           Générer PDF
         </Button>

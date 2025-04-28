@@ -57,6 +57,7 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
     .notNull(),
   status: inscriptionStatus("status").notNull().default("open"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: text("created_by").notNull(),
 });
 
 export const stations = inscriptionsSchema.table("stations", {

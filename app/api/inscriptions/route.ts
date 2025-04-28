@@ -26,6 +26,7 @@ const inscriptionSchema = z.object({
   lastRaceDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),
+  createdBy: z.string(),
 });
 
 export async function POST(request: Request) {
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       codexData,
       firstRaceDate,
       lastRaceDate,
+      createdBy,
     } = body.data;
 
     const newInscription = {
@@ -60,6 +62,7 @@ export async function POST(request: Request) {
       codexData,
       firstRaceDate,
       lastRaceDate,
+      createdBy,
     };
 
     const result = await db

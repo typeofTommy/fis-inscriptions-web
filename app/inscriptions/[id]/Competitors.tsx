@@ -25,6 +25,7 @@ import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
+import {usePermissionToEdit} from "./usePermissionToEdit";
 
 function useInscriptionCompetitors(inscriptionId: string, codexNumber: string) {
   return useQuery({
@@ -101,6 +102,8 @@ export const Competitors = ({
   const {mutate: removeCompetitor, isPending: removing} =
     useRemoveCompetitor(inscriptionId);
 
+  const permissionToEdit = usePermissionToEdit(inscription);
+
   // Quand on ouvre le dialog, on coche par défaut le codex courant
   React.useEffect(() => {
     if (openDialog !== null) {
@@ -151,7 +154,7 @@ export const Competitors = ({
             <TableHead>Date de naissance</TableHead>
             <TableHead>Nation</TableHead>
             <TableHead>Club</TableHead>
-            <TableHead>Action</TableHead>
+            {permissionToEdit && <TableHead>Action</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -165,60 +168,64 @@ export const Competitors = ({
               </TableCell>
               <TableCell>{c.nationcode}</TableCell>
               <TableCell>{c.skiclub}</TableCell>
-              <TableCell>
-                <Dialog
-                  open={openDialog === c.competitorid}
-                  onOpenChange={(o) => setOpenDialog(o ? c.competitorid : null)}
-                >
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Désinscrire"
-                      className="cursor-pointer"
-                      disabled={inscription?.status !== "open"}
-                    >
-                      <Trash2 className="w-5 h-5 text-red-500" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>
-                        Confirmer la désinscription de {c.firstname}{" "}
-                        {c.lastname} ?
-                      </DialogTitle>
-                    </DialogHeader>
-                    <DesinscriptionCodexList
-                      inscriptionId={inscriptionId}
-                      competitorId={c.competitorid}
-                      selectedCodex={selectedCodex}
-                      setSelectedCodex={setSelectedCodex}
-                      currentCodex={codexNumber}
-                    />
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="ghost" className="cursor-pointer">
-                          Annuler
-                        </Button>
-                      </DialogClose>
+              {permissionToEdit && (
+                <TableCell>
+                  <Dialog
+                    open={openDialog === c.competitorid}
+                    onOpenChange={(o) =>
+                      setOpenDialog(o ? c.competitorid : null)
+                    }
+                  >
+                    <DialogTrigger asChild>
                       <Button
-                        onClick={() => {
-                          removeCompetitor({
-                            competitorId: c.competitorid,
-                            codexNumbers: selectedCodex,
-                          });
-                          setOpenDialog(null);
-                        }}
-                        disabled={removing || selectedCodex.length === 0}
-                        variant="destructive"
+                        variant="ghost"
+                        size="icon"
+                        title="Désinscrire"
                         className="cursor-pointer"
+                        disabled={inscription?.status !== "open"}
                       >
-                        {removing ? "Suppression..." : "Confirmer"}
+                        <Trash2 className="w-5 h-5 text-red-500" />
                       </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </TableCell>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          Confirmer la désinscription de {c.firstname}{" "}
+                          {c.lastname} ?
+                        </DialogTitle>
+                      </DialogHeader>
+                      <DesinscriptionCodexList
+                        inscriptionId={inscriptionId}
+                        competitorId={c.competitorid}
+                        selectedCodex={selectedCodex}
+                        setSelectedCodex={setSelectedCodex}
+                        currentCodex={codexNumber}
+                      />
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button variant="ghost" className="cursor-pointer">
+                            Annuler
+                          </Button>
+                        </DialogClose>
+                        <Button
+                          onClick={() => {
+                            removeCompetitor({
+                              competitorId: c.competitorid,
+                              codexNumbers: selectedCodex,
+                            });
+                            setOpenDialog(null);
+                          }}
+                          disabled={removing || selectedCodex.length === 0}
+                          variant="destructive"
+                          className="cursor-pointer"
+                        >
+                          {removing ? "Suppression..." : "Confirmer"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

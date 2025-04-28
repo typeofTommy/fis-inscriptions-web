@@ -76,6 +76,7 @@ const inscriptionFormSchema = z.object({
     required_error: "La date de la dernière course est requise.",
   }),
   customStation: z.string().optional(),
+  createdBy: z.string(),
 });
 
 // Define discipline options
@@ -392,6 +393,7 @@ const NewInscriptionPage = () => {
     if (user) {
       form.setValue("email", user.emailAddresses[0].emailAddress || "");
       form.setValue("fullName", user.fullName || "");
+      form.setValue("createdBy", user.id || "");
     }
   }, [user, form]);
 
@@ -434,6 +436,7 @@ const NewInscriptionPage = () => {
         codexData: values.codexNumbers,
         firstRaceDate: values.firstRaceDate.toISOString(),
         lastRaceDate: values.lastRaceDate.toISOString(),
+        createdBy: values.createdBy,
       };
 
       const {inscription: returnedInscription} = await createInscription(

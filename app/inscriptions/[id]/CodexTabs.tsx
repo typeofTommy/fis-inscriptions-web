@@ -8,6 +8,7 @@ import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
 import React, {useMemo} from "react";
+import {usePermissionToEdit} from "./usePermissionToEdit";
 
 interface CodexTabsProps {
   inscriptionId: string;
@@ -31,6 +32,8 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
     queryKey: ["inscription", inscriptionId],
     queryFn: () => fetchInscription(inscriptionId),
   });
+
+  const permissionToEdit = usePermissionToEdit(inscription);
 
   const [activeCodex, setActiveCodex] = React.useState<string | undefined>(
     undefined
@@ -77,7 +80,7 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
         ))}
       </TabsList>
       <div className="flex justify-end mb-4">
-        {inscription?.status === "open" ? (
+        {permissionToEdit && inscription?.status === "open" ? (
           <AddCompetitorModal
             inscriptionId={inscriptionId}
             defaultCodex={activeCodex || codexData[0].number}
@@ -89,6 +92,11 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
             }
             codexData={codexData}
           />
+        ) : !permissionToEdit ? (
+          <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
+            Vous n&apos;avez pas les droits pour ajouter des compétiteurs sur
+            cet évènement.
+          </div>
         ) : (
           <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
             L&apos;inscription / désincription n&apos;est possible que lorsque
