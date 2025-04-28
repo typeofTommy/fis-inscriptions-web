@@ -1,6 +1,6 @@
 {
-  "id": "af67d2c3-568b-4de2-ae3d-d21ab8c02381",
-  "prevId": "e674e759-b5ae-48f7-a702-61c63a9d3e5d",
+  "id": "00b56a07-b90a-443c-a46f-ed6db3f7162b",
+  "prevId": "b3ee095e-d1e7-46b2-a1dc-a3f9b03d1ad1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -251,8 +251,12 @@
           "tableFrom": "inscription_competitors",
           "tableTo": "inscriptions",
           "schemaTo": "inscriptionsDB",
-          "columnsFrom": ["inscription_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "inscription_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -261,8 +265,12 @@
           "tableFrom": "inscription_competitors",
           "tableTo": "competitors",
           "schemaTo": "inscriptionsDB",
-          "columnsFrom": ["competitor_id"],
-          "columnsTo": ["competitorid"],
+          "columnsFrom": [
+            "competitor_id"
+          ],
+          "columnsTo": [
+            "competitorid"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -345,6 +353,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -398,22 +412,43 @@
     "inscriptionsDB.disciplines": {
       "name": "disciplines",
       "schema": "inscriptionsDB",
-      "values": ["SL", "GS", "SG", "DH", "AC"]
+      "values": [
+        "SL",
+        "GS",
+        "SG",
+        "DH",
+        "AC"
+      ]
     },
     "inscriptionsDB.status": {
       "name": "status",
       "schema": "inscriptionsDB",
-      "values": ["open", "frozen", "validated"]
+      "values": [
+        "open",
+        "validated"
+      ]
     },
     "inscriptionsDB.race_levels": {
       "name": "race_levels",
       "schema": "inscriptionsDB",
-      "values": ["FIS", "CIT", "NJR", "NJC", "NC", "SAC", "ANC", "ENL"]
+      "values": [
+        "FIS",
+        "CIT",
+        "NJR",
+        "NJC",
+        "NC",
+        "SAC",
+        "ANC",
+        "ENL"
+      ]
     },
     "inscriptionsDB.sexes": {
       "name": "sexes",
       "schema": "inscriptionsDB",
-      "values": ["M", "F"]
+      "values": [
+        "M",
+        "F"
+      ]
     }
   },
   "schemas": {

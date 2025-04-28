@@ -18,7 +18,12 @@ export async function GET(
       return new NextResponse("Inscription non trouvée", {status: 404});
     }
 
-    return NextResponse.json(inscription[0]);
+    return NextResponse.json({
+      ...inscription[0],
+      location:
+        inscription[0].location[0].toUpperCase() +
+        inscription[0].location.slice(1),
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération de l'inscription:", error);
     return new NextResponse("Erreur interne du serveur", {status: 500});
@@ -33,7 +38,7 @@ export async function PATCH(
     const {id} = await params;
     const json = await req.json();
     const {status} = json;
-    const allowedStatuses = ["open", "frozen", "validated"];
+    const allowedStatuses = ["open", "validated"];
     if (!allowedStatuses.includes(status)) {
       return NextResponse.json({error: "Statut invalide"}, {status: 400});
     }

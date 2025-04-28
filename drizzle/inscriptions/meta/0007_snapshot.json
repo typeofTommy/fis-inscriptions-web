@@ -251,12 +251,8 @@
           "tableFrom": "inscription_competitors",
           "tableTo": "inscriptions",
           "schemaTo": "inscriptionsDB",
-          "columnsFrom": [
-            "inscription_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["inscription_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -265,12 +261,8 @@
           "tableFrom": "inscription_competitors",
           "tableTo": "competitors",
           "schemaTo": "inscriptionsDB",
-          "columnsFrom": [
-            "competitor_id"
-          ],
-          "columnsTo": [
-            "competitorid"
-          ],
+          "columnsFrom": ["competitor_id"],
+          "columnsTo": ["competitorid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -412,44 +404,22 @@
     "inscriptionsDB.disciplines": {
       "name": "disciplines",
       "schema": "inscriptionsDB",
-      "values": [
-        "SL",
-        "GS",
-        "SG",
-        "DH",
-        "AC"
-      ]
+      "values": ["SL", "GS", "SG", "DH", "AC"]
     },
     "inscriptionsDB.status": {
       "name": "status",
       "schema": "inscriptionsDB",
-      "values": [
-        "open",
-        "frozen",
-        "validated"
-      ]
+      "values": ["open", "frozen", "validated"]
     },
     "inscriptionsDB.race_levels": {
       "name": "race_levels",
       "schema": "inscriptionsDB",
-      "values": [
-        "FIS",
-        "CIT",
-        "NJR",
-        "NJC",
-        "NC",
-        "SAC",
-        "ANC",
-        "ENL"
-      ]
+      "values": ["FIS", "CIT", "NJR", "NJC", "NC", "SAC", "ANC", "ENL"]
     },
     "inscriptionsDB.sexes": {
       "name": "sexes",
       "schema": "inscriptionsDB",
-      "values": [
-        "M",
-        "F"
-      ]
+      "values": ["M", "F"]
     }
   },
   "schemas": {

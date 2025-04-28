@@ -68,17 +68,11 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                   `px-3 py-0.5 rounded-full text-xs font-semibold flex items-center` +
                   (inscription.status === "open"
                     ? " bg-sky-100 text-sky-700 border border-sky-300"
-                    : inscription.status === "frozen"
-                    ? " bg-gray-200 text-gray-600 border border-gray-300"
                     : " bg-emerald-100 text-emerald-700 border border-emerald-300")
                 }
                 style={{minHeight: "2rem"}}
               >
-                {inscription.status === "open"
-                  ? "Ouverte"
-                  : inscription.status === "frozen"
-                  ? "Gelée"
-                  : "Validée"}
+                {inscription.status === "open" ? "Ouverte" : "Validée"}
               </span>
             </h1>
             {permissionToEdit && (

@@ -21,7 +21,7 @@ export function InscriptionActionsMenu({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (status: "open" | "frozen" | "validated") => {
+    mutationFn: async (status: "open" | "validated") => {
       const res = await fetch(`/api/inscriptions/${id}`, {
         method: "PATCH",
         headers: {"Content-Type": "application/json"},
@@ -36,7 +36,7 @@ export function InscriptionActionsMenu({
     },
   });
 
-  const handleStatus = (status: "open" | "frozen" | "validated") => {
+  const handleStatus = (status: "open" | "validated") => {
     if (currentStatus === status) return;
     mutation.mutate(status);
   };
@@ -62,23 +62,13 @@ export function InscriptionActionsMenu({
         {currentStatus !== "open" && (
           <Button
             variant="ghost"
-            className="justify-start w-full"
+            className="justify-start w-full cursor-pointer"
             onClick={() => handleStatus("open")}
             disabled={mutation.isPending || readonly}
           >
             Ouvrir
           </Button>
         )}
-        <Button
-          variant="ghost"
-          className="justify-start w-full cursor-pointer"
-          onClick={() => handleStatus("frozen")}
-          disabled={
-            mutation.isPending || currentStatus === "frozen" || readonly
-          }
-        >
-          Geler
-        </Button>
         <Button
           variant="ghost"
           className="justify-start w-full cursor-pointer"

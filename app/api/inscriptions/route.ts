@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       email,
       fullName,
       country,
-      location,
+      location: location.toLowerCase(),
       eventLink,
       codexData,
       firstRaceDate,
@@ -92,9 +92,16 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const inscripList = (await db.select().from(inscriptions)).sort(
-    (a, b) =>
-      new Date(a.firstRaceDate).getTime() - new Date(b.firstRaceDate).getTime()
-  );
+  const inscripList = (await db.select().from(inscriptions))
+    .sort(
+      (a, b) =>
+        new Date(a.firstRaceDate).getTime() -
+        new Date(b.firstRaceDate).getTime()
+    )
+    .map((inscription) => ({
+      ...inscription,
+      location:
+        inscription.location[0].toUpperCase() + inscription.location.slice(1),
+    }));
   return NextResponse.json(inscripList);
 }

@@ -35,7 +35,6 @@ import {DebouncedInput} from "@/components/ui/debounced-input";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
-  frozen: "bg-yellow-100 text-yellow-800 border-yellow-200",
   validated: "bg-blue-100 text-blue-800 border-blue-200",
 };
 
@@ -207,8 +206,6 @@ export function InscriptionsTable() {
         <Badge className={statusColors[row.original.status] || "bg-gray-200"}>
           {row.original.status === "open"
             ? "Ouverte"
-            : row.original.status === "frozen"
-            ? "Gelée"
             : row.original.status === "validated"
             ? "Validée"
             : row.original.status}
@@ -512,7 +509,6 @@ export function InscriptionsTable() {
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>
               <SelectItem value="open">Ouverte</SelectItem>
-              <SelectItem value="frozen">Gelée</SelectItem>
               <SelectItem value="validated">Validée</SelectItem>
             </SelectContent>
           </Select>

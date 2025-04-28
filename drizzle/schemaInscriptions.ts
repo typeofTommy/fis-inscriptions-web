@@ -13,7 +13,6 @@ export const inscriptionsSchema = pgSchema("inscriptionsDB");
 export const sexes = inscriptionsSchema.enum("sexes", ["M", "F"]);
 export const inscriptionStatus = inscriptionsSchema.enum("status", [
   "open",
-  "frozen",
   "validated",
 ]);
 
