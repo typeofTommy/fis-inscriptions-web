@@ -330,6 +330,8 @@ function CodexField({
 const NewInscriptionPage = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const {user, isLoaded} = useUser();
+
   const {
     data: countries = [],
     isLoading,
@@ -340,8 +342,6 @@ const NewInscriptionPage = () => {
     staleTime: 1000 * 60 * 60, // 1 heure
     refetchOnWindowFocus: false,
   });
-
-  const {user} = useUser();
 
   const {
     data: stations = [],
@@ -389,7 +389,7 @@ const NewInscriptionPage = () => {
     },
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (user) {
       form.setValue("email", user.emailAddresses[0].emailAddress || "");
       form.setValue("fullName", user.fullName || "");
@@ -463,6 +463,24 @@ const NewInscriptionPage = () => {
 
   // State for country search
   const [countrySearch] = React.useState("");
+
+  // Redirige si non connecté une fois Clerk chargé
+  React.useEffect(() => {
+    if (isLoaded && !user) {
+      router.replace("/");
+    }
+  }, [isLoaded, user, router]);
+
+  if (!isLoaded) {
+    return null; // ou un loader
+  }
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-2xl mt-10 text-center text-lg text-red-500">
+        Vous devez être connecté pour accéder à la création de demande.
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
