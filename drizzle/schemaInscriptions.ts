@@ -72,10 +72,14 @@ export const inscriptionCompetitors = inscriptionsSchema.table(
     id: serial("id").primaryKey(),
     inscriptionId: integer("inscription_id")
       .notNull()
-      .references(() => inscriptions.id),
+      .references(() => inscriptions.id, {
+        onDelete: "cascade",
+      }),
     competitorId: integer("competitor_id")
       .notNull()
-      .references(() => competitors.competitorid),
+      .references(() => competitors.competitorid, {
+        onDelete: "cascade",
+      }),
     codexNumber: text("codex_number").notNull(),
   }
 );

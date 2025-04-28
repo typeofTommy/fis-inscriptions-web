@@ -5,6 +5,8 @@ import {Button} from "@/components/ui/button";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useState} from "react";
 import {Zap} from "lucide-react";
+import {Separator} from "@/components/ui/separator";
+import {useRouter} from "next/navigation";
 
 interface InscriptionActionsMenuProps {
   id: string;
@@ -19,8 +21,9 @@ export function InscriptionActionsMenu({
 }: InscriptionActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
-  const mutation = useMutation({
+  const statusMutation = useMutation({
     mutationFn: async (status: "open" | "validated") => {
       const res = await fetch(`/api/inscriptions/${id}`, {
         method: "PATCH",
@@ -36,15 +39,46 @@ export function InscriptionActionsMenu({
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/inscriptions/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Erreur lors de la suppression");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["inscription", id]});
+      queryClient.invalidateQueries({queryKey: ["inscriptions"]});
+      setOpen(false);
+      router.push("/");
+    },
+    onError: (error) => {
+      alert(`Erreur: ${error.message}`);
+      setOpen(false);
+    },
+  });
+
   const handleStatus = (status: "open" | "validated") => {
     if (currentStatus === status) return;
-    mutation.mutate(status);
+    statusMutation.mutate(status);
   };
 
   const handleGeneratePDF = () => {
-    // Placeholder: à remplacer par la vraie génération PDF
     alert("Génération du PDF à implémenter");
     setOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (
+      window.confirm(
+        "Êtes-vous sûr de vouloir supprimer cette inscription ? Cette action est irréversible."
+      )
+    ) {
+      deleteMutation.mutate();
+    } else {
+      setOpen(false);
+    }
   };
 
   return (
@@ -64,7 +98,7 @@ export function InscriptionActionsMenu({
             variant="ghost"
             className="justify-start w-full cursor-pointer"
             onClick={() => handleStatus("open")}
-            disabled={mutation.isPending || readonly}
+            disabled={statusMutation.isPending || readonly}
           >
             Ouvrir
           </Button>
@@ -74,7 +108,9 @@ export function InscriptionActionsMenu({
           className="justify-start w-full cursor-pointer"
           onClick={() => handleStatus("validated")}
           disabled={
-            mutation.isPending || currentStatus === "validated" || readonly
+            statusMutation.isPending ||
+            currentStatus === "validated" ||
+            readonly
           }
         >
           Valider
@@ -87,6 +123,31 @@ export function InscriptionActionsMenu({
         >
           Générer PDF
         </Button>
+
+        {currentStatus !== "validated" && (
+          <>
+            <Separator className="my-1" />
+            <Button
+              variant="ghost"
+              className="justify-start w-full cursor-pointer"
+              onClick={() => {
+                alert("Fonctionnalité d'édition à implémenter");
+                setOpen(false);
+              }}
+              disabled={readonly}
+            >
+              Editer
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start w-full text-red-600 hover:text-red-700 cursor-pointer"
+              onClick={handleDelete}
+              disabled={readonly || deleteMutation.isPending}
+            >
+              Supprimer
+            </Button>
+          </>
+        )}
       </PopoverContent>
     </Popover>
   );

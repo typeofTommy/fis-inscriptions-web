@@ -143,6 +143,13 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
               </div>
             </div>
           </div>
+          {/* Creator and Date Info */}
+          {inscription.createdBy && inscription.createdAt && (
+            <p className="text-xs text-slate-400 mt-2 text-right">
+              Créé par {inscription.fullName ?? "Utilisateur inconnu"} le{" "}
+              {new Date(inscription.createdAt).toLocaleDateString("fr-FR")}
+            </p>
+          )}
         </div>
       </header>
     </div>
