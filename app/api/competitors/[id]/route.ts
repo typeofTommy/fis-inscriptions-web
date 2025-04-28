@@ -8,13 +8,14 @@ export async function GET(
   {params}: {params: Promise<{id: string}>}
 ) {
   const id = (await params).id;
-  if (!id) {
-    return NextResponse.json({error: "Missing competitor id"}, {status: 400});
+  const idNum = Number(id);
+  if (!id || isNaN(idNum) || !Number.isInteger(idNum) || idNum <= 0) {
+    return NextResponse.json({error: "Invalid competitor id"}, {status: 400});
   }
   const result = await db
     .select()
     .from(competitors)
-    .where(eq(competitors.competitorid, Number(id)));
+    .where(eq(competitors.competitorid, idNum));
   if (!result || result.length === 0) {
     return NextResponse.json({error: "Competitor not found"}, {status: 404});
   }

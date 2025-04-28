@@ -29,6 +29,7 @@ import Link from "next/link";
 import {
   colorBadgePerDiscipline,
   colorBadgePerRaceLevel,
+  colorBadgePerGender,
 } from "@/app/lib/colorMappers";
 import {DebouncedInput} from "@/components/ui/debounced-input";
 
@@ -218,6 +219,36 @@ export function InscriptionsTable() {
         return row.original.status === value;
       },
     },
+    {
+      id: "sex",
+      header: "Sexe",
+      enableColumnFilter: true,
+      accessorFn: (row) => row,
+      cell: ({row}) => {
+        const sexes = Array.from(
+          new Set(row.original.codexData.map((c: any) => c.sex))
+        );
+        return (
+          <div className="flex gap-1">
+            {sexes.map((sex) => (
+              <Badge
+                key={sex}
+                variant="outline"
+                className={`${
+                  colorBadgePerGender[sex === "M" ? "M" : "W"] || ""
+                } text-white`}
+              >
+                {sex}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+      filterFn: (row, id, filterValue) => {
+        if (!filterValue || filterValue === "all") return true;
+        return row.original.codexData.some((c: any) => c.sex === filterValue);
+      },
+    },
   ];
 
   const table = useReactTable({
@@ -275,6 +306,7 @@ export function InscriptionsTable() {
       ).sort(),
     [data]
   );
+  const sexOptions = useMemo(() => ["M", "F"], []);
 
   const dateValue = String(
     table.getColumn("firstRaceDate")?.getFilterValue() ?? ""
@@ -482,6 +514,31 @@ export function InscriptionsTable() {
               <SelectItem value="open">Ouverte</SelectItem>
               <SelectItem value="frozen">Gelée</SelectItem>
               <SelectItem value="validated">Validée</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1 w-[140px]">
+          <label htmlFor="filter-sex" className="font-semibold text-sm">
+            Sexe
+          </label>
+          <Select
+            value={String(table.getColumn("sex")?.getFilterValue() ?? "all")}
+            onValueChange={(value) =>
+              table
+                .getColumn("sex")
+                ?.setFilterValue(value === "all" ? undefined : value)
+            }
+          >
+            <SelectTrigger id="filter-sex" className="w-[140px] cursor-pointer">
+              <SelectValue placeholder="Sexe" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              {sexOptions.map((sex) => (
+                <SelectItem key={sex} value={sex}>
+                  {sex === "M" ? "Homme" : "Femme"}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

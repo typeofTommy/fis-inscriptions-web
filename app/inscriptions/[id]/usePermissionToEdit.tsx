@@ -10,7 +10,5 @@ export const usePermissionToEdit = (
 
   if (!inscription) return false;
 
-  console.log({role});
-
   return role === "admin" || user.user?.id === inscription.createdBy;
 };

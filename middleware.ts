@@ -10,7 +10,11 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 // Préfixes des API publiques
-const publicApiPrefixes = ["/api/inscriptions", "/api/competitors"];
+const publicApiPrefixes = [
+  "/api/inscriptions",
+  "/api/competitors/with-inscriptions",
+  "/api/competitors",
+];
 
 // Fonction pour savoir si une page d'inscription individuelle est publique
 function isPublicInscriptionPage(url: string) {

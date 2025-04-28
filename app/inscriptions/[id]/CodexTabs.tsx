@@ -6,6 +6,7 @@ import {Badge} from "@/components/ui/badge";
 import {Competitors} from "./Competitors";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
+import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
 import React, {useMemo} from "react";
 import {usePermissionToEdit} from "./usePermissionToEdit";
@@ -75,7 +76,13 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
             >
               {codex.discipline}
             </Badge>
-            <Badge className={`ml-2 text-base px-3 py-1 `}>{codex.sex}</Badge>
+            <Badge
+              className={`ml-2 text-base px-3 py-1 ${
+                colorBadgePerGender[codex.sex === "F" ? "W" : "M"] || ""
+              } text-white`}
+            >
+              {codex.sex}
+            </Badge>
           </TabsTrigger>
         ))}
       </TabsList>

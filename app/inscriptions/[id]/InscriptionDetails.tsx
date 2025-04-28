@@ -32,8 +32,6 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
 
   const permissionToEdit = usePermissionToEdit(inscription);
 
-  console.log({permissionToEdit});
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">

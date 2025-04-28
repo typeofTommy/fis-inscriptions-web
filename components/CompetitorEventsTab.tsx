@@ -5,41 +5,29 @@ import {Badge} from "@/components/ui/badge";
 import {format, parseISO} from "date-fns";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 
-const MIN_SEARCH_LENGTH = 3;
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debouncedValue;
-}
-
-function useCompetitorsSearch(search: string, gender: "M" | "W") {
+function useAllCompetitorsWithInscriptions() {
   return useQuery({
-    queryKey: ["competitors", search, gender],
+    queryKey: ["all-competitors-with-inscriptions"],
     queryFn: async () => {
-      if (search.length < MIN_SEARCH_LENGTH) return [];
-      const res = await fetch(
-        `/api/competitors?search=${encodeURIComponent(search)}&gender=${gender}`
-      );
-      if (!res.ok) throw new Error("Erreur API");
-      return res.json();
+      const resM = await fetch(`/api/competitors/with-inscriptions?gender=M`);
+      const resW = await fetch(`/api/competitors/with-inscriptions?gender=W`);
+      if (!resM.ok && !resW.ok) throw new Error("Erreur API");
+      const dataM = resM.ok ? await resM.json() : [];
+      const dataW = resW.ok ? await resW.json() : [];
+      return [...dataM, ...dataW];
     },
-    enabled: search.length >= MIN_SEARCH_LENGTH,
   });
 }
 
 export function CompetitorEventsTab() {
-  const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [gender, setGender] = useState<"M" | "W" | undefined>(undefined);
-  const debouncedSearch = useDebounce(search, 400);
-  const {data: results = [], isLoading: loading} = useCompetitorsSearch(
-    debouncedSearch,
-    gender as "M" | "W"
-  );
+  const {data: allResults = [], isLoading: loadingAll} =
+    useAllCompetitorsWithInscriptions();
+  const results = gender
+    ? allResults.filter((c: any) => c.gender === gender)
+    : [];
+
   const {data: competitor, isLoading: loadingCompetitor} = useQuery({
     queryKey: ["competitor", selectedId],
     queryFn: async () => {
@@ -50,6 +38,7 @@ export function CompetitorEventsTab() {
     },
     enabled: !!selectedId,
   });
+
   const {data: inscriptions, isLoading: loadingInscriptions} = useQuery({
     queryKey: ["competitor-inscriptions", selectedId],
     queryFn: async () => {
@@ -60,6 +49,11 @@ export function CompetitorEventsTab() {
     },
     enabled: !!selectedId,
   });
+
+  // Reset selectedId quand le genre change
+  useEffect(() => {
+    setSelectedId(undefined);
+  }, [gender]);
 
   return (
     <div className="max-w-2xl mx-auto mt-8">
@@ -89,20 +83,14 @@ export function CompetitorEventsTab() {
       </div>
       {gender ? (
         <>
-          <input
-            className="w-full px-3 py-2 border rounded"
-            placeholder="Nom ou prénom (3 caractères min)"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
           <select
             className="w-full px-3 py-2 border rounded mt-2"
             value={selectedId || ""}
             onChange={(e) => setSelectedId(e.target.value)}
-            disabled={loading || results.length === 0}
+            disabled={loadingAll || results.length === 0}
           >
             <option value="" disabled>
-              {loading
+              {loadingAll
                 ? "Chargement..."
                 : results.length === 0
                 ? "Aucun compétiteur trouvé"
@@ -115,11 +103,7 @@ export function CompetitorEventsTab() {
             ))}
           </select>
         </>
-      ) : (
-        <div className="text-slate-500 mt-2">
-          Veuillez d&apos;abord choisir un genre.
-        </div>
-      )}
+      ) : null}
       {loadingCompetitor && (
         <div className="mt-4">Chargement du compétiteur...</div>
       )}
@@ -131,7 +115,7 @@ export function CompetitorEventsTab() {
           </div>
           <div className="text-sm text-slate-600 mb-2">
             FIS: {competitor.fiscode} | Sexe: {competitor.gender} | Naissance:{" "}
-            {competitor.birthdate}
+            {format(parseISO(competitor.birthdate), "dd/MM/yyyy")}
           </div>
         </div>
       )}
