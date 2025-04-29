@@ -148,9 +148,11 @@ const InscriptionFormInner = ({
       const matchingStation = stations.find(
         (s) => s.name.toLowerCase() === inscription.location.toLowerCase()
       );
+
+      // Ne pas forcer en minuscules ici
       const locationValue = matchingStation
-        ? matchingStation.name?.toLowerCase()
-        : inscription.location.toLowerCase();
+        ? matchingStation.name
+        : inscription.location;
 
       form.reset({
         email: inscription.email,
@@ -164,9 +166,9 @@ const InscriptionFormInner = ({
         firstRaceDate: parseLocalDate(inscription.firstRaceDate),
         lastRaceDate: parseLocalDate(inscription.lastRaceDate),
         location: stationExists
-          ? locationValue.toLowerCase()
-          : inscription.location.toLowerCase() || "__autre__",
-        customStation: stationExists ? "" : inscription.location.toLowerCase(),
+          ? locationValue
+          : inscription.location || "__autre__",
+        customStation: stationExists ? "" : inscription.location,
       });
     }
   }, [isEdit, inscription, stations, stationsLoading, form]);
@@ -340,15 +342,12 @@ const InscriptionFormInner = ({
                   </FormLabel>
                   <FormControl>
                     <Select
-                      value={field.value.toLowerCase()}
+                      value={field.value}
                       onValueChange={(value) => {
-                        field.onChange(value?.toLowerCase()); // 🛡️ Propage dans RHF
-                        const selectedStation = stations
-                          .map((s) => ({
-                            ...s,
-                            name: s.name.toLowerCase(),
-                          }))
-                          .find((s) => s.name === value.toLowerCase());
+                        field.onChange(value); // Ne pas forcer en minuscules ici
+                        const selectedStation = stations.find(
+                          (s) => s.name === value
+                        );
                         if (selectedStation) {
                           form.setValue("country", selectedStation.country);
                         }
@@ -361,12 +360,8 @@ const InscriptionFormInner = ({
                         {stations
                           .sort((a, b) => a.name.localeCompare(b.name))
                           .map((station) => (
-                            <SelectItem
-                              key={station.id}
-                              value={station.name.toLowerCase()}
-                            >
-                              {station.name[0].toUpperCase() +
-                                station.name.slice(1)}
+                            <SelectItem key={station.id} value={station.name}>
+                              {station.name}
                             </SelectItem>
                           ))}
                         <SelectItem value="__autre__">Autre...</SelectItem>

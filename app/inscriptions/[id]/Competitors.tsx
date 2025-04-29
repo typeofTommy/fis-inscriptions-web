@@ -26,13 +26,23 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {usePermissionToEdit} from "./usePermissionToEdit";
+import {Discipline} from "@/app/types";
 
-function useInscriptionCompetitors(inscriptionId: string, codexNumber: string) {
+function useInscriptionCompetitors(
+  inscriptionId: string,
+  codexNumber: string,
+  discipline: Discipline
+) {
   return useQuery({
-    queryKey: ["inscription-competitors", inscriptionId, codexNumber],
+    queryKey: [
+      "inscription-competitors",
+      inscriptionId,
+      codexNumber,
+      discipline,
+    ],
     queryFn: async () => {
       const res = await fetch(
-        `/api/inscriptions/${inscriptionId}/competitors?codexNumber=${codexNumber}`
+        `/api/inscriptions/${inscriptionId}/competitors?codexNumber=${codexNumber}&discipline=${discipline}`
       );
       if (!res.ok) throw new Error("Erreur lors du chargement des coureurs");
       return res.json();
@@ -81,15 +91,17 @@ function useRemoveCompetitor(inscriptionId: string) {
 export const Competitors = ({
   inscriptionId,
   codexNumber,
+  discipline,
 }: {
   inscriptionId: string;
   codexNumber: string;
+  discipline: Discipline;
 }) => {
   const {
     data: competitors = [],
-    isLoading,
+    isPending,
     error,
-  } = useInscriptionCompetitors(inscriptionId, codexNumber);
+  } = useInscriptionCompetitors(inscriptionId, codexNumber, discipline);
   const {data: inscription} = useQuery({
     queryKey: ["inscriptions", inscriptionId],
     queryFn: () =>
@@ -111,7 +123,7 @@ export const Competitors = ({
     }
   }, [openDialog, codexNumber]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="w-4 h-4 animate-spin" />
@@ -123,7 +135,7 @@ export const Competitors = ({
     return <div>Erreur lors du chargement des compétiteurs.</div>;
   }
 
-  if (!competitors?.length) {
+  if (!competitors?.length && !isPending) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         {inscription?.status !== "open" && (
@@ -154,80 +166,86 @@ export const Competitors = ({
             <TableHead>Date de naissance</TableHead>
             <TableHead>Nation</TableHead>
             <TableHead>Club</TableHead>
+            <TableHead>Points FIS ({discipline})</TableHead>
             {permissionToEdit && <TableHead>Action</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(competitors || []).map((c: any) => (
-            <TableRow key={c.competitorid}>
-              <TableCell>{c.lastname}</TableCell>
-              <TableCell>{c.firstname}</TableCell>
-              <TableCell>{c.gender}</TableCell>
-              <TableCell>
-                {c.birthdate ? format(new Date(c.birthdate), "dd/MM/yyyy") : ""}
-              </TableCell>
-              <TableCell>{c.nationcode}</TableCell>
-              <TableCell>{c.skiclub}</TableCell>
-              {permissionToEdit && (
+          {(competitors || [])
+            .sort((b, a) => a.points - b.points)
+            .map((c: any) => (
+              <TableRow key={c.competitorid}>
+                <TableCell>{c.lastname}</TableCell>
+                <TableCell>{c.firstname}</TableCell>
+                <TableCell>{c.gender}</TableCell>
                 <TableCell>
-                  <Dialog
-                    open={openDialog === c.competitorid}
-                    onOpenChange={(o) =>
-                      setOpenDialog(o ? c.competitorid : null)
-                    }
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Désinscrire"
-                        className="cursor-pointer"
-                        disabled={inscription?.status !== "open"}
-                      >
-                        <Trash2 className="w-5 h-5 text-red-500" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>
-                          Confirmer la désinscription de {c.firstname}{" "}
-                          {c.lastname} ?
-                        </DialogTitle>
-                      </DialogHeader>
-                      <DesinscriptionCodexList
-                        inscriptionId={inscriptionId}
-                        competitorId={c.competitorid}
-                        selectedCodex={selectedCodex}
-                        setSelectedCodex={setSelectedCodex}
-                        currentCodex={codexNumber}
-                      />
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button variant="ghost" className="cursor-pointer">
-                            Annuler
-                          </Button>
-                        </DialogClose>
-                        <Button
-                          onClick={() => {
-                            removeCompetitor({
-                              competitorId: c.competitorid,
-                              codexNumbers: selectedCodex,
-                            });
-                            setOpenDialog(null);
-                          }}
-                          disabled={removing || selectedCodex.length === 0}
-                          variant="destructive"
-                          className="cursor-pointer"
-                        >
-                          {removing ? "Suppression..." : "Confirmer"}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  {c.birthdate
+                    ? format(new Date(c.birthdate), "dd/MM/yyyy")
+                    : ""}
                 </TableCell>
-              )}
-            </TableRow>
-          ))}
+                <TableCell>{c.nationcode}</TableCell>
+                <TableCell>{c.skiclub}</TableCell>
+                <TableCell>{c.points || "-"}</TableCell>
+                {permissionToEdit && (
+                  <TableCell>
+                    <Dialog
+                      open={openDialog === c.competitorid}
+                      onOpenChange={(o) =>
+                        setOpenDialog(o ? c.competitorid : null)
+                      }
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Désinscrire"
+                          className="cursor-pointer"
+                          disabled={inscription?.status !== "open"}
+                        >
+                          <Trash2 className="w-5 h-5 text-red-500" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>
+                            Confirmer la désinscription de {c.firstname}{" "}
+                            {c.lastname} ?
+                          </DialogTitle>
+                        </DialogHeader>
+                        <DesinscriptionCodexList
+                          inscriptionId={inscriptionId}
+                          competitorId={c.competitorid}
+                          selectedCodex={selectedCodex}
+                          setSelectedCodex={setSelectedCodex}
+                          currentCodex={codexNumber}
+                        />
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button variant="ghost" className="cursor-pointer">
+                              Annuler
+                            </Button>
+                          </DialogClose>
+                          <Button
+                            onClick={() => {
+                              removeCompetitor({
+                                competitorId: c.competitorid,
+                                codexNumbers: selectedCodex,
+                              });
+                              setOpenDialog(null);
+                            }}
+                            disabled={removing || selectedCodex.length === 0}
+                            variant="destructive"
+                            className="cursor-pointer"
+                          >
+                            {removing ? "Suppression..." : "Confirmer"}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
         </TableBody>
       </Table>
     </div>

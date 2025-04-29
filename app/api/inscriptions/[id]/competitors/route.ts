@@ -16,7 +16,7 @@ export async function GET(
   const {searchParams} = new URL(req.url);
   const codexNumber = searchParams.get("codexNumber");
   const competitorId = searchParams.get("competitorId");
-
+  const discipline = searchParams.get("discipline");
   // Si competitorId est fourni, on retourne la liste des codex où il est inscrit pour cette inscription
   if (competitorId) {
     // On récupère les codexNumbers pour ce competitorId et cette inscription
@@ -65,7 +65,26 @@ export async function GET(
 
   // 2. Récupérer les infos des coureurs dans la base FIS
   const c = await db
-    .select()
+    .select({
+      competitorid: competitors.competitorid,
+      fiscode: competitors.fiscode,
+      lastname: competitors.lastname,
+      firstname: competitors.firstname,
+      nationcode: competitors.nationcode,
+      gender: competitors.gender,
+      birthdate: competitors.birthdate,
+      skiclub: competitors.skiclub,
+      points:
+        discipline === "SL"
+          ? competitors.slpoints
+          : discipline === "GS"
+          ? competitors.gspoints
+          : discipline === "SG"
+          ? competitors.sgpoints
+          : discipline === "DH"
+          ? competitors.dhpoints
+          : competitors.acpoints,
+    })
     .from(competitors)
     .where(inArray(competitors.competitorid, competitorIds.map(Number)));
 

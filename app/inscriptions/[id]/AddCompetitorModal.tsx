@@ -99,11 +99,19 @@ export default function AddCompetitorModal({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
   const [selectedId, setSelectedId] = useState<string | undefined>();
-  const [selectedCodex, setSelectedCodex] = useState<string[]>([defaultCodex]);
+  const [selectedCodex, setSelectedCodex] = useState<string[]>(() =>
+    codexData
+      .filter((c) => (gender === "W" ? c.sex === "F" : c.sex === "M"))
+      .map((c) => c.number)
+  );
 
   useEffect(() => {
-    setSelectedCodex([defaultCodex]);
-  }, [defaultCodex]);
+    setSelectedCodex(
+      codexData
+        .filter((c) => (gender === "W" ? c.sex === "F" : c.sex === "M"))
+        .map((c) => c.number)
+    );
+  }, [defaultCodex, gender, codexData]);
 
   const {data: results = [], isLoading: loading} = useCompetitors(
     debouncedSearch,
@@ -142,6 +150,7 @@ export default function AddCompetitorModal({
         <Button
           variant="outline"
           className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-base"
+          disabled={!selectedCodex}
         >
           Inscrire un compétiteur
         </Button>

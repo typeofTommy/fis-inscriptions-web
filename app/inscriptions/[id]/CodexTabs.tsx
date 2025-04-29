@@ -113,6 +113,7 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
           <Competitors
             inscriptionId={inscriptionId}
             codexNumber={codex.number}
+            discipline={codex.discipline}
           />
         </TabsContent>
       ))}
