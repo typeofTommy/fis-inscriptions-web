@@ -54,8 +54,6 @@ export const InscriptionFormWrapper = ({
   | {mode: "new"; inscription?: never; onSuccess?: never}) => {
   const isEdit = mode === "edit";
 
-  console.log({inscription});
-
   const {
     data: stations,
     isLoading: stationsLoading,
