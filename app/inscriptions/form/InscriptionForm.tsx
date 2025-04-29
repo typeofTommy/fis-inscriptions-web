@@ -647,7 +647,7 @@ const InscriptionFormInner = ({
                   createInscription.isPending || codexDuplicates.some(Boolean)
                 }
               >
-                {createInscription.isPending
+                {createInscription.isPending || updateInscription.isPending
                   ? "Soumission en cours..."
                   : "Soumettre"}
               </button>
