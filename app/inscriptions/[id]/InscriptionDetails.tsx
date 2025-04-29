@@ -1,34 +1,17 @@
 "use client";
 
-import {inscriptions} from "@/drizzle/schemaInscriptions";
-import {useQuery} from "@tanstack/react-query";
 import {Loader2, MapPinIcon, CalendarIcon, LinkIcon} from "lucide-react";
 import {InscriptionActionsMenu} from "./InscriptionActionsMenu";
 import {usePermissionToEdit} from "./usePermissionToEdit";
+import {useInscription} from "../form/api";
+import {parseLocalDate} from "@/app/lib/dates";
 
 interface InscriptionDetailsProps {
   id: string;
 }
 
-async function fetchInscription(
-  id: string
-): Promise<typeof inscriptions.$inferSelect> {
-  const response = await fetch(`/api/inscriptions/${id}`);
-  if (!response.ok) {
-    throw new Error("Erreur lors de la récupération de l&apos;inscription");
-  }
-  return response.json();
-}
-
 export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
-  const {
-    data: inscription,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["inscription", id],
-    queryFn: () => fetchInscription(id),
-  });
+  const {data: inscription, isLoading, error} = useInscription(id);
 
   const permissionToEdit = usePermissionToEdit(inscription);
 
@@ -75,10 +58,9 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                 {inscription.status === "open" ? "Ouverte" : "Validée"}
               </span>
             </h1>
-            {permissionToEdit && (
+            {permissionToEdit && inscription && (
               <InscriptionActionsMenu
-                id={inscription.id.toString()}
-                currentStatus={inscription.status}
+                inscription={inscription}
                 readonly={!permissionToEdit}
               />
             )}
@@ -95,9 +77,9 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                   Date de la 1ère course
                 </p>
                 <p className="text-base font-medium text-slate-800">
-                  {new Date(inscription.firstRaceDate).toLocaleDateString(
-                    "fr-FR"
-                  )}
+                  {parseLocalDate(
+                    inscription.firstRaceDate
+                  )?.toLocaleDateString("fr-FR")}
                 </p>
               </div>
             </div>
@@ -110,7 +92,7 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                   Date de la dernière course
                 </p>
                 <p className="text-base font-medium text-slate-800">
-                  {new Date(inscription.lastRaceDate).toLocaleDateString(
+                  {parseLocalDate(inscription.lastRaceDate)?.toLocaleDateString(
                     "fr-FR"
                   )}
                 </p>

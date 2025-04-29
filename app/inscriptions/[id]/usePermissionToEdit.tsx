@@ -1,10 +1,8 @@
 import {useRole} from "@/app/lib/useRole";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {Inscription} from "@/app/types";
 import {useUser} from "@clerk/nextjs";
 
-export const usePermissionToEdit = (
-  inscription: typeof inscriptions.$inferSelect | undefined
-) => {
+export const usePermissionToEdit = (inscription: Inscription | undefined) => {
   const role = useRole();
   const user = useUser();
 

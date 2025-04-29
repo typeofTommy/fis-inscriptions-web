@@ -1,3 +1,4 @@
+import {Discipline, RaceLevel, Sex} from "@/app/types";
 import {
   serial,
   text,
@@ -48,9 +49,9 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
     .$type<
       {
         number: string;
-        discipline: (typeof disciplines.$inferSelect)[number];
-        sex: (typeof sexes.$inferSelect)[number];
-        raceLevel: (typeof raceLevels.$inferSelect)[number];
+        discipline: Discipline[number];
+        sex: Sex[number];
+        raceLevel: RaceLevel[number];
       }[]
     >()
     .notNull(),

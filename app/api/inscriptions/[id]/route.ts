@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
-import {eq} from "drizzle-orm";
+import {eq, and, inArray} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {
   inscriptions,
@@ -12,10 +12,14 @@ export async function GET(
 ) {
   try {
     const {id} = await params;
+    const idNum = Number(id);
+    if (isNaN(idNum)) {
+      return NextResponse.json({error: "Invalid id"}, {status: 400});
+    }
     const inscription = await db
       .select()
       .from(inscriptions)
-      .where(eq(inscriptions.id, Number(id)))
+      .where(eq(inscriptions.id, idNum))
       .limit(1);
 
     // Check if inscription exists and has data
@@ -47,17 +51,84 @@ export async function PATCH(
 ) {
   try {
     const {id} = await params;
+    const inscriptionId = Number(id);
     const json = await req.json();
-    const {status} = json;
-    const allowedStatuses = ["open", "validated"];
-    if (!allowedStatuses.includes(status)) {
-      return NextResponse.json({error: "Statut invalide"}, {status: 400});
+
+    // Extract editable fields from the request body
+    // Status updates are handled separately, so we don't expect status here.
+    const {
+      location,
+      country,
+      eventLink,
+      firstRaceDate,
+      lastRaceDate,
+      codexData,
+    } = json;
+
+    // Basic validation (more can be added with Zod if needed)
+    if (
+      !location ||
+      !country ||
+      !eventLink ||
+      !firstRaceDate ||
+      !lastRaceDate ||
+      !codexData
+    ) {
+      return NextResponse.json(
+        {error: "Données manquantes pour la mise à jour."},
+        {status: 400}
+      );
     }
+
+    // Get current inscription data to compare codex data
+    const currentInscription = await db
+      .select({codexData: inscriptions.codexData})
+      .from(inscriptions)
+      .where(eq(inscriptions.id, inscriptionId))
+      .limit(1);
+
+    if (!currentInscription.length) {
+      return NextResponse.json(
+        {error: "Inscription non trouvée"},
+        {status: 404}
+      );
+    }
+
+    // Find removed codex numbers
+    const currentCodices = new Set(
+      currentInscription[0].codexData.map((cd: any) => cd.number)
+    );
+    const newCodices = new Set(codexData.map((cd: any) => cd.number));
+    const removedCodices = [...currentCodices].filter(
+      (codex) => !newCodices.has(codex)
+    );
+
+    // If there are removed codices, delete their inscription_competitors entries
+    if (removedCodices.length > 0) {
+      await db
+        .delete(inscriptionCompetitors)
+        .where(
+          and(
+            eq(inscriptionCompetitors.inscriptionId, inscriptionId),
+            inArray(inscriptionCompetitors.codexNumber, removedCodices)
+          )
+        );
+    }
+
+    // Update the inscription with the new data
     const updated = await db
       .update(inscriptions)
-      .set({status})
-      .where(eq(inscriptions.id, Number(id)))
+      .set({
+        location,
+        country,
+        eventLink,
+        firstRaceDate,
+        lastRaceDate,
+        codexData,
+      })
+      .where(eq(inscriptions.id, inscriptionId))
       .returning();
+
     if (!updated.length) {
       return NextResponse.json(
         {error: "Inscription non trouvée"},
@@ -66,7 +137,7 @@ export async function PATCH(
     }
     return NextResponse.json(updated[0]);
   } catch (error) {
-    console.error("Erreur lors de la mise à jour du statut:", error);
+    console.error("Erreur lors de la mise à jour de l'inscription:", error);
     return NextResponse.json(
       {error: "Erreur interne du serveur"},
       {status: 500}

@@ -7,12 +7,15 @@ import {
 } from "@tanstack/react-query";
 import * as React from "react";
 import {Toaster} from "@/components/ui/toaster";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000,
+        retry: 2,
+        refetchOnWindowFocus: true,
       },
     },
   });
@@ -36,6 +39,7 @@ export function Providers(props: {children: React.ReactNode}) {
     <QueryClientProvider client={queryClient}>
       {props.children}
       <Toaster />
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }

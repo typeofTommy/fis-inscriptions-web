@@ -2,6 +2,7 @@ import {NextResponse} from "next/server";
 import * as z from "zod";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions, stations} from "@/drizzle/schemaInscriptions";
+import {eq} from "drizzle-orm";
 
 // Define the schema for the request body (matching the form schema)
 const inscriptionSchema = z.object({
@@ -72,16 +73,16 @@ export async function POST(request: Request) {
 
     // insert the station
 
-    await db
-      .insert(stations)
-      .values({
-        name: location.toLowerCase(),
-        country,
-      })
-      .onConflictDoNothing();
+    const station = await db
+      .select()
+      .from(stations)
+      .where(eq(stations.name, location.toLowerCase()));
+
+    if (!station) {
+      await db.insert(stations).values({name: location.toLowerCase(), country});
+    }
 
     return NextResponse.json({
-      message: "Inscription created successfully",
       inscription: result[0],
     });
   } catch (error) {

@@ -91,7 +91,7 @@ export const Competitors = ({
     error,
   } = useInscriptionCompetitors(inscriptionId, codexNumber);
   const {data: inscription} = useQuery({
-    queryKey: ["inscription", inscriptionId],
+    queryKey: ["inscriptions", inscriptionId],
     queryFn: () =>
       fetch(`/api/inscriptions/${inscriptionId}`).then((r) => r.json()),
   });

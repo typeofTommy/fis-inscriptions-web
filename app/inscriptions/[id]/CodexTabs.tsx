@@ -4,20 +4,18 @@ import {useQuery} from "@tanstack/react-query";
 import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/components/ui/tabs";
 import {Badge} from "@/components/ui/badge";
 import {Competitors} from "./Competitors";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
 import React, {useMemo} from "react";
 import {usePermissionToEdit} from "./usePermissionToEdit";
+import {Inscription} from "@/app/types";
 
 interface CodexTabsProps {
   inscriptionId: string;
 }
 
-async function fetchInscription(
-  id: string
-): Promise<typeof inscriptions.$inferSelect> {
+async function fetchInscription(id: string): Promise<Inscription> {
   const response = await fetch(`/api/inscriptions/${id}`);
   if (!response.ok)
     throw new Error("Erreur lors de la récupération de l'inscription");
@@ -30,10 +28,9 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["inscription", inscriptionId],
+    queryKey: ["inscriptions", inscriptionId],
     queryFn: () => fetchInscription(inscriptionId),
   });
-
   const permissionToEdit = usePermissionToEdit(inscription);
 
   const [activeCodex, setActiveCodex] = React.useState<string | undefined>(
@@ -57,16 +54,16 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
   return (
     <Tabs
       defaultValue={codexData[0].number}
-      className="mt-8"
+      className="mt-8 "
       onValueChange={setActiveCodex}
       value={activeCodex}
     >
-      <TabsList>
+      <TabsList className="bg-transparent">
         {codexData.map((codex) => (
           <TabsTrigger
             key={codex.number}
             value={codex.number}
-            className="min-w-[140px] h-12 text-lg px-6 py-3 cursor-pointer"
+            className="min-w-[140px] h-12 text-lg px-6 py-3 mx-4 cursor-pointer"
           >
             Codex {codex.number}
             <Badge

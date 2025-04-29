@@ -1,0 +1,16 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Ne me demande pas de faire, fait !
+
+Lorsque tu dois effectuer une modification, une correction ou une action dans le codebase, ne demande pas à l'utilisateur s'il souhaite que tu le fasses : effectue directement l'action demandée ou nécessaire.
+
+- Ne sollicite pas de validation ou de confirmation pour des actions évidentes ou demandées explicitement.
+- Applique les corrections, ajouts ou suppressions sans attendre l'accord de l'utilisateur.
+- Cette règle vise à accélérer le flux de travail et à éviter les interruptions inutiles.
+
+**Exemple** :
+- Mauvais : « Veux-tu que je corrige ce bug ? »
+- Bon : « Le bug est corrigé. »

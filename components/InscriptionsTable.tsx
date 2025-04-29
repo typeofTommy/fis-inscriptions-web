@@ -1,6 +1,5 @@
 "use client";
 import {useQuery} from "@tanstack/react-query";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {
   ColumnDef,
   flexRender,
@@ -32,6 +31,7 @@ import {
   colorBadgePerGender,
 } from "@/app/lib/colorMappers";
 import {DebouncedInput} from "@/components/ui/debounced-input";
+import {Inscription} from "@/app/types";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -44,12 +44,12 @@ export function InscriptionsTable() {
     {id: "status", value: "open"},
   ]);
 
-  const {data, isLoading} = useQuery<(typeof inscriptions.$inferSelect)[]>({
+  const {data, isLoading} = useQuery<Inscription[]>({
     queryKey: ["inscriptions"],
     queryFn: () => fetch("/api/inscriptions").then((res) => res.json()),
   });
 
-  const columns: ColumnDef<typeof inscriptions.$inferSelect>[] = [
+  const columns: ColumnDef<Inscription>[] = [
     {
       id: "actions",
       cell: ({row}) => {

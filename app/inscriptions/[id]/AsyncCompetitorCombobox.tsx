@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import {Combobox, ComboboxOption} from "@/components/ui/combobox";
 import {useQuery} from "@tanstack/react-query";
 import {Loader2} from "lucide-react";
-import {competitors} from "@/drizzle/schemaInscriptions";
+import {Competitor} from "@/app/types";
 
 const MIN_SEARCH_LENGTH = 4;
 
@@ -46,12 +46,10 @@ export default function AsyncCompetitorCombobox({
   const {data: results = [], isLoading} = useCompetitors(debouncedSearch);
 
   // Adapter les résultats au format ComboboxOption
-  const options: ComboboxOption[] = results.map(
-    (c: typeof competitors.$inferSelect) => ({
-      value: c.competitorid.toString(),
-      label: `${c.firstname} ${c.lastname} (${c.nationcode})`,
-    })
-  );
+  const options: ComboboxOption[] = results.map((c: Competitor) => ({
+    value: c.competitorid.toString(),
+    label: `${c.firstname} ${c.lastname} (${c.nationcode})`,
+  }));
 
   return (
     <div className="relative space-y-2">
