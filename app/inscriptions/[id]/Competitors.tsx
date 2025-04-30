@@ -9,7 +9,6 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import {format} from "date-fns";
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {Loader2, Trash2} from "lucide-react";
 import {
@@ -26,14 +25,14 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {usePermissionToEdit} from "./usePermissionToEdit";
-import {Discipline} from "@/app/types";
+import {Discipline, InscriptionCompetitor} from "@/app/types";
 
 function useInscriptionCompetitors(
   inscriptionId: string,
   codexNumber: string,
   discipline: Discipline
 ) {
-  return useQuery({
+  return useQuery<InscriptionCompetitor[]>({
     queryKey: [
       "inscription-competitors",
       inscriptionId,
@@ -102,6 +101,9 @@ export const Competitors = ({
     isPending,
     error,
   } = useInscriptionCompetitors(inscriptionId, codexNumber, discipline);
+
+  console.log({competitors});
+
   const {data: inscription} = useQuery({
     queryKey: ["inscriptions", inscriptionId],
     queryFn: () =>
@@ -162,10 +164,6 @@ export const Competitors = ({
           <TableRow>
             <TableHead>Nom</TableHead>
             <TableHead>Prénom</TableHead>
-            <TableHead>Sexe</TableHead>
-            <TableHead>Date de naissance</TableHead>
-            <TableHead>Nation</TableHead>
-            <TableHead>Club</TableHead>
             <TableHead>Points FIS ({discipline})</TableHead>
             {permissionToEdit && <TableHead>Action</TableHead>}
           </TableRow>
@@ -173,18 +171,10 @@ export const Competitors = ({
         <TableBody>
           {(competitors || [])
             .sort((b, a) => a.points - b.points)
-            .map((c: any) => (
-              <TableRow key={c.competitorid}>
+            .map((c) => (
+              <TableRow key={c.competitorId}>
                 <TableCell>{c.lastname}</TableCell>
                 <TableCell>{c.firstname}</TableCell>
-                <TableCell>{c.gender}</TableCell>
-                <TableCell>
-                  {c.birthdate
-                    ? format(new Date(c.birthdate), "dd/MM/yyyy")
-                    : ""}
-                </TableCell>
-                <TableCell>{c.nationcode}</TableCell>
-                <TableCell>{c.skiclub}</TableCell>
                 <TableCell>{c.points || "-"}</TableCell>
                 {permissionToEdit && (
                   <TableCell>
