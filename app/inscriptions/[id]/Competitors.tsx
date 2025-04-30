@@ -103,8 +103,6 @@ export const Competitors = ({
     error,
   } = useInscriptionCompetitors(inscriptionId, codexNumber, discipline);
 
-  console.log({competitors});
-
   const {data: inscription} = useQuery({
     queryKey: ["inscriptions", inscriptionId],
     queryFn: () =>
