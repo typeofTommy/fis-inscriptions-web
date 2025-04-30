@@ -26,6 +26,7 @@ import {Badge} from "@/components/ui/badge";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {usePermissionToEdit} from "./usePermissionToEdit";
 import {Discipline, InscriptionCompetitor} from "@/app/types";
+import {format} from "date-fns";
 
 function useInscriptionCompetitors(
   inscriptionId: string,
@@ -164,6 +165,7 @@ export const Competitors = ({
           <TableRow>
             <TableHead>Nom</TableHead>
             <TableHead>Prénom</TableHead>
+            <TableHead>Année de naissance</TableHead>
             <TableHead>Points FIS ({discipline})</TableHead>
             {permissionToEdit && <TableHead>Action</TableHead>}
           </TableRow>
@@ -175,6 +177,9 @@ export const Competitors = ({
               <TableRow key={c.competitorId}>
                 <TableCell>{c.lastname}</TableCell>
                 <TableCell>{c.firstname}</TableCell>
+                <TableCell>
+                  {c.birthdate ? format(new Date(c.birthdate), "yyyy") : ""}
+                </TableCell>
                 <TableCell>{c.points || "-"}</TableCell>
                 {permissionToEdit && (
                   <TableCell>
