@@ -40,9 +40,6 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),
   fullName: text("full_name").notNull(),
-  country: text("country").notNull(),
-  location: text("location").notNull(),
-  eventLink: text("event_link").notNull(),
   firstRaceDate: date("first_race_date").notNull(),
   lastRaceDate: date("last_race_date").notNull(),
   codexData: jsonb("codex_data")
@@ -56,6 +53,7 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
     >()
     .notNull(),
   status: inscriptionStatus("status").notNull().default("open"),
+  location: integer("location").references(() => stations.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   createdBy: text("created_by").notNull(),
 });

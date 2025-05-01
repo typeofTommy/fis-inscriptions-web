@@ -4,6 +4,7 @@ import {db} from "@/app/db/inscriptionsDB";
 import {
   inscriptions,
   inscriptionCompetitors,
+  stations,
 } from "@/drizzle/schemaInscriptions";
 
 export async function GET(
@@ -29,16 +30,8 @@ export async function GET(
 
     const foundInscription = inscription[0];
 
-    // Safely format location
-    const formattedLocation = foundInscription.location
-      ? foundInscription.location[0].toUpperCase() +
-        foundInscription.location.slice(1)
-      : ""; // Default to empty string if location is null/empty
-
-    return NextResponse.json({
-      ...foundInscription,
-      location: formattedLocation, // Use the safely formatted location
-    });
+    // Retourne simplement l'id de la station (number ou null)
+    return NextResponse.json(foundInscription);
   } catch (error) {
     console.error("Erreur lors de la récupération de l'inscription:", error);
     return new NextResponse("Erreur interne du serveur", {status: 500});
@@ -56,28 +49,36 @@ export async function PATCH(
 
     // Extract editable fields from the request body
     // Status updates are handled separately, so we don't expect status here.
-    const {
-      location,
-      country,
-      eventLink,
-      firstRaceDate,
-      lastRaceDate,
-      codexData,
-    } = json;
+    let location = json.location;
+    const customStation = json.customStation;
+    const country = json.country;
+    const firstRaceDate = json.firstRaceDate;
+    const lastRaceDate = json.lastRaceDate;
+    const codexData = json.codexData;
 
     // Basic validation (more can be added with Zod if needed)
-    if (
-      !location ||
-      !country ||
-      !eventLink ||
-      !firstRaceDate ||
-      !lastRaceDate ||
-      !codexData
-    ) {
+    if (!country || !firstRaceDate || !lastRaceDate || !codexData) {
       return NextResponse.json(
         {error: "Données manquantes pour la mise à jour."},
         {status: 400}
       );
+    }
+
+    // Si customStation est présent, insérer ou retrouver la station et utiliser son id
+    if (customStation && (!location || location === null)) {
+      const station = await db
+        .select()
+        .from(stations)
+        .where(eq(stations.name, customStation.toLowerCase()));
+      if (!station.length) {
+        const inserted = await db
+          .insert(stations)
+          .values({name: customStation.toLowerCase(), country})
+          .returning();
+        location = inserted[0].id;
+      } else {
+        location = station[0].id;
+      }
     }
 
     // Get current inscription data to compare codex data
@@ -120,8 +121,6 @@ export async function PATCH(
       .update(inscriptions)
       .set({
         location,
-        country,
-        eventLink,
         firstRaceDate,
         lastRaceDate,
         codexData,

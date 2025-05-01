@@ -9,8 +9,8 @@ const inscriptionSchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(2),
   country: z.string(),
-  location: z.string().min(2),
-  eventLink: z.string().url(),
+  location: z.number().nullable(),
+  customStation: z.string().optional(),
   codexData: z
     .array(
       z.object({
@@ -47,19 +47,37 @@ export async function POST(request: Request) {
       fullName,
       country,
       location,
-      eventLink,
+      customStation,
       codexData,
       firstRaceDate,
       lastRaceDate,
       createdBy,
     } = body.data;
 
+    let locationId = location;
+    if (customStation && (!location || location === null)) {
+      // Chercher la station par nom (insensible à la casse)
+      const station = await db
+        .select()
+        .from(stations)
+        .where(eq(stations.name, customStation.toLowerCase()));
+      if (!station.length) {
+        // Insérer la station si pas trouvée
+        const inserted = await db
+          .insert(stations)
+          .values({name: customStation.toLowerCase(), country})
+          .returning();
+        locationId = inserted[0].id;
+      } else {
+        locationId = station[0].id;
+      }
+    }
+
     const newInscription = {
       email,
       fullName,
       country,
-      location: location.toLowerCase(),
-      eventLink,
+      location: locationId,
       codexData,
       firstRaceDate,
       lastRaceDate,
@@ -70,17 +88,6 @@ export async function POST(request: Request) {
       .insert(inscriptions)
       .values(newInscription)
       .returning();
-
-    // insert the station
-
-    const station = await db
-      .select()
-      .from(stations)
-      .where(eq(stations.name, location.toLowerCase()));
-
-    if (!station) {
-      await db.insert(stations).values({name: location.toLowerCase(), country});
-    }
 
     return NextResponse.json({
       inscription: result[0],
@@ -101,8 +108,7 @@ export async function GET() {
     )
     .map((inscription) => ({
       ...inscription,
-      location:
-        inscription.location[0].toUpperCase() + inscription.location.slice(1),
+      location: inscription.location ?? "",
     }));
   return NextResponse.json(inscripList);
 }

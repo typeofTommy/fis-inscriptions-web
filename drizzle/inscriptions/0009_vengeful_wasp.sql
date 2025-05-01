@@ -1,0 +1,1 @@
+ALTER TABLE "inscriptionsDB"."inscriptions" DROP COLUMN "event_link";

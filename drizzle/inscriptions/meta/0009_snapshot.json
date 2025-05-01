@@ -1,6 +1,6 @@
 {
-  "id": "03d67c97-0677-4566-927f-ce3f331777cd",
-  "prevId": "00b56a07-b90a-443c-a46f-ed6db3f7162b",
+  "id": "3e938d54-f1af-4268-aa45-31b4a2e9b2b0",
+  "prevId": "03d67c97-0677-4566-927f-ce3f331777cd",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -299,12 +299,6 @@
         },
         "full_name": {
           "name": "full_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_link": {
-          "name": "event_link",
           "type": "text",
           "primaryKey": false,
           "notNull": true

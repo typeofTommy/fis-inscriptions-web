@@ -32,6 +32,7 @@ import {
 } from "@/app/lib/colorMappers";
 import {DebouncedInput} from "@/components/ui/debounced-input";
 import {Inscription} from "@/app/types";
+import {useStations} from "@/app/inscriptions/form/api";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -48,6 +49,8 @@ export function InscriptionsTable() {
     queryKey: ["inscriptions"],
     queryFn: () => fetch("/api/inscriptions").then((res) => res.json()),
   });
+
+  const {data: stations} = useStations();
 
   const columns: ColumnDef<Inscription>[] = [
     {
@@ -92,16 +95,39 @@ export function InscriptionsTable() {
     },
     {
       accessorKey: "location",
-      header: ({column}) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="cursor-pointer"
-          >
-            Station
-          </Button>
-        );
+      header: ({column}) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="cursor-pointer"
+        >
+          Station
+        </Button>
+      ),
+      cell: ({row}) => {
+        const locationId = row.original.location;
+        let stationName = "";
+        if (stations && locationId) {
+          const foundStation = stations.find((s: any) => s.id === locationId);
+          stationName = foundStation
+            ? foundStation.name
+            : `Station #${locationId}`;
+        } else if (locationId) {
+          stationName = `Station #${locationId}`;
+        } else {
+          stationName = "Non renseigné";
+        }
+        return <span>{stationName}</span>;
+      },
+      filterFn: (row, id, filterValue) => {
+        if (!filterValue || filterValue === "all") return true;
+        if (!stations) return true;
+        const locationId = row.original.location;
+        const foundStation = stations.find((s: any) => s.id === locationId);
+        const stationName = foundStation
+          ? foundStation.name
+          : `Station #${locationId}`;
+        return stationName.toLowerCase().includes(filterValue.toLowerCase());
       },
     },
     {
@@ -264,10 +290,10 @@ export function InscriptionsTable() {
   });
 
   // Mémoïsation des options pour les Selects de filtres
-  const locationOptions = useMemo(
-    () => Array.from(new Set((data ?? []).map((row) => row.location))).sort(),
-    [data]
-  );
+  const locationOptions = useMemo(() => {
+    if (!stations) return [];
+    return stations.map((s: any) => ({value: s.name, label: s.name}));
+  }, [stations]);
   const countryOptions = useMemo(
     () => Array.from(new Set((data ?? []).map((row) => row.country))).sort(),
     [data]
@@ -361,8 +387,8 @@ export function InscriptionsTable() {
             <SelectContent>
               <SelectItem value="all">Toutes</SelectItem>
               {locationOptions.map((loc) => (
-                <SelectItem key={loc} value={loc}>
-                  {loc}
+                <SelectItem key={loc.value} value={loc.value}>
+                  {loc.label}
                 </SelectItem>
               ))}
             </SelectContent>

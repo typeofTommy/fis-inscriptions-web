@@ -127,7 +127,6 @@ const InscriptionFormInner = ({
       fullName: "",
       country: "",
       location: "",
-      eventLink: "",
       codexNumbers: [
         {number: "", sex: "M", discipline: "SL", raceLevel: "FIS"},
       ],
@@ -141,35 +140,34 @@ const InscriptionFormInner = ({
   // Mise à jour des valeurs du formulaire quand l'inscription est chargée
   useEffect(() => {
     if (isEdit && inscription && !stationsLoading) {
-      // Vérifier si la station existe dans la liste
-      const stationExists = stations.some(
-        (s) => s.name.toLowerCase() === inscription.location.toLowerCase()
-      );
+      // Si location est un id, on cherche la station correspondante
       const matchingStation = stations.find(
-        (s) => s.name.toLowerCase() === inscription.location.toLowerCase()
+        (s) => s.id === inscription.location
       );
-
-      // Ne pas forcer en minuscules ici
       const locationValue = matchingStation
-        ? matchingStation.name
-        : inscription.location;
-
+        ? matchingStation.id.toString()
+        : "__autre__";
       form.reset({
         email: inscription.email,
         fullName: inscription.fullName,
         createdBy: inscription.createdBy,
-        country: inscription.country,
-        eventLink: inscription.eventLink,
         codexNumbers: Array.isArray(inscription.codexData)
           ? inscription.codexData
           : [inscription.codexData],
         firstRaceDate: parseLocalDate(inscription.firstRaceDate),
         lastRaceDate: parseLocalDate(inscription.lastRaceDate),
-        location: stationExists
-          ? locationValue
-          : inscription.location || "__autre__",
-        customStation: stationExists ? "" : inscription.location,
+        location: locationValue,
+        customStation: matchingStation
+          ? ""
+          : inscription.location
+          ? inscription.location.toString()
+          : "",
+        country: matchingStation ? matchingStation.country : "",
       });
+      // Workaround pour RHF + Select custom
+      setTimeout(() => {
+        form.setValue("location", locationValue, {shouldValidate: true});
+      }, 0);
     }
   }, [isEdit, inscription, stations, stationsLoading, form]);
 
@@ -185,8 +183,15 @@ const InscriptionFormInner = ({
   const onSubmit = async (
     values: z.infer<typeof inscriptionFormSchema> & {customStation?: string}
   ) => {
+    // Debug : log la valeur de location juste avant la validation Zod
+    console.log(
+      "[DEBUG] onSubmit location:",
+      values.location,
+      typeof values.location
+    );
     try {
-      let finalLocation = values.location.toLowerCase();
+      let finalLocation: number | null = null;
+      let customStationName = undefined;
       if (values.location === "__autre__") {
         if (!values.customStation || values.customStation.trim().length < 2) {
           toast({
@@ -196,21 +201,26 @@ const InscriptionFormInner = ({
           });
           return;
         }
-        finalLocation = values.customStation.trim().toLowerCase();
+        finalLocation = null;
+        customStationName = values.customStation.trim();
+      } else {
+        finalLocation = Number(values.location);
       }
 
-      const newInscription = {
+      const newInscription: any = {
         email: values.email,
         fullName: values.fullName,
         country: values.country,
-        location: finalLocation.toLowerCase(),
-        eventLink: values.eventLink,
+        location: finalLocation,
         codexData: values.codexNumbers,
         firstRaceDate: values.firstRaceDate.toISOString(),
         lastRaceDate: values.lastRaceDate.toISOString(),
         createdBy: values.createdBy,
         id: inscription?.id,
       };
+      if (customStationName) {
+        newInscription.customStation = customStationName;
+      }
 
       let returnedInscription;
 
@@ -329,6 +339,13 @@ const InscriptionFormInner = ({
           <form
             onSubmit={form.handleSubmit(onSubmit, (errors, values) => {
               console.log("ZOD ERRORS", errors, values);
+              if (form.getValues) {
+                console.log(
+                  "[DEBUG] ZOD ERROR form.getValues location:",
+                  JSON.stringify(form.getValues("location")),
+                  typeof form.getValues("location")
+                );
+              }
             })}
             className="space-y-6"
           >
@@ -342,11 +359,11 @@ const InscriptionFormInner = ({
                   </FormLabel>
                   <FormControl>
                     <Select
-                      value={field.value}
+                      value={field.value?.toString() ?? ""}
                       onValueChange={(value) => {
-                        field.onChange(value); // Ne pas forcer en minuscules ici
+                        field.onChange(value.toString());
                         const selectedStation = stations.find(
-                          (s) => s.name === value
+                          (s) => s.id.toString() === value
                         );
                         if (selectedStation) {
                           form.setValue("country", selectedStation.country);
@@ -360,8 +377,12 @@ const InscriptionFormInner = ({
                         {stations
                           .sort((a, b) => a.name.localeCompare(b.name))
                           .map((station) => (
-                            <SelectItem key={station.id} value={station.name}>
-                              {station.name}
+                            <SelectItem
+                              key={station.id}
+                              value={station.id.toString()}
+                            >
+                              {station.name[0].toUpperCase() +
+                                station.name.slice(1)}
                             </SelectItem>
                           ))}
                         <SelectItem value="__autre__">Autre...</SelectItem>
@@ -381,7 +402,14 @@ const InscriptionFormInner = ({
                         <Input
                           {...field}
                           placeholder="Nom de la station"
-                          value={field.value?.toLowerCase() || ""}
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            console.log(
+                              "inside customStation onChange",
+                              e.target.value
+                            );
+                            field.onChange(e.target.value);
+                          }}
                         />
                       </div>
                     )}
@@ -494,26 +522,6 @@ const InscriptionFormInner = ({
                   </FormItem>
                 );
               }}
-            />
-
-            <FormField
-              control={form.control}
-              name="eventLink"
-              render={({field}) => (
-                <FormItem>
-                  <FormLabel className="text-base text-[#3d7cf2]">
-                    Lien évènement <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="url"
-                      placeholder="ex: https://beta.fis-ski.com/DB/general/event-details.html?sectorcode=AL&eventid=54647&seasoncode=2024"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-500 text-sm" />
-                </FormItem>
-              )}
             />
 
             {/* Codex Dynamic Fields */}
@@ -664,12 +672,10 @@ const inscriptionFormSchema = z.object({
   country: z.string({
     required_error: "Veuillez sélectionner un pays.",
   }),
-  location: z.string().min(2, {
-    message: "Le lieu de compétition doit contenir au moins 2 caractères.",
-  }),
-  eventLink: z.string().url({
-    message: "Veuillez entrer une URL valide.",
-  }),
+  location: z.union([
+    z.string().regex(/^\d+$/, {message: "Sélectionnez une station."}),
+    z.literal("__autre__"),
+  ]),
   codexNumbers: z
     .array(
       z.object({

@@ -43,8 +43,54 @@ export async function GET(
     return NextResponse.json(result);
   }
 
-  if (!inscriptionId || !codexNumber) {
+  if (!inscriptionId) {
     return NextResponse.json({error: "Missing parameters"}, {status: 400});
+  }
+
+  // Si codexNumber n'est pas fourni, on retourne les infos de tous les codex pour cet event
+  if (!codexNumber) {
+    // On récupère tous les codexNumbers pour cette inscription
+    const inscription = await db
+      .select({codexData: inscriptions.codexData})
+      .from(inscriptions)
+      .where(eq(inscriptions.id, inscriptionId));
+    const codexData = inscription[0]?.codexData || [];
+    // Pour chaque codex, on récupère les competitorIds et leurs infos
+    const result = await Promise.all(
+      codexData.map(async (codex: any) => {
+        // 1. Récupérer les competitorIds liés à cette inscription et ce codex
+        const links = await db
+          .select({competitorId: inscriptionCompetitors.competitorId})
+          .from(inscriptionCompetitors)
+          .where(
+            and(
+              eq(inscriptionCompetitors.inscriptionId, inscriptionId),
+              eq(inscriptionCompetitors.codexNumber, codex.number)
+            )
+          );
+        const competitorIds = links.map((l) => l.competitorId);
+        if (competitorIds.length === 0) {
+          return {codexNumber: codex.number, competitors: []};
+        }
+        // 2. Récupérer les infos des coureurs dans la base FIS
+        const competitorsData = await db
+          .select({
+            competitorid: competitors.competitorid,
+            fiscode: competitors.fiscode,
+            lastname: competitors.lastname,
+            firstname: competitors.firstname,
+            nationcode: competitors.nationcode,
+            gender: competitors.gender,
+            birthdate: competitors.birthdate,
+            skiclub: competitors.skiclub,
+            points: competitors.acpoints, // Par défaut AC si pas de discipline précisée
+          })
+          .from(competitors)
+          .where(inArray(competitors.competitorid, competitorIds.map(Number)));
+        return {codexNumber: codex.number, competitors: competitorsData};
+      })
+    );
+    return NextResponse.json(result);
   }
 
   // 1. Récupérer les competitorIds liés à cette inscription et ce codex

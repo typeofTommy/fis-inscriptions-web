@@ -58,12 +58,12 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
       onValueChange={setActiveCodex}
       value={activeCodex}
     >
-      <TabsList className="bg-transparent">
+      <TabsList className="bg-transparent flex gap-4">
         {codexData.map((codex) => (
           <TabsTrigger
             key={codex.number}
             value={codex.number}
-            className="min-w-[140px] h-12 text-lg px-6 py-3 mx-4 cursor-pointer"
+            className="min-w-[140px] h-12 text-lg px-6 py-3 cursor-pointer border border-slate-200 rounded-md transition-all duration-150 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:border-2 data-[state=active]:border-slate-300 data-[state=active]:text-black data-[state=active]:font-bold data-[state=active]:z-10 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:border-slate-200 data-[state=inactive]:shadow-none data-[state=inactive]:z-0"
           >
             Codex {codex.number}
             <Badge

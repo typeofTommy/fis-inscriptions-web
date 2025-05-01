@@ -3,7 +3,7 @@
 import {Loader2, MapPinIcon, CalendarIcon, LinkIcon} from "lucide-react";
 import {InscriptionActionsMenu} from "./InscriptionActionsMenu";
 import {usePermissionToEdit} from "./usePermissionToEdit";
-import {useInscription} from "../form/api";
+import {useInscription, useStations} from "../form/api";
 import {parseLocalDate} from "@/app/lib/dates";
 
 interface InscriptionDetailsProps {
@@ -12,6 +12,7 @@ interface InscriptionDetailsProps {
 
 export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
   const {data: inscription, isLoading, error} = useInscription(id);
+  const {data: stations} = useStations();
 
   const permissionToEdit = usePermissionToEdit(inscription);
 
@@ -33,6 +34,19 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
 
   if (!inscription) {
     return null;
+  }
+
+  // Trouver le nom de la station à partir de l'id
+  let stationName = "Non renseigné";
+  let stationCountry = "";
+  if (stations && inscription.location) {
+    const foundStation = stations.find(
+      (s: any) => s.id === inscription.location
+    );
+    if (foundStation) {
+      stationName = foundStation.name;
+      stationCountry = foundStation.country;
+    }
   }
 
   return (
@@ -105,23 +119,14 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
               <div>
                 <p className="text-sm font-medium text-slate-500 mb-1">Lieu</p>
                 <p className="text-base font-medium text-slate-800">
-                  {inscription.location} ({inscription.country})
+                  {stationName[0].toUpperCase() + stationName.slice(1)}
+                  {stationCountry ? ` (${stationCountry})` : ""}
                 </p>
               </div>
             </div>
             <div className="flex items-center">
               <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mr-4">
                 <LinkIcon className="h-6 w-6 text-sky-500" />
-              </div>
-              <div>
-                <a
-                  href={inscription.eventLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sky-600 hover:text-sky-800 text-base font-medium"
-                >
-                  Lien de l&apos;événement
-                </a>
               </div>
             </div>
           </div>
