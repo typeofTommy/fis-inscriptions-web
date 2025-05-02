@@ -23,6 +23,7 @@ import {Badge} from "@/components/ui/badge";
 import {
   colorBadgePerDiscipline,
   colorBadgePerGender,
+  colorBadgePerRaceLevel,
 } from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
 
@@ -133,6 +134,13 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
                 >
                   {codex.sex}
                 </Badge>
+                <Badge
+                  className={`text-xs px-2 py-1 cursor-pointer ${
+                    colorBadgePerRaceLevel[codex.raceLevel] || "bg-gray-300"
+                  }`}
+                >
+                  {codex.raceLevel}
+                </Badge>
               </div>
             ),
             cell: (info) => (
@@ -151,7 +159,6 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-
   // 4. Loading / Error / Empty States
   if (isLoadingInscription || isPending) {
     return (
