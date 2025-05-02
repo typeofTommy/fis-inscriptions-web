@@ -176,12 +176,6 @@ const InscriptionFormInner = ({
   const onSubmit = async (
     values: z.infer<typeof inscriptionFormSchema> & {customStation?: string}
   ) => {
-    // Debug : log la valeur de location juste avant la validation Zod
-    console.log(
-      "[DEBUG] onSubmit location:",
-      values.location,
-      typeof values.location
-    );
     try {
       let finalLocation: number | null = null;
       let customStationName = undefined;
@@ -332,13 +326,6 @@ const InscriptionFormInner = ({
           <form
             onSubmit={form.handleSubmit(onSubmit, (errors, values) => {
               console.log("ZOD ERRORS", errors, values);
-              if (form.getValues) {
-                console.log(
-                  "[DEBUG] ZOD ERROR form.getValues location:",
-                  JSON.stringify(form.getValues("location")),
-                  typeof form.getValues("location")
-                );
-              }
             })}
             className="space-y-6"
           >
@@ -397,10 +384,6 @@ const InscriptionFormInner = ({
                           placeholder="Nom de la station"
                           value={field.value || ""}
                           onChange={(e) => {
-                            console.log(
-                              "inside customStation onChange",
-                              e.target.value
-                            );
                             field.onChange(e.target.value);
                           }}
                         />

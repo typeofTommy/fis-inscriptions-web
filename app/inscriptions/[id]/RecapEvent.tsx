@@ -151,7 +151,6 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-  console.log({competitorsData, allCompetitors});
 
   // 4. Loading / Error / Empty States
   if (isLoadingInscription || isPending) {
