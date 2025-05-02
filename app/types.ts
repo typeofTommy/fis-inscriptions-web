@@ -14,6 +14,7 @@ export type Competitor = typeof competitors.$inferSelect;
 export type RaceLevel = typeof raceLevels.$inferSelect;
 export type Sex = typeof sexes.$inferSelect;
 export type Station = typeof stations.$inferSelect;
+export type CodexData = (typeof inscriptions.$inferSelect)["codexData"][number];
 export type InscriptionCompetitor =
   typeof inscriptionCompetitors.$inferSelect & {
     points: number;

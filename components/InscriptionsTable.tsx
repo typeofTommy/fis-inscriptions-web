@@ -31,7 +31,7 @@ import {
   colorBadgePerGender,
 } from "@/app/lib/colorMappers";
 import {DebouncedInput} from "@/components/ui/debounced-input";
-import {Inscription} from "@/app/types";
+import {CodexData, Inscription} from "@/app/types";
 import {useStations} from "@/app/inscriptions/form/api";
 
 const statusColors: Record<string, string> = {
@@ -319,7 +319,7 @@ export function InscriptionsTable() {
       Array.from(
         new Set(
           (data ?? []).flatMap((row) =>
-            row.codexData.map((c: any) => c.discipline)
+            row.codexData.map((c: CodexData) => c.discipline)
           )
         )
       ).sort(),

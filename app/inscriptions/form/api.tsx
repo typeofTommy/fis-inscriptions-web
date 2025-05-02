@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import {fetchCountries, useDebouncedValue} from "./lib";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
-import {Inscription} from "@/app/types";
+import {Inscription, Station} from "@/app/types";
 
 export const useCountries = () => {
   return useQuery({
@@ -18,7 +18,7 @@ export const useCountries = () => {
 };
 
 export const useStations = () => {
-  return useQuery({
+  return useQuery<Station[]>({
     queryKey: ["stations"],
     queryFn: () => fetch("/api/stations").then((res) => res.json()),
     staleTime: 1000 * 60 * 60, // 1 heure
