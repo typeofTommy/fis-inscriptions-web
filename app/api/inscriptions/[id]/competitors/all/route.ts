@@ -58,24 +58,26 @@ export const GET = async (
     .where(inArray(competitors.competitorid, competitorIds.map(Number)));
 
   // Formater la réponse avec un objet points
-  const result = competitorsData.map((c) => ({
-    competitorid: c.competitorid,
-    fiscode: c.fiscode,
-    lastname: c.lastname,
-    firstname: c.firstname,
-    nationcode: c.nationcode,
-    gender: c.gender,
-    birthdate: c.birthdate,
-    skiclub: c.skiclub,
-    points: {
-      SL: c.pointsSL,
-      SG: c.pointsSG,
-      GS: c.pointsGS,
-      DH: c.pointsDH,
-      AC: c.pointsAC,
-    },
-    codexNumbers: codexMap[c.competitorid] || [],
-  }));
+  const result = competitorsData
+    .map((c) => ({
+      competitorid: c.competitorid,
+      fiscode: c.fiscode,
+      lastname: c.lastname,
+      firstname: c.firstname,
+      nationcode: c.nationcode,
+      gender: c.gender,
+      birthdate: c.birthdate,
+      skiclub: c.skiclub,
+      points: {
+        SL: c.pointsSL ?? 0,
+        SG: c.pointsSG ?? 0,
+        GS: c.pointsGS ?? 0,
+        DH: c.pointsDH ?? 0,
+        AC: c.pointsAC ?? 0,
+      },
+      codexNumbers: codexMap[c.competitorid] || [],
+    }))
+    .filter((c) => Array.isArray(c.codexNumbers) && c.codexNumbers.length > 0);
 
   return NextResponse.json(result);
 };

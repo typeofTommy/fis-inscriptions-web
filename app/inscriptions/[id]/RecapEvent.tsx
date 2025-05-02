@@ -107,7 +107,12 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
             const isInscrit =
               Array.isArray(row.codexNumbers) &&
               row.codexNumbers.includes(String(codex.number));
-            return isInscrit ? row.points[codex.discipline] ?? "-" : "-";
+            // Si inscrit mais pas de points, retourne 0. Si pas inscrit, retourne '-'.
+            if (isInscrit) {
+              const val = row.points[codex.discipline];
+              return val === null || val === undefined || val === "" ? 0 : val;
+            }
+            return "-";
           },
           {
             id: String(codex.number),
@@ -131,9 +136,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
               </div>
             ),
             cell: (info) => (
-              <div className="text-center min-w-[120px]">
-                {info.getValue() || "-"}
-              </div>
+              <div className="text-center min-w-[120px]">{info.getValue()}</div>
             ),
           }
         )
