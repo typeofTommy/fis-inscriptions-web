@@ -117,7 +117,9 @@ export function InscriptionsTable() {
         } else {
           stationName = "Non renseigné";
         }
-        return <span>{stationName}</span>;
+        return (
+          <span>{stationName[0].toUpperCase() + stationName.slice(1)}</span>
+        );
       },
       filterFn: (row, id, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
@@ -294,10 +296,15 @@ export function InscriptionsTable() {
     if (!stations) return [];
     return stations.map((s: any) => ({value: s.name, label: s.name}));
   }, [stations]);
+
   const countryOptions = useMemo(
-    () => Array.from(new Set((data ?? []).map((row) => row.country))).sort(),
-    [data]
+    () =>
+      Array.from(
+        new Set((stations ?? []).map((station) => station.country))
+      ).sort(),
+    [stations]
   );
+
   const codexOptions = useMemo(
     () =>
       Array.from(
@@ -388,7 +395,7 @@ export function InscriptionsTable() {
               <SelectItem value="all">Toutes</SelectItem>
               {locationOptions.map((loc) => (
                 <SelectItem key={loc.value} value={loc.value}>
-                  {loc.label}
+                  {loc.label[0].toUpperCase() + loc.label.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>
