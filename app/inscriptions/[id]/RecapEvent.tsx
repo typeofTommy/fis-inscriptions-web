@@ -159,6 +159,24 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  // Découpe en groupes par sexe
+  const groups = [
+    {label: "Femmes", value: "W"},
+    {label: "Hommes", value: "M"},
+  ];
+
+  // Détection des sexes présents dans les codex de l'évènement
+  const codexSexes = useMemo(() => {
+    if (!inscription?.codexData) return [];
+    const sexes = new Set<string>();
+    for (const codex of inscription.codexData) {
+      if (codex.sex === "F") sexes.add("W");
+      if (codex.sex === "M") sexes.add("M");
+    }
+    return Array.from(sexes);
+  }, [inscription?.codexData]);
+
   // 4. Loading / Error / Empty States
   if (isLoadingInscription || isPending) {
     return (
@@ -185,48 +203,53 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     return 1;
   });
 
-  // Découpe en groupes par sexe
-  const groups = [
-    {label: "Femmes", value: "W"},
-    {label: "Hommes", value: "M"},
-  ];
-
   return (
     <div className="overflow-x-auto">
       <div className="flex items-center gap-4 mb-4 justify-end">
         <div className="flex gap-2 items-center">
-          <span className="text-sm">
-            Ajouter un{addGender === "W" ? "e" : ""} :
-          </span>
-          <button
-            type="button"
-            className={`px-3 py-1 rounded border cursor-pointer ${
-              addGender === "W"
-                ? "bg-blue-100 border-blue-500 text-blue-700"
-                : "bg-white border-gray-300"
-            }`}
-            onClick={() => setAddGender("W")}
-          >
-            Femme
-          </button>
-          <button
-            type="button"
-            className={`px-3 py-1 rounded border cursor-pointer ${
-              addGender === "M"
-                ? "bg-blue-100 border-blue-500 text-blue-700"
-                : "bg-white border-gray-300"
-            }`}
-            onClick={() => setAddGender("M")}
-          >
-            Homme
-          </button>
+          {codexSexes.length === 1 ? (
+            <AddCompetitorModal
+              inscriptionId={inscriptionId}
+              defaultCodex={""}
+              gender={codexSexes[0] as "W" | "M"}
+              codexData={inscription?.codexData || []}
+            />
+          ) : (
+            <>
+              <span className="text-sm">
+                Ajouter un{addGender === "W" ? "e" : ""} :
+              </span>
+              <button
+                type="button"
+                className={`px-3 py-1 rounded border cursor-pointer ${
+                  addGender === "W"
+                    ? "bg-blue-100 border-blue-500 text-blue-700"
+                    : "bg-white border-gray-300"
+                }`}
+                onClick={() => setAddGender("W")}
+              >
+                Femme
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-1 rounded border cursor-pointer ${
+                  addGender === "M"
+                    ? "bg-blue-100 border-blue-500 text-blue-700"
+                    : "bg-white border-gray-300"
+                }`}
+                onClick={() => setAddGender("M")}
+              >
+                Homme
+              </button>
+              <AddCompetitorModal
+                inscriptionId={inscriptionId}
+                defaultCodex={""}
+                gender={addGender}
+                codexData={inscription?.codexData || []}
+              />
+            </>
+          )}
         </div>
-        <AddCompetitorModal
-          inscriptionId={inscriptionId}
-          defaultCodex={""}
-          gender={addGender}
-          codexData={inscription?.codexData || []}
-        />
       </div>
       <Table>
         <TableHeader>
