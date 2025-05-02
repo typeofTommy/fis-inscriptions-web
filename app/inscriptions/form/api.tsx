@@ -2,6 +2,7 @@ import {
   UseBaseQueryOptions,
   useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 import {fetchCountries, useDebouncedValue} from "./lib";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
@@ -27,6 +28,7 @@ export const useStations = () => {
 };
 
 export const useCreateInscription = () => {
+  const queryClient = useQueryClient();
   const createInscription = useMutation({
     mutationFn: async (
       inscription: Omit<typeof inscriptions.$inferInsert, "id" | "createdAt">
@@ -39,6 +41,13 @@ export const useCreateInscription = () => {
         throw new Error("Erreur lors de l'enregistrement de l'inscription");
       }
       return response.json();
+    },
+    onSuccess: (data) => {
+      if (data?.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["inscription-competitors-all", data.id],
+        });
+      }
     },
   });
   return {createInscription};
@@ -85,6 +94,7 @@ export const useInscription = (
 };
 
 export const useUpdateInscription = () => {
+  const queryClient = useQueryClient();
   const updateInscription = useMutation({
     mutationFn: async (inscription: Partial<Inscription>) => {
       const response = await fetch(`/api/inscriptions/${inscription.id}`, {
@@ -95,6 +105,13 @@ export const useUpdateInscription = () => {
         throw new Error("Erreur lors de la mise à jour de l'inscription");
       }
       return response.json();
+    },
+    onSuccess: (data, variables) => {
+      if (variables?.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["inscription-competitors-all", variables.id],
+        });
+      }
     },
   });
   return {updateInscription};

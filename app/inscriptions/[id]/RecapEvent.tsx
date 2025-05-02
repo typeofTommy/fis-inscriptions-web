@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import {useMemo} from "react";
+import React, {useMemo, useState} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {useInscription} from "../form/api";
 import {Loader2} from "lucide-react";
@@ -20,16 +19,30 @@ import {
   getCoreRowModel,
   createColumnHelper,
 } from "@tanstack/react-table";
+import {Badge} from "@/components/ui/badge";
+import {
+  colorBadgePerDiscipline,
+  colorBadgePerGender,
+} from "@/app/lib/colorMappers";
+import AddCompetitorModal from "./AddCompetitorModal";
 
-// Hook pour récupérer tous les compétiteurs de l'inscription (tous codex)
+type InscriptionCompetitorWithCodex = InscriptionCompetitor & {
+  codexNumbers: string[];
+};
+
+// Hook pour récupérer tous les compétiteurs de l'inscription (nouvelle structure)
 const useAllInscriptionCompetitors = (inscriptionId: string) => {
   return useQuery<InscriptionCompetitor[]>({
     queryKey: ["inscription-competitors-all", inscriptionId],
     queryFn: async () => {
-      const res = await fetch(`/api/inscriptions/${inscriptionId}/competitors`);
+      const res = await fetch(
+        `/api/inscriptions/${inscriptionId}/competitors/all`
+      );
       if (!res.ok)
         throw new Error("Erreur lors du chargement des compétiteurs");
-      return res.json();
+      // Nouvelle structure: retourne un tableau plat
+      const data = await res.json();
+      return data || [];
     },
   });
 };
@@ -39,12 +52,14 @@ interface RecapEventProps {
 }
 
 // Define a type for the competitor data used in the table
+// (pointsByCodex devient points)
 type CompetitorRow = {
   competitorid: number;
   lastname: string;
   firstname: string;
   gender: string;
-  pointsByCodex: Record<string, string | number | null>;
+  points: Record<string, string | number | null>;
+  codexNumbers: string[];
 };
 
 export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
@@ -53,94 +68,87 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     isLoading: isLoadingInscription,
     error: errorInscription,
   } = useInscription(inscriptionId);
+
   const {
     data: competitorsData = [],
     isPending,
     error,
   } = useAllInscriptionCompetitors(inscriptionId);
 
-  // 1. Data Preparation (moved before hooks depending on it)
-  // Index competitors by codex for quick lookup in cell renderers
-  const competitorsByCodex: Record<string, any[]> = {};
-  competitorsData.forEach((entry: any) => {
-    competitorsByCodex[entry.codexNumber] = entry.competitors;
-  });
+  const [addGender, setAddGender] = useState<"W" | "M">("W");
 
-  // Create a unique list of competitors with points mapped by codex
+  // 1. Data Preparation: on force les champs string à non-null et on normalise le genre
   const allCompetitors: CompetitorRow[] = useMemo(() => {
-    return Array.from(
-      new Map(
-        competitorsData
-          .flatMap((c: any) => c.competitors)
-          .map((c: any) => [
-            c.competitorid,
-            {
-              ...c,
-              // Add pointsByCodex map for easy access in cell rendering
-              pointsByCodex: competitorsData.reduce((acc: any, entry: any) => {
-                const competitorInCodex = entry.competitors.find(
-                  (comp: any) => comp.competitorid === c.competitorid
-                );
-                if (competitorInCodex) {
-                  acc[entry.codexNumber] = competitorInCodex.points;
-                }
-                return acc;
-              }, {}),
-            },
-          ])
-      ).values()
-    );
+    return (competitorsData as InscriptionCompetitorWithCodex[]).map((c) => ({
+      ...c,
+      lastname: c.lastname ?? "",
+      firstname: c.firstname ?? "",
+      gender: c.gender || "M",
+      points: typeof c.points === "object" && c.points !== null ? c.points : {},
+      codexNumbers: (c.codexNumbers || []).map(String),
+    }));
   }, [competitorsData]);
-
-  // Safe fallback for codex data
-  const codexData = inscription?.codexData ?? [];
 
   // 2. TanStack Table Columns Definition (for body rows)
   const columnHelper = createColumnHelper<CompetitorRow>();
 
+  // Colonnes = codex de l'évènement, chaque colonne affiche les points de la discipline du codex
   const columns = useMemo(
     () => [
-      // Column 1: Competitor Name
-      columnHelper.accessor((row) => `${row.lastname} ${row.firstname}`, {
-        id: "competitorName",
-        // Header is rendered manually
-        cell: (info) => <span className="font-bold">{info.getValue()}</span>,
-      }),
-      // Column 2: Gender
-      columnHelper.accessor("gender", {
-        id: "gender",
-        // Header is rendered manually
-        cell: (info) => (
-          <span className="font-bold italic">
-            {info.getValue() === "F" ? "W" : "M"}
-          </span>
-        ), // Assuming 'F' maps to 'W'
-      }),
-      // Column 3: Placeholder for "points/disc" label (rendered manually in header)
-      // This column data cell will be empty, label is in header
       columnHelper.display({
-        id: "pointsLabelPlaceholder",
-        // Header rendered manually
-        cell: () => null, // No data in this cell column
+        id: "name",
+        header: () => "Nom",
+        cell: (info) =>
+          `${info.row.original.firstname} ${info.row.original.lastname}`,
       }),
-      // Columns 4+: Points per Codex
-      ...codexData.map((codex: any) =>
-        columnHelper.accessor((row) => row.pointsByCodex[codex.number], {
-          id: codex.number,
-          // Header is rendered manually
-          cell: (info) => <span>{info.getValue() ?? "-"}</span>, // Display points or '-'
-        })
+      ...(inscription?.codexData ?? []).map((codex) =>
+        columnHelper.accessor(
+          (row) => {
+            const isInscrit =
+              Array.isArray(row.codexNumbers) &&
+              row.codexNumbers.includes(String(codex.number));
+            return isInscrit ? row.points[codex.discipline] ?? "-" : "-";
+          },
+          {
+            id: String(codex.number),
+            header: () => (
+              <div className="flex items-center gap-1 justify-center min-w-[120px]">
+                <span>{codex.number}</span>
+                <Badge
+                  className={`text-xs px-2 py-1 ${
+                    colorBadgePerDiscipline[codex.discipline] || ""
+                  }`}
+                >
+                  {codex.discipline}
+                </Badge>
+                <Badge
+                  className={`text-xs px-2 py-1 text-white ${
+                    colorBadgePerGender[codex.sex === "F" ? "W" : "M"] || ""
+                  }`}
+                >
+                  {codex.sex}
+                </Badge>
+              </div>
+            ),
+            cell: (info) => (
+              <div className="text-center min-w-[120px]">
+                {info.getValue() || "-"}
+              </div>
+            ),
+          }
+        )
       ),
     ],
-    [codexData, columnHelper] // Dependencies for useMemo
+    [columnHelper, inscription?.codexData]
   );
 
   // 3. TanStack Table Instance
   const table = useReactTable({
-    data: allCompetitors, // Use prepared competitor data
+    data: allCompetitors,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+  console.log({competitorsData, allCompetitors});
 
   // 4. Loading / Error / Empty States
   if (isLoadingInscription || isPending) {
@@ -154,134 +162,109 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
   if (errorInscription || error) {
     return <div>Erreur lors du chargement des données.</div>;
   }
-  if (!inscription || !codexData.length) {
+  if (!inscription?.codexData?.length) {
     return <div>Aucun codex pour cet évènement.</div>;
   }
 
-  // 5. Render Component
+  // 5. Render Component (groupé par sexe)
+  // Trie les compétiteurs par sexe (F puis M)
+  const sortedRows = table.getRowModel().rows.sort((a, b) => {
+    const sexA = a.original.gender;
+    const sexB = b.original.gender;
+    if (sexA === sexB) return 0;
+    if (sexA === "F") return -1;
+    return 1;
+  });
+
+  // Découpe en groupes par sexe
+  const groups = [
+    {label: "Femmes", value: "W"},
+    {label: "Hommes", value: "M"},
+  ];
+
   return (
     <div className="overflow-x-auto">
-      {/* Use shadcn Table component for structure */}
-      <Table className="border-collapse border border-slate-400">
-        {/* Manual Header construction to match the target image */}
+      <div className="flex items-center gap-4 mb-4 justify-end">
+        <div className="flex gap-2 items-center">
+          <span className="text-sm">
+            Ajouter un{addGender === "W" ? "e" : ""} :
+          </span>
+          <button
+            type="button"
+            className={`px-3 py-1 rounded border cursor-pointer ${
+              addGender === "W"
+                ? "bg-blue-100 border-blue-500 text-blue-700"
+                : "bg-white border-gray-300"
+            }`}
+            onClick={() => setAddGender("W")}
+          >
+            Femme
+          </button>
+          <button
+            type="button"
+            className={`px-3 py-1 rounded border cursor-pointer ${
+              addGender === "M"
+                ? "bg-blue-100 border-blue-500 text-blue-700"
+                : "bg-white border-gray-300"
+            }`}
+            onClick={() => setAddGender("M")}
+          >
+            Homme
+          </button>
+        </div>
+        <AddCompetitorModal
+          inscriptionId={inscriptionId}
+          defaultCodex={""}
+          gender={addGender}
+          codexData={inscription?.codexData || []}
+        />
+      </div>
+      <Table>
         <TableHeader>
-          {/* Row 1 & 2: Dates */}
-          <TableRow>
-            {/* Placeholder cells for Name/Gender/PointsLabel columns */}
-            <TableHead
-              className="border border-slate-300"
-              colSpan={3}
-              rowSpan={6}
-            />
-            {codexData.map((codex) => (
-              <TableHead
-                key={codex.number + "-datelabel"}
-                className="border border-slate-300 text-center font-bold italic text-sky-400"
-              >
-                dates
-              </TableHead>
-            ))}
-          </TableRow>
-          <TableRow>
-            {codexData.map((codex) => (
-              <TableHead
-                key={codex.number + "-dateval"}
-                className="border border-slate-300 text-center"
-              >
-                TODO {/* Replace with actual date if available */}
-              </TableHead>
-            ))}
-          </TableRow>
-          {/* Row 3 & 4: Discipline */}
-          <TableRow>
-            {codexData.map((codex) => (
-              <TableHead
-                key={codex.number + "-disclabel"}
-                className="border border-slate-300 text-center font-bold italic text-sky-400"
-              >
-                disc
-              </TableHead>
-            ))}
-          </TableRow>
-          <TableRow>
-            {codexData.map((codex) => (
-              <TableHead
-                key={codex.number + "-discval"}
-                className="border border-slate-300 text-center"
-              >
-                {codex.discipline}
-              </TableHead>
-            ))}
-          </TableRow>
-          {/* Row 5 & 6: Codex */}
-          <TableRow>
-            {codexData.map((codex) => (
-              <TableHead
-                key={codex.number + "-codexlabel"}
-                className="border border-slate-300 text-center font-bold italic text-sky-400"
-              >
-                codex
-              </TableHead>
-            ))}
-          </TableRow>
-          <TableRow>
-            {codexData.map((codex) => (
-              <TableHead
-                key={codex.number + "-codexval"}
-                className="border border-slate-300 text-center"
-              >
-                {codex.number}
-              </TableHead>
-            ))}
-          </TableRow>
-          {/* Row 7: points/disc labels aligned with data columns */}
-          <TableRow>
-            <TableHead className="border border-slate-300 font-bold">
-              Nom
-            </TableHead>
-            <TableHead className="border border-slate-300 font-bold italic text-center">
-              Sexe
-            </TableHead>
-            <TableHead className="border border-slate-300 font-bold italic text-sky-400 text-center">
-              points/disc
-            </TableHead>
-            {codexData.map((codex) => (
-              <TableHead
-                key={codex.number + "-pointslabel"}
-                className="border border-slate-300 text-center font-bold italic text-sky-400"
-              >
-                points/disc
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        {/* TanStack Table Body for data rows */}
-        <TableBody>
-          {table.getRowModel().rows.length > 0 ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} className="border border-slate-300">
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className="border border-slate-300 text-center p-1"
-                  >
-                    {/* Render cell content using TanStack */}
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              {/* Adjust colSpan dynamically based on the number of columns */}
-              <TableCell
-                colSpan={3 + codexData.length}
-                className="h-24 text-center"
-              >
-                Aucun compétiteur inscrit.
-              </TableCell>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id}>
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
+                </TableHead>
+              ))}
             </TableRow>
-          )}
+          ))}
+        </TableHeader>
+        <TableBody>
+          {groups.map((group) => {
+            const groupRows = sortedRows.filter(
+              (row) => row.original.gender === group.value
+            );
+            if (groupRows.length === 0) return null;
+            return (
+              <React.Fragment key={group.value}>
+                <TableRow>
+                  <TableCell
+                    colSpan={table.getAllColumns().length}
+                    className="bg-slate-50 font-bold text-lg text-slate-700"
+                  >
+                    {group.label}
+                  </TableCell>
+                </TableRow>
+                {groupRows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </React.Fragment>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

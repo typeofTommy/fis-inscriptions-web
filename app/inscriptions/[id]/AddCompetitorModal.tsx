@@ -68,6 +68,10 @@ function useSaveCompetitors(inscriptionId: string) {
       queryClient.invalidateQueries({
         queryKey: ["inscription-competitors", inscriptionId],
       });
+      // Invalider la liste globale des compétiteurs de l'inscription
+      queryClient.invalidateQueries({
+        queryKey: ["inscription-competitors-all", inscriptionId],
+      });
       // Invalider la liste des inscriptions du compétiteur (onglet Compétiteurs)
       if (
         variables &&
