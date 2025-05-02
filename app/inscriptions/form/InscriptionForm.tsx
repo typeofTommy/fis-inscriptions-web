@@ -40,7 +40,7 @@ import {cn} from "@/lib/utils";
 import {format} from "date-fns";
 import {Calendar} from "@/components/ui/calendar";
 import {useRouter} from "next/navigation";
-import {Inscription, Station} from "@/app/types";
+import {Inscription} from "@/app/types";
 import {Country} from "@/app/types";
 import {parseLocalDate} from "@/app/lib/dates";
 
@@ -54,11 +54,7 @@ export const InscriptionFormWrapper = ({
   | {mode: "new"; inscription?: never; onSuccess?: never}) => {
   const isEdit = mode === "edit";
 
-  const {
-    data: stations,
-    isLoading: stationsLoading,
-    error: stationsError,
-  } = useStations();
+  const {isLoading: stationsLoading} = useStations();
 
   const {
     data: countries,
@@ -79,9 +75,6 @@ export const InscriptionFormWrapper = ({
       key={isEdit ? "edit " + inscription?.id : "new"}
       mode={mode}
       inscription={inscription}
-      stations={stations}
-      stationsLoading={stationsLoading}
-      stationsError={stationsError}
       countries={countries || []}
       countriesLoading={countriesLoading}
       countriesError={countriesError}
@@ -94,9 +87,6 @@ export const InscriptionFormWrapper = ({
 const InscriptionFormInner = ({
   mode,
   inscription,
-  stations,
-  stationsLoading,
-  stationsError,
   countries,
   countriesLoading,
   countriesError,
@@ -104,9 +94,6 @@ const InscriptionFormInner = ({
 }: {
   mode: "edit" | "new";
   inscription: Inscription | undefined;
-  stations: Station[];
-  stationsLoading: boolean;
-  stationsError: Error | null;
   countries: Country[];
   countriesLoading: boolean;
   countriesError: Error | null;
@@ -118,6 +105,12 @@ const InscriptionFormInner = ({
   const {createInscription} = useCreateInscription();
   const {updateInscription} = useUpdateInscription();
   const isEdit = mode === "edit";
+
+  const {
+    data: stations,
+    isLoading: stationsLoading,
+    error: stationsError,
+  } = useStations();
 
   // Initialisation du formulaire avec React Hook Form
   const form = useForm<z.infer<typeof inscriptionFormSchema>>({
@@ -141,7 +134,7 @@ const InscriptionFormInner = ({
   useEffect(() => {
     if (isEdit && inscription && !stationsLoading) {
       // Si location est un id, on cherche la station correspondante
-      const matchingStation = stations.find(
+      const matchingStation = stations?.find(
         (s) => s.id === inscription.location
       );
       const locationValue = matchingStation
@@ -362,7 +355,7 @@ const InscriptionFormInner = ({
                       value={field.value?.toString() ?? ""}
                       onValueChange={(value) => {
                         field.onChange(value.toString());
-                        const selectedStation = stations.find(
+                        const selectedStation = stations?.find(
                           (s) => s.id.toString() === value
                         );
                         if (selectedStation) {
@@ -375,7 +368,7 @@ const InscriptionFormInner = ({
                       </SelectTrigger>
                       <SelectContent>
                         {stations
-                          .sort((a, b) => a.name.localeCompare(b.name))
+                          ?.sort((a, b) => a.name.localeCompare(b.name))
                           .map((station) => (
                             <SelectItem
                               key={station.id}
