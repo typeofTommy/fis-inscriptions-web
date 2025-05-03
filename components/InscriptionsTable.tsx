@@ -145,6 +145,17 @@ export function InscriptionsTable() {
           </Button>
         );
       },
+      cell: ({row}) => {
+        const locationId = row.original.location;
+        let country = row.original.country;
+        if (stations && locationId) {
+          const foundStation = stations.find((s: any) => s.id === locationId);
+          if (foundStation && foundStation.country) {
+            country = foundStation.country;
+          }
+        }
+        return <span>{country ? country : "Non renseigné"}</span>;
+      },
     },
     {
       id: "codex",
