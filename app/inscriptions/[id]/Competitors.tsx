@@ -175,7 +175,7 @@ export const Competitors = ({
         </TableHeader>
         <TableBody>
           {(competitors || [])
-            .sort((b, a) => a.points - b.points)
+            .sort((a, b) => a.points - b.points)
             .map((c) => (
               <TableRow key={c.competitorId}>
                 <TableCell>{c.lastname}</TableCell>
