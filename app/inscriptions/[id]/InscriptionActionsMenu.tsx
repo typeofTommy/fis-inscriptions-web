@@ -81,7 +81,7 @@ export function InscriptionActionsMenu({
   };
 
   const handleGeneratePDF = () => {
-    alert("Génération du PDF à implémenter");
+    router.push(`/inscriptions/${inscription.id}/pdf`);
     setPopoverOpen(false);
   };
 
