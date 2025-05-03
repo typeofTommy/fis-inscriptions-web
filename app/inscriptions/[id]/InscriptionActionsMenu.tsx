@@ -36,7 +36,7 @@ export function InscriptionActionsMenu({
       const res = await fetch(
         `/api/inscriptions/${inscription.id}/status?status=${status}`,
         {
-          method: "POST",
+          method: "PATCH",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({status}),
         }
