@@ -61,6 +61,7 @@ type CompetitorRow = {
   gender: string;
   points: Record<string, string | number | null>;
   codexNumbers: string[];
+  skiclub: string;
 };
 
 export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
@@ -87,6 +88,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
       gender: c.gender || "M",
       points: typeof c.points === "object" && c.points !== null ? c.points : {},
       codexNumbers: (c.codexNumbers || []).map(String),
+      skiclub: c.skiclub ?? "",
     }));
   }, [competitorsData]);
 
@@ -100,8 +102,15 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
         id: "name",
         header: () => "Nom",
         cell: (info) =>
-          `${info.row.original.firstname} ${info.row.original.lastname}`,
+          `${info.row.original.firstname} ${info.row.original.lastname}}`,
       }),
+      // Static skiclub column
+      columnHelper.accessor((row) => row.skiclub, {
+        id: "skiclub",
+        header: () => "Club",
+        cell: (info) => info.getValue(),
+      }),
+      // Dynamic codex columns
       ...(inscription?.codexData ?? []).map((codex) =>
         columnHelper.accessor(
           (row) => {
