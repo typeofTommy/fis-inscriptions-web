@@ -1,6 +1,6 @@
 import React from "react";
 
-export const TableFooter = () => {
+export const TableFooter = ({competitorLength}: {competitorLength: number}) => {
   return (
     <div>
       {" "}
@@ -15,7 +15,7 @@ export const TableFooter = () => {
         </div>
         <div className="w-1/4 p-2 flex justify-between items-center">
           <div className="text-xs italic">Signature</div>
-          <div className="font-bold text-right">10</div>
+          <div className="font-bold text-right">{competitorLength}</div>
         </div>
       </div>
       <div className="flex border-b border-black">

@@ -23,12 +23,22 @@ export async function GET(
       .where(eq(inscriptions.id, idNum))
       .limit(1);
 
+    const station = await db
+      .select()
+      .from(stations)
+      .where(eq(stations.id, inscription[0].location || 0));
+
     // Check if inscription exists and has data
     if (!inscription || inscription.length === 0) {
       return new NextResponse("Inscription non trouvée", {status: 404});
     }
 
-    const foundInscription = inscription[0];
+    const foundInscription = {
+      ...inscription[0],
+      station: station[0],
+    };
+
+    console.log(foundInscription);
 
     // Retourne simplement l'id de la station (number ou null)
     return NextResponse.json(foundInscription);

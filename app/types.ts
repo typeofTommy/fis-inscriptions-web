@@ -9,7 +9,9 @@ import {
   stations,
 } from "@/drizzle/schemaInscriptions";
 
-export type Inscription = typeof inscriptions.$inferSelect;
+export type Inscription = typeof inscriptions.$inferSelect & {
+  station: typeof stations.$inferSelect;
+};
 export type Discipline = typeof disciplines.$inferSelect;
 export type Competitor = typeof competitors.$inferSelect;
 export type RaceLevel = typeof raceLevels.$inferSelect;
