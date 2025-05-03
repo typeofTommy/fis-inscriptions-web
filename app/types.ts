@@ -3,6 +3,7 @@ import {
   disciplines,
   inscriptionCompetitors,
   inscriptions,
+  inscriptionStatus,
   raceLevels,
   sexes,
   stations,
@@ -19,6 +20,9 @@ export type InscriptionCompetitor =
   typeof inscriptionCompetitors.$inferSelect & {
     points: number;
   } & Competitor;
+
+export type Status = typeof inscriptionStatus.$inferSelect;
+
 export type Country = {
   name: {
     common: string;

@@ -542,7 +542,7 @@ export function InscriptionsTable() {
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>
               <SelectItem value="open">Ouverte</SelectItem>
-              <SelectItem value="validated">Validée</SelectItem>
+              <SelectItem value="validated">Clôturée</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -69,7 +69,7 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                 }
                 style={{minHeight: "2rem"}}
               >
-                {inscription.status === "open" ? "Ouverte" : "Validée"}
+                {inscription.status === "open" ? "Ouverte" : "Clôturée"}
               </span>
             </h1>
             {permissionToEdit && inscription && (

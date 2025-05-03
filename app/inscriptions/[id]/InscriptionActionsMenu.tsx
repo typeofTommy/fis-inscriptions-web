@@ -33,11 +33,14 @@ export function InscriptionActionsMenu({
 
   const statusMutation = useMutation({
     mutationFn: async (status: "open" | "validated") => {
-      const res = await fetch(`/api/inscriptions/${inscription.id}`, {
-        method: "PATCH",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({status}),
-      });
+      const res = await fetch(
+        `/api/inscriptions/${inscription.id}/status?status=${status}`,
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({status}),
+        }
+      );
       if (!res.ok) throw new Error("Erreur lors du changement de statut");
       return res.json();
     },
@@ -126,7 +129,7 @@ export function InscriptionActionsMenu({
             readonly
           }
         >
-          Valider
+          Clôturer
         </Button>
         <Button
           variant="ghost"
