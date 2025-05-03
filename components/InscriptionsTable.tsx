@@ -524,9 +524,11 @@ export function InscriptionsTable() {
             Statut
           </label>
           <Select
-            value={String(
-              table.getColumn("status")?.getFilterValue() ?? "open"
-            )}
+            value={
+              table.getColumn("status")?.getFilterValue() === undefined
+                ? "all"
+                : String(table.getColumn("status")?.getFilterValue())
+            }
             onValueChange={(value) =>
               table
                 .getColumn("status")
