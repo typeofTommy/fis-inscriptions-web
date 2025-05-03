@@ -317,7 +317,9 @@ export function InscriptionsTable() {
   // Mémoïsation des options pour les Selects de filtres
   const locationOptions = useMemo(() => {
     if (!stations) return [];
-    return stations.map((s: any) => ({value: s.name, label: s.name}));
+    return stations
+      .map((s: any) => ({value: s.name, label: s.name}))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [stations]);
 
   const countryOptions = useMemo(() => {
@@ -334,7 +336,7 @@ export function InscriptionsTable() {
       }
       if (country) countriesSet.add(country);
     });
-    return Array.from(countriesSet).sort();
+    return Array.from(countriesSet).sort((a, b) => a.localeCompare(b));
   }, [data, stations]);
 
   const codexOptions = useMemo(
@@ -343,7 +345,7 @@ export function InscriptionsTable() {
         new Set(
           (data ?? []).flatMap((row) => row.codexData.map((c: any) => c.number))
         )
-      ).sort((a, b) => parseInt(a) - parseInt(b)),
+      ).sort((a, b) => a.localeCompare(b)),
     [data]
   );
   const disciplineOptions = useMemo(
@@ -354,7 +356,7 @@ export function InscriptionsTable() {
             row.codexData.map((c: CodexData) => c.discipline)
           )
         )
-      ).sort(),
+      ).sort((a, b) => a.localeCompare(b)),
     [data]
   );
   const raceLevelOptions = useMemo(
@@ -365,10 +367,13 @@ export function InscriptionsTable() {
             row.codexData.map((c: any) => c.raceLevel)
           )
         )
-      ).sort(),
+      ).sort((a, b) => a.localeCompare(b)),
     [data]
   );
-  const sexOptions = useMemo(() => ["M", "F"], []);
+  const sexOptions = useMemo(
+    () => ["M", "F"].sort((a, b) => a.localeCompare(b)),
+    []
+  );
 
   const dateValue = String(
     table.getColumn("firstRaceDate")?.getFilterValue() ?? ""
