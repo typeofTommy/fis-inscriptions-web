@@ -5,6 +5,7 @@ import {Snowflake} from "lucide-react";
 import {Header} from "@/components/ui/Header";
 import {ClerkProvider} from "@clerk/nextjs";
 import "./globals.css";
+import {frFR} from "@clerk/localizations";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ClerkProvider>
+        <ClerkProvider localization={frFR}>
           <div className="min-h-screen bg-gradient-to-b from-[#e0f0ff] to-white pb-10">
             {/* Header avec effet de neige */}
             <div className="relative bg-[#3d7cf2] text-white">
