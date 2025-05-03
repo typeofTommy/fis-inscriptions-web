@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useMemo, useState} from "react";
+import React, {useMemo, useState, useEffect} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {useInscription} from "../form/api";
 import {Loader2} from "lucide-react";
@@ -18,6 +18,8 @@ import {
   useReactTable,
   getCoreRowModel,
   createColumnHelper,
+  getSortedRowModel,
+  SortingState,
 } from "@tanstack/react-table";
 import {Badge} from "@/components/ui/badge";
 import {
@@ -78,6 +80,19 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
   } = useAllInscriptionCompetitors(inscriptionId);
 
   const [addGender, setAddGender] = useState<"W" | "M">("W");
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  // Tri par défaut sur le premier codex dès que codexData est dispo
+  useEffect(() => {
+    if (inscription?.codexData && inscription.codexData.length > 0) {
+      const firstCodexId = String(inscription.codexData[0].number);
+      setSorting((current) =>
+        current.length === 0 || current[0].id !== firstCodexId
+          ? [{id: firstCodexId, desc: false}]
+          : current
+      );
+    }
+  }, [inscription?.codexData]);
 
   // 1. Data Preparation: on force les champs string à non-null et on normalise le genre
   const allCompetitors: CompetitorRow[] = useMemo(() => {
@@ -109,6 +124,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
         id: "skiclub",
         header: () => "Club",
         cell: (info) => info.getValue(),
+        enableSorting: true,
       }),
       // Dynamic codex columns
       ...(inscription?.codexData ?? []).map((codex) =>
@@ -126,8 +142,13 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
           },
           {
             id: String(codex.number),
-            header: () => (
-              <div className="flex items-center gap-1 justify-center min-w-[120px]">
+            header: ({column}) => (
+              <div
+                className="flex items-center gap-1 justify-center min-w-[120px] cursor-pointer select-none"
+                onClick={() =>
+                  column.toggleSorting(column.getIsSorted() === "asc")
+                }
+              >
                 <span>{codex.number}</span>
                 <Badge
                   className={`text-xs px-2 py-1 ${
@@ -150,11 +171,23 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
                 >
                   {codex.raceLevel}
                 </Badge>
+                {column.getIsSorted() === "asc" && <span>↑</span>}
+                {column.getIsSorted() === "desc" && <span>↓</span>}
               </div>
             ),
             cell: (info) => (
               <div className="text-center min-w-[120px]">{info.getValue()}</div>
             ),
+            enableSorting: true,
+            sortingFn: (rowA, rowB, columnId) => {
+              // On veut trier par valeur numérique, '-' en dernier
+              const a = rowA.getValue(columnId);
+              const b = rowB.getValue(columnId);
+              if (a === "-" && b === "-") return 0;
+              if (a === "-") return 1;
+              if (b === "-") return -1;
+              return Number(a) - Number(b);
+            },
           }
         )
       ),
@@ -167,6 +200,9 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     data: allCompetitors,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {sorting},
+    onSortingChange: setSorting,
   });
 
   // Découpe en groupes par sexe
