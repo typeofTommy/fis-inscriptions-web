@@ -21,7 +21,8 @@ export async function GET(request: Request) {
         ilike(competitors.lastname, `%${search}%`),
         ilike(competitors.firstname, `%${search}%`)
       ),
-      eq(competitors.gender, gender)
+      eq(competitors.gender, gender),
+      eq(competitors.nationcode, "FRA")
     );
 
     const c = await db.select().from(competitors).where(where);
