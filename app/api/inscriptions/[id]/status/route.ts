@@ -4,7 +4,10 @@ import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {eq} from "drizzle-orm";
 import {NextRequest, NextResponse} from "next/server";
 
-export async function POST(req: NextRequest, {params}: {params: {id: string}}) {
+export async function PATCH(
+  req: NextRequest,
+  {params}: {params: {id: string}}
+) {
   try {
     const {id} = params;
     const searchParams = req.nextUrl.searchParams;
