@@ -147,7 +147,7 @@ export function InscriptionsTable() {
       },
       cell: ({row}) => {
         const locationId = row.original.location;
-        let country = row.original.country;
+        let country = (row.original as any).country;
         if (stations && locationId) {
           const foundStation = stations.find((s: any) => s.id === locationId);
           if (foundStation && foundStation.country) {
@@ -155,6 +155,18 @@ export function InscriptionsTable() {
           }
         }
         return <span>{country ? country : "Non renseigné"}</span>;
+      },
+      filterFn: (row, id, filterValue) => {
+        if (!filterValue || filterValue === "all") return true;
+        const locationId = row.original.location;
+        let country = (row.original as any).country;
+        if (stations && locationId) {
+          const foundStation = stations.find((s: any) => s.id === locationId);
+          if (foundStation && foundStation.country) {
+            country = foundStation.country;
+          }
+        }
+        return country === filterValue;
       },
     },
     {
@@ -308,13 +320,22 @@ export function InscriptionsTable() {
     return stations.map((s: any) => ({value: s.name, label: s.name}));
   }, [stations]);
 
-  const countryOptions = useMemo(
-    () =>
-      Array.from(
-        new Set((stations ?? []).map((station) => station.country))
-      ).sort(),
-    [stations]
-  );
+  const countryOptions = useMemo(() => {
+    if (!data) return [];
+    const countriesSet = new Set<string>();
+    data.forEach((row) => {
+      const locationId = row.location;
+      let country = (row as any).country;
+      if (stations && locationId) {
+        const foundStation = stations.find((s: any) => s.id === locationId);
+        if (foundStation && foundStation.country) {
+          country = foundStation.country;
+        }
+      }
+      if (country) countriesSet.add(country);
+    });
+    return Array.from(countriesSet).sort();
+  }, [data, stations]);
 
   const codexOptions = useMemo(
     () =>
