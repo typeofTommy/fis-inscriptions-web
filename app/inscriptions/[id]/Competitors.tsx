@@ -167,6 +167,7 @@ export const Competitors = ({
           <TableRow>
             <TableHead>Nom</TableHead>
             <TableHead>Prénom</TableHead>
+            <TableHead>Club</TableHead>
             <TableHead>Année de naissance</TableHead>
             <TableHead>Points FIS ({discipline})</TableHead>
             {permissionToEdit && <TableHead>Action</TableHead>}
@@ -179,6 +180,7 @@ export const Competitors = ({
               <TableRow key={c.competitorId}>
                 <TableCell>{c.lastname}</TableCell>
                 <TableCell>{c.firstname}</TableCell>
+                <TableCell>{c.skiclub}</TableCell>
                 <TableCell>
                   {c.birthdate ? format(new Date(c.birthdate), "yyyy") : ""}
                 </TableCell>
