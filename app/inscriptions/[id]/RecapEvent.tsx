@@ -133,10 +133,15 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
             const isInscrit =
               Array.isArray(row.codexNumbers) &&
               row.codexNumbers.includes(String(codex.number));
-            // Si inscrit mais pas de points, retourne 0. Si pas inscrit, retourne '-'.
+            // Si inscrit mais pas de points, retourne '-'. Si pas inscrit, retourne '-'.
             if (isInscrit) {
               const val = row.points[codex.discipline];
-              return val === null || val === undefined || val === "" ? 0 : val;
+              return val === null ||
+                val === undefined ||
+                val === "" ||
+                val === "-"
+                ? "-"
+                : val;
             }
             return "-";
           },
@@ -175,17 +180,31 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
                 {column.getIsSorted() === "desc" && <span>↓</span>}
               </div>
             ),
-            cell: (info) => (
-              <div className="text-center min-w-[120px]">{info.getValue()}</div>
-            ),
+            cell: (info) => {
+              const value = info.getValue();
+              return (
+                <div className="text-center min-w-[120px]">
+                  {value === null ||
+                  value === undefined ||
+                  value === "" ||
+                  value === "-"
+                    ? "-"
+                    : value}
+                </div>
+              );
+            },
             enableSorting: true,
             sortingFn: (rowA, rowB, columnId) => {
-              // On veut trier par valeur numérique, '-' en dernier
+              // On veut trier par valeur numérique, '-' (pas de points) en dernier, 0 (zéro point) en haut
               const a = rowA.getValue(columnId);
               const b = rowB.getValue(columnId);
-              if (a === "-" && b === "-") return 0;
-              if (a === "-") return 1;
-              if (b === "-") return -1;
+              const isANoPoints =
+                a === "-" || a === undefined || a === null || a === "";
+              const isBNoPoints =
+                b === "-" || b === undefined || b === null || b === "";
+              if (isANoPoints && isBNoPoints) return 0;
+              if (isANoPoints) return 1; // a va en bas
+              if (isBNoPoints) return -1; // b va en bas
               return Number(a) - Number(b);
             },
           }

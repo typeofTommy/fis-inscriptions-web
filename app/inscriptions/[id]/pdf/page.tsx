@@ -41,16 +41,44 @@ export default async function PdfPage({
     `https://restcountries.com/v3.1/name/${station[0].country}`
   ).then((res) => res.json());
 
-  const rawCompetitors = await db
-    .select()
+  // Typage explicite du résultat de l'innerJoin
+  type RawCompetitorRow = {
+    competitors: typeof competitorsTable.$inferSelect;
+    inscriptionCompetitors: typeof inscriptionCompetitors.$inferSelect;
+  };
+  const rawCompetitors = (await db
+    .select({
+      competitors: competitorsTable,
+      inscriptionCompetitors: inscriptionCompetitors,
+    })
     .from(inscriptionCompetitors)
     .where(eq(inscriptionCompetitors.inscriptionId, Number(id)))
     .innerJoin(
       competitorsTable,
       eq(inscriptionCompetitors.competitorId, competitorsTable.competitorid)
-    );
+    )) as RawCompetitorRow[];
 
-  const competitors = rawCompetitors.map(({competitors}) => competitors);
+  // Construire un mapping competitorid -> [codexNumber]
+  const codexMap: Record<number, string[]> = {};
+  rawCompetitors.forEach((row) => {
+    const competitorid = row.competitors.competitorid;
+    const codexNumber = row.inscriptionCompetitors.codexNumber;
+    if (!codexMap[competitorid]) codexMap[competitorid] = [];
+    codexMap[competitorid].push(codexNumber);
+  });
+
+  // Enrichir chaque compétiteur avec ses codexNumbers
+  const competitors = Array.from(
+    new Map(
+      rawCompetitors.map((row) => [
+        row.competitors.competitorid,
+        {
+          ...row.competitors,
+          codexNumbers: codexMap[row.competitors.competitorid] || [],
+        },
+      ])
+    ).values()
+  );
 
   const raceGender = competitors[0].gender;
 

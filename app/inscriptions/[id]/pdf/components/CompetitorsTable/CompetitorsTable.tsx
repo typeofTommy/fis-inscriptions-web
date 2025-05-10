@@ -5,7 +5,7 @@ export const CompetitorsTable = ({
   competitors,
   codexData,
 }: {
-  competitors: Competitor[];
+  competitors: (Competitor & {codexNumbers: string[]})[];
   codexData: CodexData[];
 }) => {
   return (
@@ -70,11 +70,13 @@ export const CompetitorsTable = ({
                   className="border-r border-black p-1 text-center"
                 >
                   <div className="font-bold">
-                    {codex.discipline === "SL" && competitor.slpoints}
-                    {codex.discipline === "GS" && competitor.gspoints}
-                    {codex.discipline === "SG" && competitor.sgpoints}
-                    {codex.discipline === "DH" && competitor.dhpoints}
-                    {codex.discipline === "AC" && competitor.acpoints}
+                    {competitor.codexNumbers?.includes(codex.number)
+                      ? (codex.discipline === "SL" && competitor.slpoints) ||
+                        (codex.discipline === "GS" && competitor.gspoints) ||
+                        (codex.discipline === "SG" && competitor.sgpoints) ||
+                        (codex.discipline === "DH" && competitor.dhpoints) ||
+                        (codex.discipline === "AC" && competitor.acpoints)
+                      : null}
                   </div>
                 </td>
               ))}

@@ -175,7 +175,24 @@ export const Competitors = ({
         </TableHeader>
         <TableBody>
           {(competitors || [])
-            .sort((a, b) => a.points - b.points)
+            .sort((a, b) => {
+              const aPoints = a.points;
+              const bPoints = b.points;
+              const aNoPoints =
+                aPoints === null ||
+                aPoints === undefined ||
+                String(aPoints) === "" ||
+                String(aPoints) === "-";
+              const bNoPoints =
+                bPoints === null ||
+                bPoints === undefined ||
+                String(bPoints) === "" ||
+                String(bPoints) === "-";
+              if (aNoPoints && bNoPoints) return 0;
+              if (aNoPoints) return 1;
+              if (bNoPoints) return -1;
+              return Number(aPoints) - Number(bPoints);
+            })
             .map((c) => (
               <TableRow key={c.competitorId}>
                 <TableCell>{c.lastname}</TableCell>
@@ -184,7 +201,14 @@ export const Competitors = ({
                 <TableCell>
                   {c.birthdate ? format(new Date(c.birthdate), "yyyy") : ""}
                 </TableCell>
-                <TableCell>{c.points || "-"}</TableCell>
+                <TableCell>
+                  {c.points === null ||
+                  c.points === undefined ||
+                  String(c.points) === "" ||
+                  String(c.points) === "-"
+                    ? "-"
+                    : c.points}
+                </TableCell>
                 {permissionToEdit && (
                   <TableCell>
                     <Dialog
