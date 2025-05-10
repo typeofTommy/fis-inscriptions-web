@@ -38,8 +38,6 @@ export async function GET(
       station: station[0],
     };
 
-    console.log(foundInscription);
-
     // Retourne simplement l'id de la station (number ou null)
     return NextResponse.json(foundInscription);
   } catch (error) {
