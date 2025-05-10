@@ -28,12 +28,6 @@ import {usePermissionToEdit} from "./usePermissionToEdit";
 import {Discipline, InscriptionCompetitor} from "@/app/types";
 import {format} from "date-fns";
 
-export interface InscriptionCompetitor {
-  competitorId: number;
-  codexNumbers: string[];
-  addedByEmail?: string;
-}
-
 export const useInscriptionCompetitors = (
   inscriptionId: string,
   codexNumber: string,
