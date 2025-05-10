@@ -1,6 +1,6 @@
 "use client";
 
-import {useMutation, useQueryClient} from "@tanstack/react-query";
+import {useMutation, useQueryClient, useQuery} from "@tanstack/react-query";
 import {Button} from "@/components/ui/button";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useState} from "react";
@@ -74,6 +74,18 @@ export function InscriptionActionsMenu({
     },
   });
 
+  const {data: competitors = [], isLoading: isLoadingCompetitors} = useQuery({
+    queryKey: ["inscription-competitors-all", inscription.id],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/inscriptions/${inscription.id}/competitors/all`
+      );
+      if (!res.ok)
+        throw new Error("Erreur lors du chargement des compétiteurs");
+      return res.json();
+    },
+  });
+
   const handleStatus = (status: "open" | "validated") => {
     if (inscription.status === status) return;
     statusMutation.mutate(status);
@@ -135,7 +147,9 @@ export function InscriptionActionsMenu({
           variant="ghost"
           className="justify-start w-full cursor-pointer"
           onClick={handleGeneratePDF}
-          disabled={readonly}
+          disabled={
+            readonly || isLoadingCompetitors || competitors.length === 0
+          }
         >
           Générer PDF
         </Button>

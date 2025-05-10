@@ -92,7 +92,7 @@ export default async function PdfPage({
             station={
               station[0].name[0].toUpperCase() + station[0].name.slice(1) || ""
             }
-            countryTrigram={countryCode[0].cca2.toUpperCase() || ""}
+            countryTrigram={countryCode[0].cioc.toUpperCase() || ""}
             flag={countryCode[0].flags.svg || ""}
           />
           <DateOfRaceBlock
