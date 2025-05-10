@@ -28,6 +28,7 @@ import {
   colorBadgePerRaceLevel,
 } from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
+import {usePermissionToEdit} from "./usePermissionToEdit";
 
 type InscriptionCompetitorWithCodex = InscriptionCompetitor & {
   codexNumbers: string[];
@@ -241,6 +242,8 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     return Array.from(sexes);
   }, [inscription?.codexData]);
 
+  const permissionToEdit = usePermissionToEdit(inscription);
+
   // 4. Loading / Error / Empty States
   if (isLoadingInscription || isPending) {
     return (
@@ -271,47 +274,59 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     <div className="overflow-x-auto">
       <div className="flex items-center gap-4 mb-4 justify-end">
         <div className="flex gap-2 items-center">
-          {codexSexes.length === 1 ? (
-            <AddCompetitorModal
-              inscriptionId={inscriptionId}
-              defaultCodex={""}
-              gender={codexSexes[0] as "W" | "M"}
-              codexData={inscription?.codexData || []}
-            />
-          ) : (
-            <>
-              <span className="text-sm">
-                Ajouter un{addGender === "W" ? "e" : ""} :
-              </span>
-              <button
-                type="button"
-                className={`px-3 py-1 rounded border cursor-pointer ${
-                  addGender === "W"
-                    ? "bg-blue-100 border-blue-500 text-blue-700"
-                    : "bg-white border-gray-300"
-                }`}
-                onClick={() => setAddGender("W")}
-              >
-                Femme
-              </button>
-              <button
-                type="button"
-                className={`px-3 py-1 rounded border cursor-pointer ${
-                  addGender === "M"
-                    ? "bg-blue-100 border-blue-500 text-blue-700"
-                    : "bg-white border-gray-300"
-                }`}
-                onClick={() => setAddGender("M")}
-              >
-                Homme
-              </button>
+          {permissionToEdit && inscription?.status === "open" ? (
+            codexSexes.length === 1 ? (
               <AddCompetitorModal
                 inscriptionId={inscriptionId}
                 defaultCodex={""}
-                gender={addGender}
+                gender={codexSexes[0] as "W" | "M"}
                 codexData={inscription?.codexData || []}
               />
-            </>
+            ) : (
+              <>
+                <span className="text-sm">
+                  Ajouter un{addGender === "W" ? "e" : ""} :
+                </span>
+                <button
+                  type="button"
+                  className={`px-3 py-1 rounded border cursor-pointer ${
+                    addGender === "W"
+                      ? "bg-blue-100 border-blue-500 text-blue-700"
+                      : "bg-white border-gray-300"
+                  }`}
+                  onClick={() => setAddGender("W")}
+                >
+                  Femme
+                </button>
+                <button
+                  type="button"
+                  className={`px-3 py-1 rounded border cursor-pointer ${
+                    addGender === "M"
+                      ? "bg-blue-100 border-blue-500 text-blue-700"
+                      : "bg-white border-gray-300"
+                  }`}
+                  onClick={() => setAddGender("M")}
+                >
+                  Homme
+                </button>
+                <AddCompetitorModal
+                  inscriptionId={inscriptionId}
+                  defaultCodex={""}
+                  gender={addGender}
+                  codexData={inscription?.codexData || []}
+                />
+              </>
+            )
+          ) : !permissionToEdit ? (
+            <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
+              Vous n&apos;avez pas les droits pour ajouter des compétiteurs sur
+              cet évènement.
+            </div>
+          ) : (
+            <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
+              L&apos;inscription / désincription n&apos;est possible que lorsque
+              l&apos;inscription est <b>ouverte</b>.
+            </div>
           )}
         </div>
       </div>
