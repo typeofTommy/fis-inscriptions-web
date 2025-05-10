@@ -71,6 +71,13 @@
       "when": 1746097926964,
       "tag": "0009_vengeful_wasp",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1746884192747,
+      "tag": "0010_unknown_gladiator",
+      "breakpoints": true
     }
   ]
 }

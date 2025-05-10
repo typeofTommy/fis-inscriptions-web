@@ -28,6 +28,12 @@ import {usePermissionToEdit} from "./usePermissionToEdit";
 import {Discipline, InscriptionCompetitor} from "@/app/types";
 import {format} from "date-fns";
 
+export interface InscriptionCompetitor {
+  competitorId: number;
+  codexNumbers: string[];
+  addedByEmail?: string;
+}
+
 export const useInscriptionCompetitors = (
   inscriptionId: string,
   codexNumber: string,
@@ -170,6 +176,7 @@ export const Competitors = ({
             <TableHead>Club</TableHead>
             <TableHead>Année de naissance</TableHead>
             <TableHead>Points FIS ({discipline})</TableHead>
+            <TableHead>Ajouté par</TableHead>
             {permissionToEdit && <TableHead>Action</TableHead>}
           </TableRow>
         </TableHeader>
@@ -209,6 +216,7 @@ export const Competitors = ({
                     ? "-"
                     : c.points}
                 </TableCell>
+                <TableCell>{c.addedByEmail || "-"}</TableCell>
                 {permissionToEdit && (
                   <TableCell>
                     <Dialog

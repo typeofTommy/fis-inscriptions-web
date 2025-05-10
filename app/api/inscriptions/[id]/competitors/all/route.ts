@@ -5,6 +5,7 @@ import {
   competitors,
   inscriptionCompetitors,
 } from "@/drizzle/schemaInscriptions";
+import {clerkClient} from "@clerk/nextjs/server";
 
 export const GET = async (
   req: NextRequest,
@@ -16,11 +17,14 @@ export const GET = async (
     return NextResponse.json({error: "Missing parameters"}, {status: 400});
   }
 
-  // Récupérer tous les liens competitorId <-> codexNumber pour cette inscription
+  const clerk = await clerkClient();
+
+  // Récupérer tous les liens competitorId <-> codexNumber <-> addedBy pour cette inscription
   const links = await db
     .select({
       competitorId: inscriptionCompetitors.competitorId,
       codexNumber: inscriptionCompetitors.codexNumber,
+      addedBy: inscriptionCompetitors.addedBy,
     })
     .from(inscriptionCompetitors)
     .where(eq(inscriptionCompetitors.inscriptionId, inscriptionId));
@@ -28,9 +32,13 @@ export const GET = async (
 
   // Construire un mapping competitorId -> [codexNumber]
   const codexMap: Record<number, string[]> = {};
+  // Mapping competitorId -> addedBy (on prend le premier si plusieurs)
+  const addedByMap: Record<number, string> = {};
   links.forEach((l) => {
     if (!codexMap[l.competitorId]) codexMap[l.competitorId] = [];
     codexMap[l.competitorId].push(l.codexNumber);
+    if (!addedByMap[l.competitorId])
+      addedByMap[l.competitorId] = l.addedBy ?? "Unknown";
   });
 
   if (competitorIds.length === 0) {
@@ -57,7 +65,27 @@ export const GET = async (
     .from(competitors)
     .where(inArray(competitors.competitorid, competitorIds.map(Number)));
 
-  // Formater la réponse avec un objet points
+  // Récupérer tous les Clerk userId distincts
+  const uniqueUserIds = Array.from(new Set(Object.values(addedByMap))).filter(
+    (id): id is string => !!id && id !== "Unknown"
+  );
+  // Récupérer les emails Clerk en batch
+  const userEmailMap: Record<string, string> = {};
+  await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      const safeUserId = typeof userId === "string" ? userId : String(userId);
+      if (!safeUserId || safeUserId === "Unknown") return;
+      try {
+        const user = await clerk.users.getUser(safeUserId);
+        userEmailMap[safeUserId] =
+          user?.emailAddresses?.[0]?.emailAddress || safeUserId;
+      } catch {
+        userEmailMap[safeUserId] = safeUserId;
+      }
+    })
+  );
+
+  // Formater la réponse avec un objet points et l'email de l'ajouteur
   const result = competitorsData
     .map((c) => ({
       competitorid: c.competitorid,
@@ -76,6 +104,8 @@ export const GET = async (
         AC: c.pointsAC ?? 0,
       },
       codexNumbers: codexMap[c.competitorid] || [],
+      addedBy: addedByMap[c.competitorid] || "Unknown",
+      addedByEmail: userEmailMap[addedByMap[c.competitorid]] || "Unknown",
     }))
     .filter((c) => Array.isArray(c.codexNumbers) && c.codexNumbers.length > 0);
 

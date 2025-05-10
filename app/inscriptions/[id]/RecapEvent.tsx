@@ -32,6 +32,7 @@ import {usePermissionToEdit} from "./usePermissionToEdit";
 
 type InscriptionCompetitorWithCodex = InscriptionCompetitor & {
   codexNumbers: string[];
+  addedByEmail?: string;
 };
 
 // Hook pour récupérer tous les compétiteurs de l'inscription (nouvelle structure)
@@ -65,6 +66,7 @@ type CompetitorRow = {
   points: Record<string, string | number | null>;
   codexNumbers: string[];
   skiclub: string;
+  addedByEmail?: string;
 };
 
 export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
@@ -105,6 +107,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
       points: typeof c.points === "object" && c.points !== null ? c.points : {},
       codexNumbers: (c.codexNumbers || []).map(String),
       skiclub: c.skiclub ?? "",
+      addedByEmail: c.addedByEmail,
     }));
   }, [competitorsData]);
 
@@ -211,6 +214,13 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
           }
         )
       ),
+      // Nouvelle colonne email ajouté par
+      columnHelper.accessor((row) => row.addedByEmail ?? "-", {
+        id: "addedByEmail",
+        header: () => "Ajouté par",
+        cell: (info) => <span>{info.getValue() || "-"}</span>,
+        enableSorting: false,
+      }),
     ],
     [columnHelper, inscription?.codexData]
   );

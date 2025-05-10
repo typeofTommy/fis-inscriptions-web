@@ -80,6 +80,7 @@ export const inscriptionCompetitors = inscriptionsSchema.table(
         onDelete: "cascade",
       }),
     codexNumber: text("codex_number").notNull(),
+    addedBy: text("added_by").default("Unknown"),
   }
 );
 

@@ -21,6 +21,7 @@ export type CodexData = (typeof inscriptions.$inferSelect)["codexData"][number];
 export type InscriptionCompetitor =
   typeof inscriptionCompetitors.$inferSelect & {
     points: number;
+    addedByEmail?: string;
   } & Competitor;
 
 export type Status = typeof inscriptionStatus.$inferSelect;
