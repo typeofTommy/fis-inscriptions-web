@@ -28,11 +28,11 @@ import {usePermissionToEdit} from "./usePermissionToEdit";
 import {Discipline, InscriptionCompetitor} from "@/app/types";
 import {format} from "date-fns";
 
-function useInscriptionCompetitors(
+export const useInscriptionCompetitors = (
   inscriptionId: string,
   codexNumber: string,
   discipline: Discipline
-) {
+) => {
   return useQuery<InscriptionCompetitor[]>({
     queryKey: [
       "inscription-competitors",
@@ -48,7 +48,7 @@ function useInscriptionCompetitors(
       return res.json();
     },
   });
-}
+};
 
 function useRemoveCompetitor(inscriptionId: string) {
   const queryClient = useQueryClient();

@@ -3,13 +3,14 @@
 import {useQuery} from "@tanstack/react-query";
 import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/components/ui/tabs";
 import {Badge} from "@/components/ui/badge";
-import {Competitors} from "./Competitors";
+import {Competitors, useInscriptionCompetitors} from "./Competitors";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
 import React, {useMemo} from "react";
 import {usePermissionToEdit} from "./usePermissionToEdit";
 import {Inscription} from "@/app/types";
+import {Loader2} from "lucide-react";
 
 interface CodexTabsProps {
   inscriptionId: string;
@@ -52,71 +53,108 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
   if (isLoading) return null;
 
   return (
-    <Tabs
-      defaultValue={codexData[0].number}
-      className="mt-8 "
-      onValueChange={setActiveCodex}
-      value={activeCodex}
-    >
-      <TabsList className="bg-transparent flex gap-4">
+    <>
+      <Tabs
+        defaultValue={codexData[0].number}
+        className="mt-8 "
+        onValueChange={setActiveCodex}
+        value={activeCodex}
+      >
+        <TabsList className="bg-transparent flex gap-4">
+          {codexData.map((codex) => (
+            <TabsTrigger
+              key={codex.number}
+              value={codex.number}
+              className="min-w-[140px] h-12 text-lg px-6 py-3 cursor-pointer border border-slate-200 rounded-md transition-all duration-150 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:border-2 data-[state=active]:border-slate-300 data-[state=active]:text-black data-[state=active]:font-bold data-[state=active]:z-10 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:border-slate-200 data-[state=inactive]:shadow-none data-[state=inactive]:z-0"
+            >
+              Codex {codex.number}
+              <Badge
+                className={`ml-2 text-base px-3 py-1 ${
+                  colorBadgePerDiscipline[codex.discipline] || ""
+                }`}
+              >
+                {codex.discipline}
+              </Badge>
+              <Badge
+                className={`ml-2 text-base px-3 py-1 ${
+                  colorBadgePerGender[codex.sex === "F" ? "W" : "M"] || ""
+                } text-white`}
+              >
+                {codex.sex}
+              </Badge>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <div className="flex justify-end mb-4">
+          {permissionToEdit && inscription?.status === "open" ? (
+            <AddCompetitorModal
+              inscriptionId={inscriptionId}
+              defaultCodex={activeCodex || codexData[0].number}
+              gender={
+                inscription?.codexData.find((c) => c.number === activeCodex)
+                  ?.sex === "F"
+                  ? "W"
+                  : "M"
+              }
+              codexData={codexData}
+            />
+          ) : !permissionToEdit ? (
+            <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
+              Vous n&apos;avez pas les droits pour ajouter des compétiteurs sur
+              cet évènement.
+            </div>
+          ) : (
+            <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
+              L&apos;inscription / désincription n&apos;est possible que lorsque
+              l&apos;inscription est <b>ouverte</b>.
+            </div>
+          )}
+        </div>
         {codexData.map((codex) => (
-          <TabsTrigger
-            key={codex.number}
-            value={codex.number}
-            className="min-w-[140px] h-12 text-lg px-6 py-3 cursor-pointer border border-slate-200 rounded-md transition-all duration-150 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:border-2 data-[state=active]:border-slate-300 data-[state=active]:text-black data-[state=active]:font-bold data-[state=active]:z-10 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:border-slate-200 data-[state=inactive]:shadow-none data-[state=inactive]:z-0"
-          >
-            Codex {codex.number}
-            <Badge
-              className={`ml-2 text-base px-3 py-1 ${
-                colorBadgePerDiscipline[codex.discipline] || ""
-              }`}
-            >
-              {codex.discipline}
-            </Badge>
-            <Badge
-              className={`ml-2 text-base px-3 py-1 ${
-                colorBadgePerGender[codex.sex === "F" ? "W" : "M"] || ""
-              } text-white`}
-            >
-              {codex.sex}
-            </Badge>
-          </TabsTrigger>
+          <TabsContent key={codex.number} value={codex.number}>
+            <Competitors
+              inscriptionId={inscriptionId}
+              codexNumber={codex.number}
+              discipline={codex.discipline}
+            />
+          </TabsContent>
         ))}
-      </TabsList>
-      <div className="flex justify-end mb-4">
-        {permissionToEdit && inscription?.status === "open" ? (
-          <AddCompetitorModal
-            inscriptionId={inscriptionId}
-            defaultCodex={activeCodex || codexData[0].number}
-            gender={
-              inscription?.codexData.find((c) => c.number === activeCodex)
-                ?.sex === "F"
-                ? "W"
-                : "M"
-            }
-            codexData={codexData}
-          />
-        ) : !permissionToEdit ? (
-          <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
-            Vous n&apos;avez pas les droits pour ajouter des compétiteurs sur
-            cet évènement.
-          </div>
-        ) : (
-          <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
-            L&apos;inscription / désincription n&apos;est possible que lorsque
-            l&apos;inscription est <b>ouverte</b>.
-          </div>
-        )}
-      </div>
-      {codexData.map((codex) => (
-        <TabsContent key={codex.number} value={codex.number}>
-          <Competitors
-            inscriptionId={inscriptionId}
-            codexNumber={codex.number}
-            discipline={codex.discipline}
-          />
-        </TabsContent>
-      ))}
-    </Tabs>
+      </Tabs>
+      <TotalInscriptionsInfo
+        inscriptionId={inscriptionId}
+        codexNumber={activeCodex || codexData[0].number}
+        discipline={codexData.find((c) => c.number === activeCodex)?.discipline}
+      />
+    </>
   );
 }
+
+// Composant pour afficher le nombre total d'inscriptions
+const TotalInscriptionsInfo = ({
+  inscriptionId,
+  codexNumber,
+  discipline,
+}: {
+  inscriptionId: string;
+  codexNumber: string;
+  discipline: string;
+}) => {
+  const {data, isLoading} = useInscriptionCompetitors(
+    inscriptionId,
+    codexNumber,
+    discipline
+  );
+
+  return (
+    <div className="text-xs text-center text-slate-500 mt-2 mb-2 border-t border-slate-200 pt-2">
+      Nombre total d&apos;inscriptions sur ce codex :{" "}
+      <b>
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin inline-block" />
+        ) : (
+          data?.length
+        )}
+      </b>
+    </div>
+  );
+};

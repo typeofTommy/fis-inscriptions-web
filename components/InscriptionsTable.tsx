@@ -39,6 +39,24 @@ const statusColors: Record<string, string> = {
   validated: "bg-blue-100 text-blue-800 border-blue-200",
 };
 
+// Composant pour afficher le nombre de compétiteurs pour une inscription
+const CompetitorCountCell = ({inscriptionId}: {inscriptionId: number}) => {
+  const {data, isLoading} = useQuery({
+    queryKey: ["inscription-competitors-all", inscriptionId],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/inscriptions/${inscriptionId}/competitors/all`
+      );
+      if (!res.ok)
+        throw new Error("Erreur lors du chargement des compétiteurs");
+      return res.json();
+    },
+  });
+  if (isLoading)
+    return <Loader2 className="w-4 h-4 animate-spin inline-block" />;
+  return <span>{Array.isArray(data) ? data.length : 0}</span>;
+};
+
 export function InscriptionsTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
@@ -297,10 +315,21 @@ export function InscriptionsTable() {
         return row.original.codexData.some((c: any) => c.sex === filterValue);
       },
     },
+    {
+      id: "competitorCount",
+      header: "Nb compétiteurs",
+      cell: ({row}) => <CompetitorCountCell inscriptionId={row.original.id} />,
+    },
   ];
 
   const table = useReactTable({
-    data: data ?? [],
+    data: (data ?? [])
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(a.firstRaceDate).getTime() -
+          new Date(b.firstRaceDate).getTime()
+      ),
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
