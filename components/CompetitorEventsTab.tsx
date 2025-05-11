@@ -96,11 +96,13 @@ export function CompetitorEventsTab() {
                 ? "Aucun compétiteur trouvé"
                 : "Sélectionner un compétiteur"}
             </option>
-            {results.map((c: any) => (
-              <option key={c.competitorid} value={c.competitorid}>
-                {c.firstname} {c.lastname} ({c.nationcode})
-              </option>
-            ))}
+            {results
+              .sort((a: any, b: any) => a.lastname.localeCompare(b.lastname))
+              .map((c: any) => (
+                <option key={c.competitorid} value={c.competitorid}>
+                  {c.firstname} {c.lastname}
+                </option>
+              ))}
           </select>
         </>
       ) : null}
