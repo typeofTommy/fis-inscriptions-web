@@ -396,7 +396,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
 // Composant pour afficher le nombre total d'inscriptions
 const TotalInscriptionsInfo = ({count}: {count: number}) => {
   return (
-    <div className="text-xs text-center text-slate-500 mt-2 mb-2 border-t border-slate-200 pt-2">
+    <div className="text-xl text-center text-slate-500 mt-8 mb-2 border-t border-slate-200 pt-2">
       Nombre total d&apos;inscriptions : <b>{count}</b>
     </div>
   );
