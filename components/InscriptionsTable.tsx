@@ -33,6 +33,7 @@ import {
 import {DebouncedInput} from "@/components/ui/debounced-input";
 import {CodexData, Inscription} from "@/app/types";
 import {useStations} from "@/app/inscriptions/form/api";
+import {useCompetitionByCodex} from "@/app/fisApi";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -68,6 +69,9 @@ export function InscriptionsTable() {
     queryKey: ["inscriptions"],
     queryFn: () => fetch("/api/inscriptions").then((res) => res.json()),
   });
+  const {data: c} = useCompetitionByCodex(5915);
+
+  console.log({c});
 
   const {data: stations} = useStations();
 

@@ -1,5 +1,4 @@
 import {NextRequest, NextResponse} from "next/server";
-import {getFisToken} from "@/app/lib/fisAuth";
 
 export async function GET(req: NextRequest) {
   const codex = req.nextUrl.searchParams.get("codex");
@@ -8,15 +7,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const {access_token} = await getFisToken();
-    if (!access_token) {
-      return NextResponse.json({error: "Missing access token"}, {status: 400});
-    }
     const fisRes = await fetch(
       `https://api.fis-ski.com/competitions/find-by-codex/AL/${codex}?season=2025`,
       {
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          "x-api-key": process.env.FIS_API_KEY!,
           Accept: "application/json",
           "X-CSRF-TOKEN": "",
         },
@@ -24,6 +19,7 @@ export async function GET(req: NextRequest) {
     );
 
     if (!fisRes.ok) {
+      console.error(fisRes);
       return NextResponse.json(
         {error: "FIS API error"},
         {status: fisRes.status}

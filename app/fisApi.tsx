@@ -11,7 +11,7 @@ export const useCompetitionByCodex = (codex: number) => {
     queryFn: async () => {
       if (!codex) throw new Error("Codex is required");
       const res = await fetch(
-        `/fis-api/codex/competition-by-codex?codex=${codex}`
+        `/api/fis-api/codex/competition-by-codex?codex=${codex}`
       );
       if (!res.ok) throw new Error("API error");
       return res.json();
