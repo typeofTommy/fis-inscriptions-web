@@ -95,7 +95,10 @@ export async function GET(
 
   // 1. Récupérer les competitorIds liés à cette inscription et ce codex
   const links = await db
-    .select({competitorId: inscriptionCompetitors.competitorId})
+    .select({
+      competitorId: inscriptionCompetitors.competitorId,
+      addedBy: inscriptionCompetitors.addedBy,
+    })
     .from(inscriptionCompetitors)
     .where(
       and(
@@ -104,6 +107,9 @@ export async function GET(
       )
     );
   const competitorIds = links.map((l) => l.competitorId);
+  const addedByMap = Object.fromEntries(
+    links.map((l) => [l.competitorId, l.addedBy])
+  );
 
   if (competitorIds.length === 0) {
     return NextResponse.json([]);
@@ -134,7 +140,37 @@ export async function GET(
     .from(competitors)
     .where(inArray(competitors.competitorid, competitorIds.map(Number)));
 
-  return NextResponse.json(c);
+  // Ajout de l'email Clerk
+  const {clerkClient} = await import("@clerk/nextjs/server");
+  const clerk = await clerkClient();
+  const uniqueUserIds = Array.from(new Set(Object.values(addedByMap))).filter(
+    (id) => !!id && id !== "Unknown"
+  );
+  const userEmailMap: Record<string, string> = {};
+  await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      const safeUserId = typeof userId === "string" ? userId : String(userId);
+      if (!safeUserId || safeUserId === "Unknown") return;
+      try {
+        const user = await clerk.users.getUser(safeUserId);
+        userEmailMap[safeUserId] =
+          user?.emailAddresses?.[0]?.emailAddress || safeUserId;
+      } catch {
+        userEmailMap[safeUserId] = safeUserId;
+      }
+    })
+  );
+
+  // Ajoute le champ addedByEmail à chaque compétiteur
+  const result = c.map((comp) => {
+    const addedByKey = String(addedByMap[comp.competitorid] ?? "");
+    return {
+      ...comp,
+      addedByEmail: userEmailMap[addedByKey] || "-",
+    };
+  });
+
+  return NextResponse.json(result);
 }
 
 export async function DELETE(
