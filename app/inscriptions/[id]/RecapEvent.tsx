@@ -121,7 +121,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
         id: "name",
         header: () => "Nom",
         cell: (info) =>
-          `${info.row.original.firstname} ${info.row.original.lastname}`,
+          `${info.row.original.lastname} ${info.row.original.firstname} `,
       }),
       // Static skiclub column
       columnHelper.accessor((row) => row.skiclub, {
