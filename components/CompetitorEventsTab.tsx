@@ -100,7 +100,7 @@ export function CompetitorEventsTab() {
               .sort((a: any, b: any) => a.lastname.localeCompare(b.lastname))
               .map((c: any) => (
                 <option key={c.competitorid} value={c.competitorid}>
-                  {c.firstname} {c.lastname}
+                  {c.lastname} {c.firstname}
                 </option>
               ))}
           </select>
