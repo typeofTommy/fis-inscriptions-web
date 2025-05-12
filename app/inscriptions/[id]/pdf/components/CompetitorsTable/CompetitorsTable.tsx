@@ -1,4 +1,4 @@
-import {Competitor, CodexData} from "@/app/types";
+import {CompetitionItem, Competitor} from "@/app/types";
 import React from "react";
 
 export const CompetitorsTable = ({
@@ -6,7 +6,7 @@ export const CompetitorsTable = ({
   codexData,
 }: {
   competitors: (Competitor & {codexNumbers: string[]})[];
-  codexData: CodexData[];
+  codexData: CompetitionItem[];
 }) => {
   return (
     <div className="overflow-x-auto">
@@ -28,12 +28,12 @@ export const CompetitorsTable = ({
             </th>
             {codexData.map((codex) => (
               <th
-                key={codex.number}
+                key={codex.codex}
                 className="border-r border-black p-1 font-semibold"
               >
-                <div>{codex.discipline}</div>
-                <div>{codex.number}</div>
-                <div>{codex.raceLevel}</div>
+                <div>{codex.eventCode}</div>
+                <div>{codex.codex}</div>
+                <div>{codex.categoryCode}</div>
               </th>
             ))}
             <th className="border-r border-black p-1 font-semibold">
@@ -66,16 +66,16 @@ export const CompetitorsTable = ({
               </td>
               {codexData.map((codex) => (
                 <td
-                  key={codex.number}
+                  key={codex.codex}
                   className="border-r border-black p-1 text-center"
                 >
                   <div className="font-bold">
-                    {competitor.codexNumbers?.includes(codex.number)
-                      ? (codex.discipline === "SL" && competitor.slpoints) ||
-                        (codex.discipline === "GS" && competitor.gspoints) ||
-                        (codex.discipline === "SG" && competitor.sgpoints) ||
-                        (codex.discipline === "DH" && competitor.dhpoints) ||
-                        (codex.discipline === "AC" && competitor.acpoints)
+                    {competitor.codexNumbers?.includes(String(codex.codex))
+                      ? (codex.eventCode === "SL" && competitor.slpoints) ||
+                        (codex.eventCode === "GS" && competitor.gspoints) ||
+                        (codex.eventCode === "SG" && competitor.sgpoints) ||
+                        (codex.eventCode === "DH" && competitor.dhpoints) ||
+                        (codex.eventCode === "AC" && competitor.acpoints)
                       : null}
                   </div>
                 </td>

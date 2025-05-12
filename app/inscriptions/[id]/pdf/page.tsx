@@ -13,7 +13,6 @@ import {format} from "date-fns";
 import {
   inscriptionCompetitors,
   inscriptions,
-  stations,
   competitors as competitorsTable,
 } from "@/drizzle/schemaInscriptions";
 import {db} from "@/app/db/inscriptionsDB";
@@ -31,14 +30,8 @@ export default async function PdfPage({
     .where(eq(inscriptions.id, Number(id)))
     .limit(1);
 
-  const station = await db
-    .select()
-    .from(stations)
-    .where(eq(stations.id, inscription.location || 0))
-    .limit(1);
-
   const countryCode = await fetch(
-    `https://restcountries.com/v3.1/name/${station[0].country}`
+    `https://restcountries.com/v3.1/name/${inscription.eventData.placeNationCode}`
   ).then((res) => res.json());
 
   // Typage explicite du résultat de l'innerJoin
@@ -90,14 +83,15 @@ export default async function PdfPage({
         <div className="flex border-b border-black">
           <CompetitionBlock
             station={
-              station[0].name[0].toUpperCase() + station[0].name.slice(1) || ""
+              inscription.eventData.place[0].toUpperCase() +
+                inscription.eventData.place.slice(1) || ""
             }
             countryTrigram={countryCode[0].cioc.toUpperCase() || ""}
             flag={countryCode[0].flags.svg || ""}
           />
           <DateOfRaceBlock
-            startDate={format(inscription.firstRaceDate, "dd/MM/yyyy")}
-            endDate={format(inscription.lastRaceDate, "dd/MM/yyyy")}
+            startDate={format(inscription.eventData.startDate, "dd/MM/yyyy")}
+            endDate={format(inscription.eventData.endDate, "dd/MM/yyyy")}
           />
         </div>
         {/* Responsible and Category Row */}
@@ -108,7 +102,7 @@ export default async function PdfPage({
         <GenderRow gender={raceGender === "M" ? "M" : "W"} />
         <CompetitorsTable
           competitors={competitors}
-          codexData={inscription.codexData}
+          codexData={inscription.eventData.competitions}
         />
         <TableFooter
           competitorLength={

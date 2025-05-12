@@ -2,12 +2,6 @@ import {NextResponse} from "next/server";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 
-// Define the codex data type
-interface CodexEntry {
-  number: string;
-  [key: string]: unknown;
-}
-
 export async function GET(req: Request) {
   const {searchParams} = new URL(req.url);
   const number = searchParams.get("number");
@@ -18,13 +12,17 @@ export async function GET(req: Request) {
 
   // Cherche une inscription qui contient ce codex
   const result = await db
-    .select({id: inscriptions.id, codexData: inscriptions.codexData})
+    .select({
+      id: inscriptions.id,
+      eventData: inscriptions.eventData,
+    })
     .from(inscriptions);
 
   for (const row of result) {
     if (excludeId && String(row.id) === String(excludeId)) continue;
-    if (Array.isArray(row.codexData)) {
-      if (row.codexData.some((c: CodexEntry) => c.number === number)) {
+    const competitions = row.eventData.competitions;
+    if (Array.isArray(competitions)) {
+      if (competitions.some((c) => String(c.codex) === number)) {
         return NextResponse.json({exists: true, inscriptionId: row.id});
       }
     }
