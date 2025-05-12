@@ -195,7 +195,7 @@ export const Competitors = ({
               return Number(aPoints) - Number(bPoints);
             })
             .map((c) => (
-              <TableRow key={c.competitorId}>
+              <TableRow key={c.competitorId + c.codexNumber}>
                 <TableCell>{c.lastname}</TableCell>
                 <TableCell>{c.firstname}</TableCell>
                 <TableCell>{c.skiclub}</TableCell>

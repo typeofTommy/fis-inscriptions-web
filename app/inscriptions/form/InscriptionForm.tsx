@@ -5,7 +5,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {z} from "zod";
 import {useCompetitionByCodex} from "@/app/fisApi";
-import {useCreateInscription} from "./api";
+import {useCreateInscription, useCodexCheck} from "./api";
 import {
   Form,
   FormControl,
@@ -27,20 +27,27 @@ export const InscriptionFormWrapper = () => {
   });
   const [codexInput, setCodexInput] = useState("");
   const [searchedCodex, setSearchedCodex] = useState<string | null>(null);
+  const [genderChoice, setGenderChoice] = useState<
+    "men" | "women" | "both" | null
+  >(null);
   const {
     data: event,
     isLoading,
     error,
   } = useCompetitionByCodex(searchedCodex ? Number(searchedCodex) : 0);
   const {createInscription} = useCreateInscription();
+  const {data: codexCheck} = useCodexCheck(searchedCodex ?? "");
+
+  const isMixte = event && event.genderCodes && event.genderCodes.length > 1;
 
   const onSubmit = async () => {
-    if (!event || !user) return;
+    if (!event || !user || (codexCheck && codexCheck.exists)) return;
     const createdBy = user.id;
     const newInscription = {
       eventId: event.id,
       eventData: event,
       createdBy,
+      genderChoice: isMixte ? genderChoice : undefined,
     };
     const returningInscription: {inscription: Inscription} =
       await createInscription.mutateAsync(newInscription);
@@ -96,9 +103,67 @@ export const InscriptionFormWrapper = () => {
                     </button>
                   </div>
                   <FormMessage />
+                  {searchedCodex &&
+                    codexCheck &&
+                    codexCheck.exists &&
+                    codexCheck.inscriptionId && (
+                      <div className="mt-2 text-red-600">
+                        Ce codex est déjà présent dans une{" "}
+                        <a
+                          href={`/inscriptions/${codexCheck.inscriptionId}`}
+                          className="underline text-blue-600"
+                        >
+                          inscription existante
+                        </a>
+                        .
+                      </div>
+                    )}
                 </FormItem>
               )}
             />
+            {event && isMixte && !codexCheck.exists && (
+              <div className="mt-4">
+                <label className="block font-semibold mb-2">
+                  L&apos;événement est mixte, quels codex souhaitez-vous
+                  importer ?
+                </label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    className={`px-4 py-2 rounded border cursor-pointer ${
+                      genderChoice === "men"
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200"
+                    }`}
+                    onClick={() => setGenderChoice("men")}
+                  >
+                    Hommes
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-4 py-2 rounded border cursor-pointer ${
+                      genderChoice === "women"
+                        ? "bg-pink-500 text-white"
+                        : "bg-gray-200"
+                    }`}
+                    onClick={() => setGenderChoice("women")}
+                  >
+                    Femmes
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-4 py-2 rounded border cursor-pointer ${
+                      genderChoice === "both"
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-200"
+                    }`}
+                    onClick={() => setGenderChoice("both")}
+                  >
+                    Les deux
+                  </button>
+                </div>
+              </div>
+            )}
             {isLoading && <p>Chargement des infos FIS...</p>}
             {error && (
               <p className="text-red-500">
@@ -141,7 +206,12 @@ export const InscriptionFormWrapper = () => {
               <button
                 type="submit"
                 className="bg-[#3d7cf2] hover:bg-[#3369d6] text-white px-8 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                disabled={isLoading || !event}
+                disabled={
+                  isLoading ||
+                  !event ||
+                  (codexCheck && codexCheck.exists) ||
+                  (isMixte && !genderChoice)
+                }
               >
                 Créer la compétition
               </button>
