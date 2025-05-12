@@ -275,7 +275,25 @@ export function InscriptionsTable() {
     },
     {
       id: "codex",
-      header: "Codex",
+      header: ({table}) => {
+        // On récupère la première ligne de données pour construire le header multi-lignes
+        const firstRow = table.getRowModel().rows[0]?.original;
+        const competitions = firstRow?.eventData?.competitions ?? [];
+        return (
+          <div className="flex divide-x">
+            {competitions.map((c, i) => (
+              <div key={i} className="px-2 flex flex-col items-center">
+                <span className="font-semibold text-xs">{c.eventCode}</span>
+                <span className="text-xs">{c.codex}</span>
+                <span className="text-xs">{c.status}</span>
+                <span className="text-xs">
+                  {c.date ? format(parseISO(c.date), "dd/MM/yyyy") : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        );
+      },
       enableColumnFilter: true,
       accessorFn: (row) => row,
       cell: ({row}) => (

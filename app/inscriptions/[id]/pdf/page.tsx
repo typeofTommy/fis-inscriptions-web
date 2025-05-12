@@ -69,21 +69,23 @@ export default async function PdfPage({
     ).values()
   );
 
-  const raceGender = competitors[0].gender;
+  const raceGender = competitors.length > 0 ? competitors[0].gender : "M"; // Default to M if no competitors
 
   return (
     <div className="max-w-4xl mx-auto p-4 bg-white">
       <Header />
-      <div className="border border-black">
+      <div className="border-2 border-black">
         {/* Competition and Date Row */}
         <div className="flex border-b border-black">
           <CompetitionBlock
             station={
-              inscription.eventData.place[0].toUpperCase() +
-                inscription.eventData.place.slice(1) || ""
+              inscription.eventData.place
+                ? inscription.eventData.place[0].toUpperCase() +
+                  inscription.eventData.place.slice(1)
+                : ""
             }
             countryTrigram={
-              inscription.eventData.placeNationCode.toUpperCase() || ""
+              inscription.eventData.placeNationCode?.toUpperCase() || ""
             }
           />
           <DateOfRaceBlock
@@ -101,11 +103,7 @@ export default async function PdfPage({
           competitors={competitors}
           codexData={inscription.eventData.competitions}
         />
-        <TableFooter
-          competitorLength={
-            new Set(competitors.map((c) => c.competitorid)).size
-          }
-        />
+        <TableFooter />
       </div>
       <Footer />
     </div>

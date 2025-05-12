@@ -1,5 +1,7 @@
 import {CompetitionItem, Competitor} from "@/app/types";
+import {format} from "date-fns";
 import React from "react";
+import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 
 export const CompetitorsTable = ({
   competitors,
@@ -8,6 +10,38 @@ export const CompetitorsTable = ({
   competitors: (Competitor & {codexNumbers: string[]})[];
   codexData: CompetitionItem[];
 }) => {
+  // Calculate entries per codex (only those with points > 0 for that specific event)
+  const entriesPerCodex = codexData.map((codexItem) => {
+    const count = competitors.filter((c) => {
+      const isAssociated = c.codexNumbers.includes(String(codexItem.codex));
+      if (!isAssociated) return false;
+
+      let hasPointsEntry = false;
+      // Check if competitor has a points entry (including 0) for the specific event type
+      switch (codexItem.eventCode) {
+        case "SL":
+          // Check for non-null value. parseFloat helps ensure "0" or "0.00" is treated as non-null.
+          hasPointsEntry = c.slpoints != null && !isNaN(parseFloat(c.slpoints));
+          break;
+        case "GS":
+          hasPointsEntry = c.gspoints != null && !isNaN(parseFloat(c.gspoints));
+          break;
+        case "SG":
+          hasPointsEntry = c.sgpoints != null && !isNaN(parseFloat(c.sgpoints));
+          break;
+        case "DH":
+          hasPointsEntry = c.dhpoints != null && !isNaN(parseFloat(c.dhpoints));
+          break;
+        case "AC":
+          hasPointsEntry = c.acpoints != null && !isNaN(parseFloat(c.acpoints));
+          break;
+        // Add other event codes if necessary
+      }
+      return hasPointsEntry; // Count if associated AND has a non-null points value (0 counts)
+    }).length;
+    return {codex: String(codexItem.codex), count};
+  });
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs border-collapse">
@@ -22,40 +56,50 @@ export const CompetitorsTable = ({
               <div className="italic font-normal">Familienname, Vorname</div>
             </th>
             <th className="border-r border-black p-1 font-semibold">
-              <div>YB</div>
-              <div className="italic font-normal">AN</div>
-              <div className="italic font-normal">JG</div>
+              <div className="text-center text-lg">YB</div>
             </th>
-            {codexData.map((codex) => (
-              <th
-                key={codex.codex}
-                className="border-r border-black p-1 font-semibold"
-              >
-                <div>{codex.eventCode}</div>
-                <div>{codex.codex}</div>
-                <div>{codex.categoryCode}</div>
-              </th>
-            ))}
-            <th className="border-r border-black p-1 font-semibold">
-              <div>Arrival</div>
-              <div className="italic font-normal">Arrivée</div>
-              <div className="italic font-normal">Anreise</div>
-              <div className="italic font-normal">(dd.mm.yy)</div>
-            </th>
-            <th className="p-1 font-semibold">
-              <div>Departure</div>
-              <div className="italic font-normal">Départ</div>
-              <div className="italic font-normal">Abreise</div>
-              <div className="italic font-normal">(dd.mm.yy)</div>
-            </th>
+            {codexData.map((codex, index) => {
+              const disciplineBgColor =
+                colorBadgePerDiscipline[codex.eventCode] || "bg-gray-200"; // Fallback for discipline cell
+              return (
+                <th
+                  key={codex.codex}
+                  className={`${
+                    index === codexData.length - 1
+                      ? ""
+                      : "border-r border-black"
+                  } p-0 font-semibold min-w-[70px] text-center align-middle`}
+                >
+                  <div
+                    className={`border-b border-black py-1 text-md ${disciplineBgColor} text-white`}
+                  >
+                    {codex.eventCode}
+                  </div>
+                  <div className="border-b border-black py-1 text-md">
+                    {codex.codex}
+                  </div>
+                  <div className="border-b border-black py-1 text-md">
+                    {codex.categoryCode}
+                  </div>
+                  <div className="py-1 text-md">
+                    {format(codex.date, "dd/MM/yy")}
+                  </div>
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
           {Array.from(
             new Map(competitors.map((c) => [c.competitorid, c])).values()
-          ).map((competitor) => (
-            <tr className="border-b border-black" key={competitor.competitorid}>
-              <td className="border-r border-black p-1 text-center">
+          ).map((competitor, rowIndex, arr) => (
+            <tr
+              className={`${
+                rowIndex === arr.length - 1 ? "" : "border-b border-black"
+              }`}
+              key={competitor.competitorid}
+            >
+              <td className="border-r border-black p-1 text-center font-bold text-md">
                 {competitor.fiscode}
               </td>
               <td className="border-r border-black p-1">
@@ -64,27 +108,49 @@ export const CompetitorsTable = ({
               <td className="border-r border-black p-1 text-center">
                 {competitor.birthyear}
               </td>
-              {codexData.map((codex) => (
+              {codexData.map((codex, colIndex) => (
                 <td
                   key={codex.codex}
-                  className="border-r border-black p-1 text-center"
+                  className={`${
+                    colIndex === codexData.length - 1
+                      ? ""
+                      : "border-r border-black"
+                  } p-1 text-center text-md`}
                 >
-                  <div className="font-bold">
-                    {competitor.codexNumbers?.includes(String(codex.codex))
-                      ? (codex.eventCode === "SL" && competitor.slpoints) ||
-                        (codex.eventCode === "GS" && competitor.gspoints) ||
-                        (codex.eventCode === "SG" && competitor.sgpoints) ||
-                        (codex.eventCode === "DH" && competitor.dhpoints) ||
-                        (codex.eventCode === "AC" && competitor.acpoints)
-                      : null}
-                  </div>
+                  {competitor.codexNumbers?.includes(String(codex.codex))
+                    ? (codex.eventCode === "SL" && competitor.slpoints) ||
+                      (codex.eventCode === "GS" && competitor.gspoints) ||
+                      (codex.eventCode === "SG" && competitor.sgpoints) ||
+                      (codex.eventCode === "DH" && competitor.dhpoints) ||
+                      (codex.eventCode === "AC" && competitor.acpoints)
+                    : null}
                 </td>
               ))}
-              <td className="border-r border-black p-1 text-center">TODO</td>
-              <td className="p-1 text-center">TODO</td>
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr className="border-t border-black">
+            <td
+              colSpan={3} // Spans FIS Code, Name, YB columns
+              className="p-1 pr-2 border-r border-black text-right font-bold text-md"
+            >
+              Entries per Codex
+            </td>
+            {entriesPerCodex.map((item, index) => (
+              <td
+                key={item.codex}
+                className={`p-1 text-center font-bold ${
+                  index === entriesPerCodex.length - 1
+                    ? ""
+                    : "border-r border-black"
+                }`}
+              >
+                {item.count}
+              </td>
+            ))}
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
