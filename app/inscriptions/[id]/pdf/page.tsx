@@ -86,8 +86,9 @@ export default async function PdfPage({
               inscription.eventData.place[0].toUpperCase() +
                 inscription.eventData.place.slice(1) || ""
             }
-            countryTrigram={countryCode[0].cioc.toUpperCase() || ""}
-            flag={countryCode[0].flags.svg || ""}
+            countryTrigram={
+              inscription.eventData.placeNationCode.toUpperCase() || ""
+            }
           />
           <DateOfRaceBlock
             startDate={format(inscription.eventData.startDate, "dd/MM/yyyy")}
