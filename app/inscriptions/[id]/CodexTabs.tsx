@@ -97,6 +97,7 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
                 competitions.find((c) => c.codex === activeCodex)?.genderCode ||
                 "M"
               }
+              codexData={competitions}
             />
           ) : !permissionToEdit ? (
             <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
@@ -142,7 +143,7 @@ const TotalInscriptionsInfo = ({
   discipline,
 }: {
   inscriptionId: string;
-  codexNumber: string;
+  codexNumber: number;
   discipline: string;
 }) => {
   const {data, isLoading} = useInscriptionCompetitors(
