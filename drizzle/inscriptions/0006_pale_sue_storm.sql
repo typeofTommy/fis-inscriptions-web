@@ -1,2 +1,0 @@
-CREATE TYPE "inscriptionsDB"."status" AS ENUM('open', 'frozen', 'validated');--> statement-breakpoint
-ALTER TABLE "inscriptionsDB"."inscriptions" ADD COLUMN "status" "inscriptionsDB"."status" DEFAULT 'open' NOT NULL;

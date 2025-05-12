@@ -3,7 +3,7 @@
 import {Loader2, MapPinIcon, CalendarIcon, LinkIcon} from "lucide-react";
 import {InscriptionActionsMenu} from "./InscriptionActionsMenu";
 import {usePermissionToEdit} from "./usePermissionToEdit";
-import {useInscription, useStations} from "../form/api";
+import {useInscription} from "../form/api";
 import {parseLocalDate} from "@/app/lib/dates";
 
 interface InscriptionDetailsProps {
@@ -12,7 +12,6 @@ interface InscriptionDetailsProps {
 
 export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
   const {data: inscription, isLoading, error} = useInscription(id);
-  const {data: stations} = useStations();
 
   const permissionToEdit = usePermissionToEdit(inscription);
 
@@ -34,19 +33,6 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
 
   if (!inscription) {
     return null;
-  }
-
-  // Trouver le nom de la station à partir de l'id
-  let stationName = "Non renseigné";
-  let stationCountry = "";
-  if (stations && inscription.location) {
-    const foundStation = stations.find(
-      (s: any) => s.id === inscription.location
-    );
-    if (foundStation) {
-      stationName = foundStation.name;
-      stationCountry = foundStation.country;
-    }
   }
 
   return (
@@ -92,7 +78,7 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                 </p>
                 <p className="text-base font-medium text-slate-800">
                   {parseLocalDate(
-                    inscription.firstRaceDate
+                    inscription.eventData.startDate
                   )?.toLocaleDateString("fr-FR")}
                 </p>
               </div>
@@ -106,9 +92,9 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                   Date de la dernière course
                 </p>
                 <p className="text-base font-medium text-slate-800">
-                  {parseLocalDate(inscription.lastRaceDate)?.toLocaleDateString(
-                    "fr-FR"
-                  )}
+                  {parseLocalDate(
+                    inscription.eventData.endDate
+                  )?.toLocaleDateString("fr-FR")}
                 </p>
               </div>
             </div>
@@ -119,8 +105,7 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
               <div>
                 <p className="text-sm font-medium text-slate-500 mb-1">Lieu</p>
                 <p className="text-base font-medium text-slate-800">
-                  {stationName[0].toUpperCase() + stationName.slice(1)}
-                  {stationCountry ? ` (${stationCountry})` : ""}
+                  {inscription.eventData.place}
                 </p>
               </div>
             </div>
@@ -133,7 +118,7 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
           {/* Creator and Date Info */}
           {inscription.createdBy && inscription.createdAt && (
             <p className="text-xs text-slate-400 mt-2 text-right">
-              Créé par {inscription.fullName ?? "Utilisateur inconnu"} le{" "}
+              Créé par {inscription.createdBy ?? "Utilisateur inconnu"} le{" "}
               {new Date(inscription.createdAt).toLocaleDateString("fr-FR")}
             </p>
           )}

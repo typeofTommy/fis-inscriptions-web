@@ -1,4 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
+import {Competition} from "./types";
 
 /**
  * Fetch competition details by codex from the FIS public API.
@@ -6,7 +7,7 @@ import {useQuery} from "@tanstack/react-query";
  * @param codex - The competition codex (unique identifier)
  */
 export const useCompetitionByCodex = (codex: number) => {
-  return useQuery({
+  return useQuery<Competition>({
     queryKey: ["competitionByCodex", codex],
     queryFn: async () => {
       if (!codex) throw new Error("Codex is required");

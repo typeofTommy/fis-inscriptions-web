@@ -12,10 +12,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {Inscription} from "@/app/types";
-import {InscriptionFormWrapper} from "../form/InscriptionForm";
 
 interface InscriptionActionsMenuProps {
   inscription: Inscription;
@@ -158,27 +156,10 @@ export function InscriptionActionsMenu({
           <>
             <Separator className="my-1" />
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="justify-start w-full cursor-pointer"
-                  disabled={readonly}
-                >
-                  Editer
-                </Button>
-              </DialogTrigger>
               <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Modifier l&apos;inscription</DialogTitle>
                 </DialogHeader>
-                <InscriptionFormWrapper
-                  mode="edit"
-                  inscription={inscription}
-                  onSuccess={() => {
-                    setDialogOpen(false);
-                    router.refresh();
-                  }}
-                />
               </DialogContent>
             </Dialog>
             <Button

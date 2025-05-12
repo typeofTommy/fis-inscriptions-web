@@ -87,15 +87,18 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
 
   // Tri par défaut sur le premier codex dès que codexData est dispo
   useEffect(() => {
-    if (inscription?.codexData && inscription.codexData.length > 0) {
-      const firstCodexId = String(inscription.codexData[0].number);
+    if (
+      inscription?.eventData.competitions &&
+      inscription.eventData.competitions.length > 0
+    ) {
+      const firstCodexId = String(inscription.eventData.competitions[0].codex);
       setSorting((current) =>
         current.length === 0 || current[0].id !== firstCodexId
           ? [{id: firstCodexId, desc: false}]
           : current
       );
     }
-  }, [inscription?.codexData]);
+  }, [inscription?.eventData.competitions]);
 
   // 1. Data Preparation: on force les champs string à non-null et on normalise le genre
   const allCompetitors: CompetitorRow[] = useMemo(() => {
@@ -131,15 +134,15 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
         enableSorting: true,
       }),
       // Dynamic codex columns
-      ...(inscription?.codexData ?? []).map((codex) =>
+      ...(inscription?.eventData.competitions ?? []).map((competition) =>
         columnHelper.accessor(
           (row) => {
             const isInscrit =
               Array.isArray(row.codexNumbers) &&
-              row.codexNumbers.includes(String(codex.number));
+              row.codexNumbers.includes(String(competition.codex));
             // Si inscrit mais pas de points, retourne '-'. Si pas inscrit, retourne '-'.
             if (isInscrit) {
-              const val = row.points[codex.discipline];
+              const val = row.points[competition.eventCode];
               return val === null ||
                 val === undefined ||
                 val === "" ||
@@ -150,7 +153,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
             return "-";
           },
           {
-            id: String(codex.number),
+            id: String(competition.codex),
             header: ({column}) => (
               <div
                 className="flex items-center gap-1 justify-center min-w-[120px] cursor-pointer select-none"
@@ -158,27 +161,28 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
                   column.toggleSorting(column.getIsSorted() === "asc")
                 }
               >
-                <span>{codex.number}</span>
+                <span>{competition.codex}</span>
                 <Badge
                   className={`text-xs px-2 py-1 ${
-                    colorBadgePerDiscipline[codex.discipline] || ""
+                    colorBadgePerDiscipline[competition.eventCode] || ""
                   }`}
                 >
-                  {codex.discipline}
+                  {competition.eventCode}
                 </Badge>
                 <Badge
                   className={`text-xs px-2 py-1 text-white ${
-                    colorBadgePerGender[codex.sex === "F" ? "W" : "M"] || ""
+                    colorBadgePerGender[competition.genderCode] || ""
                   }`}
                 >
-                  {codex.sex}
+                  {competition.genderCode}
                 </Badge>
                 <Badge
                   className={`text-xs px-2 py-1 cursor-pointer ${
-                    colorBadgePerRaceLevel[codex.raceLevel] || "bg-gray-300"
+                    colorBadgePerRaceLevel[competition.categoryCode] ||
+                    "bg-gray-300"
                   }`}
                 >
-                  {codex.raceLevel}
+                  {competition.categoryCode}
                 </Badge>
                 {column.getIsSorted() === "asc" && <span>↑</span>}
                 {column.getIsSorted() === "desc" && <span>↓</span>}
@@ -222,7 +226,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
         enableSorting: false,
       }),
     ],
-    [columnHelper, inscription?.codexData]
+    [columnHelper, inscription?.eventData.competitions]
   );
 
   // 3. TanStack Table Instance
@@ -243,14 +247,14 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
 
   // Détection des sexes présents dans les codex de l'évènement
   const codexSexes = useMemo(() => {
-    if (!inscription?.codexData) return [];
+    if (!inscription?.eventData.competitions) return [];
     const sexes = new Set<string>();
-    for (const codex of inscription.codexData) {
-      if (codex.sex === "F") sexes.add("W");
-      if (codex.sex === "M") sexes.add("M");
+    for (const competition of inscription.eventData.competitions) {
+      if (competition.genderCode === "W") sexes.add("W");
+      if (competition.genderCode === "M") sexes.add("M");
     }
     return Array.from(sexes);
-  }, [inscription?.codexData]);
+  }, [inscription?.eventData.competitions]);
 
   const permissionToEdit = usePermissionToEdit(inscription);
 
@@ -266,7 +270,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
   if (errorInscription || error) {
     return <div>Erreur lors du chargement des données.</div>;
   }
-  if (!inscription?.codexData?.length) {
+  if (!inscription?.eventData.competitions?.length) {
     return <div>Aucun codex pour cet évènement.</div>;
   }
 
@@ -288,9 +292,9 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
             codexSexes.length === 1 ? (
               <AddCompetitorModal
                 inscriptionId={inscriptionId}
-                defaultCodex={""}
+                defaultCodex={inscription?.eventData.competitions[0].codex}
                 gender={codexSexes[0] as "W" | "M"}
-                codexData={inscription?.codexData || []}
+                codexData={inscription?.eventData.competitions || []}
               />
             ) : (
               <>
@@ -321,9 +325,9 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
                 </button>
                 <AddCompetitorModal
                   inscriptionId={inscriptionId}
-                  defaultCodex={""}
+                  defaultCodex={inscription?.eventData.competitions[0].codex}
                   gender={addGender}
-                  codexData={inscription?.codexData || []}
+                  codexData={inscription?.eventData.competitions || []}
                 />
               </>
             )

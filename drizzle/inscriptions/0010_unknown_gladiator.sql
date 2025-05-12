@@ -1,1 +1,0 @@
-ALTER TABLE "inscriptionsDB"."inscription_competitors" ADD COLUMN "added_by" text DEFAULT 'Unknown';

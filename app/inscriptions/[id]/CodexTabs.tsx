@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {useQuery} from "@tanstack/react-query";
 import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/components/ui/tabs";
 import {Badge} from "@/components/ui/badge";
@@ -7,7 +8,6 @@ import {Competitors, useInscriptionCompetitors} from "./Competitors";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
-import React, {useMemo} from "react";
 import {usePermissionToEdit} from "./usePermissionToEdit";
 import {Inscription} from "@/app/types";
 import {Loader2} from "lucide-react";
@@ -34,53 +34,56 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
   });
   const permissionToEdit = usePermissionToEdit(inscription);
 
-  const [activeCodex, setActiveCodex] = React.useState<string | undefined>(
+  const [activeCodex, setActiveCodex] = React.useState<number | undefined>(
     undefined
   );
-  const codexData = useMemo(() => inscription?.codexData || [], [inscription]);
+
+  const competitions = inscription?.eventData.competitions;
 
   React.useEffect(() => {
-    if (!activeCodex && codexData.length > 0) {
-      setActiveCodex(codexData[0].number);
+    if (!activeCodex && competitions?.length) {
+      setActiveCodex(competitions[0].codex);
     }
-  }, [activeCodex, codexData]);
+  }, [activeCodex, competitions]);
 
   if (error) return <div>Erreur lors du chargement des codex</div>;
-  if ((!Array.isArray(codexData) || codexData.length === 0) && !isLoading) {
+  if (!competitions?.length && !isLoading) {
     return <div>Aucun codex pour cette inscription.</div>;
   }
 
   if (isLoading) return null;
 
+  if (!competitions) return null;
+
   return (
     <>
       <Tabs
-        defaultValue={codexData[0].number}
+        defaultValue={competitions?.[0].codex.toString()}
         className="mt-8 "
-        onValueChange={setActiveCodex}
-        value={activeCodex}
+        onValueChange={(value) => setActiveCodex(Number(value))}
+        value={activeCodex?.toString()}
       >
         <TabsList className="bg-transparent flex gap-4">
-          {codexData.map((codex) => (
+          {competitions?.map((competition) => (
             <TabsTrigger
-              key={codex.number}
-              value={codex.number}
+              key={competition.codex}
+              value={competition.codex.toString()}
               className="min-w-[140px] h-12 text-lg px-6 py-3 cursor-pointer border border-slate-200 rounded-md transition-all duration-150 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:border-2 data-[state=active]:border-slate-300 data-[state=active]:text-black data-[state=active]:font-bold data-[state=active]:z-10 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:border-slate-200 data-[state=inactive]:shadow-none data-[state=inactive]:z-0"
             >
-              Codex {codex.number}
+              Codex {competition.codex}
               <Badge
                 className={`ml-2 text-base px-3 py-1 ${
-                  colorBadgePerDiscipline[codex.discipline] || ""
+                  colorBadgePerDiscipline[competition.eventCode] || ""
                 }`}
               >
-                {codex.discipline}
+                {inscription?.eventData.disciplineCode}
               </Badge>
               <Badge
                 className={`ml-2 text-base px-3 py-1 ${
-                  colorBadgePerGender[codex.sex === "F" ? "W" : "M"] || ""
+                  colorBadgePerGender[competition.genderCode] || ""
                 } text-white`}
               >
-                {codex.sex}
+                {inscription?.eventData.genderCodes[0]}
               </Badge>
             </TabsTrigger>
           ))}
@@ -89,14 +92,11 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
           {permissionToEdit && inscription?.status === "open" ? (
             <AddCompetitorModal
               inscriptionId={inscriptionId}
-              defaultCodex={activeCodex || codexData[0].number}
+              defaultCodex={activeCodex || competitions?.[0].codex}
               gender={
-                inscription?.codexData.find((c) => c.number === activeCodex)
-                  ?.sex === "F"
-                  ? "W"
-                  : "M"
+                competitions.find((c) => c.codex === activeCodex)?.genderCode ||
+                "M"
               }
-              codexData={codexData}
             />
           ) : !permissionToEdit ? (
             <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
@@ -110,20 +110,26 @@ export function CodexTabs({inscriptionId}: CodexTabsProps) {
             </div>
           )}
         </div>
-        {codexData.map((codex) => (
-          <TabsContent key={codex.number} value={codex.number}>
+        {competitions.map((competition) => (
+          <TabsContent
+            key={competition.codex}
+            value={competition.codex.toString()}
+          >
             <Competitors
               inscriptionId={inscriptionId}
-              codexNumber={codex.number}
-              discipline={codex.discipline}
+              codexNumber={competition.codex}
+              discipline={competition.eventCode}
             />
           </TabsContent>
         ))}
       </Tabs>
       <TotalInscriptionsInfo
         inscriptionId={inscriptionId}
-        codexNumber={activeCodex || codexData[0].number}
-        discipline={codexData.find((c) => c.number === activeCodex)?.discipline}
+        codexNumber={activeCodex || competitions[0].codex}
+        discipline={
+          competitions.find((c) => c.codex === activeCodex)?.eventCode ||
+          competitions[0].eventCode
+        }
       />
     </>
   );

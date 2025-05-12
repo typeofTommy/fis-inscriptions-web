@@ -31,9 +31,7 @@ import {
   colorBadgePerGender,
 } from "@/app/lib/colorMappers";
 import {DebouncedInput} from "@/components/ui/debounced-input";
-import {CodexData, Inscription} from "@/app/types";
-import {useStations} from "@/app/inscriptions/form/api";
-import {useCompetitionByCodex} from "@/app/fisApi";
+import {Inscription} from "@/app/types";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -69,15 +67,71 @@ export function InscriptionsTable() {
     queryKey: ["inscriptions"],
     queryFn: () => fetch("/api/inscriptions").then((res) => res.json()),
   });
-  const {data: c} = useCompetitionByCodex(5915);
-
-  console.log({c});
-
-  const {data: stations} = useStations();
 
   // Mémoïsation forte pour éviter les recalculs infinis
   const stableData = useMemo(() => data ?? [], [data]);
-  const stableStations = useMemo(() => stations ?? [], [stations]);
+
+  // Génération dynamique des options de filtres à partir de stableData
+  const locationOptions = useMemo(() => {
+    return Array.from(
+      new Set(stableData.map((row) => row.eventData.place).filter(Boolean))
+    )
+      .map((name) => ({value: name, label: name}))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [stableData]);
+
+  const countryOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        stableData
+          .map(
+            (row) =>
+              row.eventData.placeNationCode || row.eventData.organiserNationCode
+          )
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [stableData]);
+
+  const codexOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        stableData.flatMap((row) =>
+          (row.eventData.competitions ?? []).map((c: any) => c.codex)
+        )
+      )
+    ).sort((a, b) => String(a).localeCompare(String(b)));
+  }, [stableData]);
+
+  const disciplineOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        stableData.flatMap((row) =>
+          (row.eventData.competitions ?? []).map((c) => c.eventCode)
+        )
+      )
+    ).sort((a, b) => String(a).localeCompare(String(b)));
+  }, [stableData]);
+
+  const raceLevelOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        stableData.flatMap((row) =>
+          (row.eventData.competitions ?? []).map((c: any) => c.categoryCode)
+        )
+      )
+    ).sort((a, b) => String(a).localeCompare(String(b)));
+  }, [stableData]);
+
+  const sexOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        stableData.flatMap((row) =>
+          (row.eventData.competitions ?? []).map((c: any) => c.genderCode)
+        )
+      )
+    ).sort((a, b) => String(a).localeCompare(String(b)));
+  }, [stableData]);
 
   const columns: ColumnDef<Inscription>[] = [
     {
@@ -102,7 +156,7 @@ export function InscriptionsTable() {
       cell: ({row}) => {
         return (
           <div>
-            {format(parseISO(row.original.firstRaceDate), "dd/MM/yyyy")}
+            {format(parseISO(row.original.eventData.startDate), "dd/MM/yyyy")}
           </div>
         );
       },
@@ -117,7 +171,7 @@ export function InscriptionsTable() {
       ),
       filterFn: (row, id, filterValue) => {
         if (!filterValue) return true;
-        return row.original.firstRaceDate.includes(filterValue);
+        return row.original.eventData.startDate.includes(filterValue);
       },
     },
     {
@@ -132,15 +186,10 @@ export function InscriptionsTable() {
         </Button>
       ),
       cell: ({row}) => {
-        const locationId = row.original.location;
+        const locationId = row.original.eventData.place;
         let stationName = "";
-        if (stations && locationId) {
-          const foundStation = stations.find((s: any) => s.id === locationId);
-          stationName = foundStation
-            ? foundStation.name
-            : `Station #${locationId}`;
-        } else if (locationId) {
-          stationName = `Station #${locationId}`;
+        if (locationId) {
+          stationName = locationId;
         } else {
           stationName = "Non renseigné";
         }
@@ -150,49 +199,34 @@ export function InscriptionsTable() {
       },
       filterFn: (row, id, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
-        if (!stations) return true;
-        const locationId = row.original.location;
-        const foundStation = stations.find((s: any) => s.id === locationId);
-        const stationName = foundStation
-          ? foundStation.name
-          : `Station #${locationId}`;
-        return stationName.toLowerCase().includes(filterValue.toLowerCase());
+        const locationId = row.original.eventData.place;
+        return locationId.toLowerCase().includes(filterValue.toLowerCase());
       },
     },
     {
       accessorKey: "country",
-      header: ({column}) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="cursor-pointer"
-          >
-            Pays
-          </Button>
-        );
-      },
+      header: ({column}) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="cursor-pointer"
+        >
+          Pays
+        </Button>
+      ),
       cell: ({row}) => {
-        const locationId = row.original.location;
-        let country = (row.original as any).country;
-        if (stations && locationId) {
-          const foundStation = stations.find((s: any) => s.id === locationId);
-          if (foundStation && foundStation.country) {
-            country = foundStation.country;
-          }
-        }
-        return <span>{country ? country : "Non renseigné"}</span>;
+        const country =
+          row.original.eventData.placeNationCode ||
+          row.original.eventData.organiserNationCode ||
+          "Non renseigné";
+        return <span>{country}</span>;
       },
       filterFn: (row, id, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
-        const locationId = row.original.location;
-        let country = (row.original as any).country;
-        if (stations && locationId) {
-          const foundStation = stations.find((s: any) => s.id === locationId);
-          if (foundStation && foundStation.country) {
-            country = foundStation.country;
-          }
-        }
+        const country =
+          row.original.eventData.placeNationCode ||
+          row.original.eventData.organiserNationCode ||
+          "";
         return country === filterValue;
       },
     },
@@ -203,19 +237,21 @@ export function InscriptionsTable() {
       accessorFn: (row) => row,
       cell: ({row}) => (
         <div className="flex gap-2 flex-wrap">
-          {(row.original.codexData ?? []).map((c: any, i: number) => (
-            <Badge key={c.number + i} variant={"outline"}>
-              {c.number}
-            </Badge>
-          ))}
+          {(row.original.eventData.competitions ?? []).map(
+            (c: any, i: number) => (
+              <Badge key={c.codex + i} variant={"outline"}>
+                {c.codex}
+              </Badge>
+            )
+          )}
         </div>
       ),
       filterFn: (row, id, filterValue) => {
         if (!filterValue) return true;
-        return Array.isArray(row.original.codexData)
-          ? row.original.codexData.some((c: any) =>
-              c.number
-                ?.toLowerCase()
+        return Array.isArray(row.original.eventData.competitions)
+          ? row.original.eventData.competitions.some((c: any) =>
+              String(c.codex)
+                .toLowerCase()
                 .includes((filterValue as string).toLowerCase())
             )
           : true;
@@ -226,27 +262,30 @@ export function InscriptionsTable() {
       header: "Disciplines",
       enableColumnFilter: true,
       accessorFn: (row) => row,
-      cell: ({row}) => (
-        <div className="flex gap-2 flex-wrap">
-          {Array.from(
-            new Set(
-              (row.original.codexData ?? []).map((c: any) => c.discipline)
-            )
-          ).map((discipline) => (
-            <Badge
-              key={discipline}
-              className={colorBadgePerDiscipline[discipline] || "bg-gray-300"}
-            >
-              {discipline}
-            </Badge>
-          ))}
-        </div>
-      ),
+      cell: ({row}) => {
+        const disciplines = Array.from(
+          new Set(
+            (row.original.eventData.competitions ?? []).map((c) => c.eventCode)
+          )
+        ).filter(Boolean);
+        return (
+          <div className="flex gap-2 flex-wrap">
+            {disciplines.map((discipline: string) => (
+              <Badge
+                key={discipline}
+                className={colorBadgePerDiscipline[discipline] || "bg-gray-300"}
+              >
+                {discipline}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
       filterFn: (row, id, filterValue) => {
         if (!filterValue) return true;
-        return Array.isArray(row.original.codexData)
-          ? row.original.codexData.some(
-              (c: any) => c.discipline === filterValue
+        return Array.isArray(row.original.eventData.competitions)
+          ? row.original.eventData.competitions.some(
+              (c: any) => c.disciplineCode === filterValue
             )
           : true;
       },
@@ -256,24 +295,33 @@ export function InscriptionsTable() {
       header: "Race Levels",
       enableColumnFilter: true,
       accessorFn: (row) => row,
-      cell: ({row}) => (
-        <div className="flex gap-2 flex-wrap">
-          {Array.from(
-            new Set((row.original.codexData ?? []).map((c: any) => c.raceLevel))
-          ).map((raceLevel) => (
-            <Badge
-              key={raceLevel}
-              className={colorBadgePerRaceLevel[raceLevel] || "bg-gray-300"}
-            >
-              {raceLevel}
-            </Badge>
-          ))}
-        </div>
-      ),
+      cell: ({row}) => {
+        const raceLevels = Array.from(
+          new Set(
+            (row.original.eventData.competitions ?? []).map(
+              (c: any) => c.categoryCode
+            )
+          )
+        ).filter(Boolean);
+        return (
+          <div className="flex gap-2 flex-wrap">
+            {raceLevels.map((raceLevel: string) => (
+              <Badge
+                key={raceLevel}
+                className={colorBadgePerRaceLevel[raceLevel] || "bg-gray-300"}
+              >
+                {raceLevel}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
       filterFn: (row, id, filterValue) => {
         if (!filterValue) return true;
-        return Array.isArray(row.original.codexData)
-          ? row.original.codexData.some((c: any) => c.raceLevel === filterValue)
+        return Array.isArray(row.original.eventData.competitions)
+          ? row.original.eventData.competitions.some(
+              (c: any) => c.categoryCode === filterValue
+            )
           : true;
       },
     },
@@ -309,11 +357,15 @@ export function InscriptionsTable() {
       accessorFn: (row) => row,
       cell: ({row}) => {
         const sexes = Array.from(
-          new Set((row.original.codexData ?? []).map((c: any) => c.sex))
-        );
+          new Set(
+            (row.original.eventData.competitions ?? []).map(
+              (c: any) => c.genderCode
+            )
+          )
+        ).filter(Boolean);
         return (
           <div className="flex gap-1">
-            {sexes.map((sex) => (
+            {sexes.map((sex: string) => (
               <Badge
                 key={sex}
                 variant="outline"
@@ -329,8 +381,10 @@ export function InscriptionsTable() {
       },
       filterFn: (row, id, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
-        return Array.isArray(row.original.codexData)
-          ? row.original.codexData.some((c: any) => c.sex === filterValue)
+        return Array.isArray(row.original.eventData.competitions)
+          ? row.original.eventData.competitions.some(
+              (c: any) => c.genderCode === filterValue
+            )
           : true;
       },
     },
@@ -340,84 +394,6 @@ export function InscriptionsTable() {
       cell: ({row}) => <CompetitorCountCell inscriptionId={row.original.id} />,
     },
   ];
-
-  // Mémoïsation des options pour les Selects de filtres
-  const locationOptions = useMemo(() => {
-    if (!stableStations) return [];
-    // On ne garde que les stations qui ont au moins un event dans les données affichées
-    const usedStationNames = new Set(
-      stableData
-        .map((row) => {
-          const locationId = row.location;
-          const foundStation = stableStations.find(
-            (s: any) => s.id === locationId
-          );
-          return foundStation ? foundStation.name : null;
-        })
-        .filter(Boolean)
-    );
-    return stableStations
-      .filter((s: any) => usedStationNames.has(s.name))
-      .map((s: any) => ({value: s.name, label: s.name}))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [stableStations, stableData]);
-
-  const countryOptions = useMemo(() => {
-    if (!stableData) return [];
-    const countriesSet = new Set<string>();
-    stableData.forEach((row) => {
-      const locationId = row.location;
-      let country = (row as any).country;
-      if (stableStations && locationId) {
-        const foundStation = stableStations.find(
-          (s: any) => s.id === locationId
-        );
-        if (foundStation && foundStation.country) {
-          country = foundStation.country;
-        }
-      }
-      if (country) countriesSet.add(country);
-    });
-    return Array.from(countriesSet).sort((a, b) => a.localeCompare(b));
-  }, [stableData, stableStations]);
-
-  const codexOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          stableData.flatMap((row) =>
-            (row.codexData ?? []).map((c: any) => c.number)
-          )
-        )
-      ).sort((a, b) => a.localeCompare(b)),
-    [stableData]
-  );
-  const disciplineOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          stableData.flatMap((row) =>
-            (row.codexData ?? []).map((c: CodexData) => c.discipline)
-          )
-        )
-      ).sort((a, b) => a.localeCompare(b)),
-    [stableData]
-  );
-  const raceLevelOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          stableData.flatMap((row) =>
-            (row.codexData ?? []).map((c: any) => c.raceLevel)
-          )
-        )
-      ).sort((a, b) => a.localeCompare(b)),
-    [stableData]
-  );
-  const sexOptions = useMemo(
-    () => ["M", "F"].sort((a, b) => a.localeCompare(b)),
-    []
-  );
 
   // Table instance (props stables)
   const table = useReactTable({

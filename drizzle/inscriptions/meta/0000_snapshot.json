@@ -1,12 +1,223 @@
 {
-  "id": "c799c1cd-7684-4fe2-843f-73d8d76232dd",
+  "id": "6e2c473f-ddd1-4af5-9c4e-d72880ee3472",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "my_schema.inscriptions": {
-      "name": "inscriptions",
-      "schema": "my_schema",
+    "inscriptionsDB.competitors": {
+      "name": "competitors",
+      "schema": "inscriptionsDB",
+      "columns": {
+        "listid": {
+          "name": "listid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "listname": {
+          "name": "listname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "listpublished": {
+          "name": "listpublished",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published": {
+          "name": "published",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sectorcode": {
+          "name": "sectorcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "competitorid": {
+          "name": "competitorid",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fiscode": {
+          "name": "fiscode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lastname": {
+          "name": "lastname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "firstname": {
+          "name": "firstname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nationcode": {
+          "name": "nationcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gender": {
+          "name": "gender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birthdate": {
+          "name": "birthdate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skiclub": {
+          "name": "skiclub",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nationalcode": {
+          "name": "nationalcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "competitorname": {
+          "name": "competitorname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birthyear": {
+          "name": "birthyear",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "calculationdate": {
+          "name": "calculationdate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dhpoints": {
+          "name": "dhpoints",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dhpos": {
+          "name": "dhpos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dhsta": {
+          "name": "dhsta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slpoints": {
+          "name": "slpoints",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slpos": {
+          "name": "slpos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slsta": {
+          "name": "slsta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gspoints": {
+          "name": "gspoints",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gspos": {
+          "name": "gspos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gssta": {
+          "name": "gssta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sgpoints": {
+          "name": "sgpoints",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sgpos": {
+          "name": "sgpos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sgsta": {
+          "name": "sgsta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "acpoints": {
+          "name": "acpoints",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "acpos": {
+          "name": "acpos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "acsta": {
+          "name": "acsta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "inscriptionsDB.inscription_competitors": {
+      "name": "inscription_competitors",
+      "schema": "inscriptionsDB",
       "columns": {
         "id": {
           "name": "id",
@@ -14,59 +225,102 @@
           "primaryKey": true,
           "notNull": true
         },
-        "email": {
-          "name": "email",
+        "inscription_id": {
+          "name": "inscription_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "competitor_id": {
+          "name": "competitor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codex_number": {
+          "name": "codex_number",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "full_name": {
-          "name": "full_name",
+        "added_by": {
+          "name": "added_by",
           "type": "text",
           "primaryKey": false,
+          "notNull": false,
+          "default": "'Unknown'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "inscription_competitors_inscription_id_inscriptions_id_fk": {
+          "name": "inscription_competitors_inscription_id_inscriptions_id_fk",
+          "tableFrom": "inscription_competitors",
+          "tableTo": "inscriptions",
+          "schemaTo": "inscriptionsDB",
+          "columnsFrom": [
+            "inscription_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "inscription_competitors_competitor_id_competitors_competitorid_fk": {
+          "name": "inscription_competitors_competitor_id_competitors_competitorid_fk",
+          "tableFrom": "inscription_competitors",
+          "tableTo": "competitors",
+          "schemaTo": "inscriptionsDB",
+          "columnsFrom": [
+            "competitor_id"
+          ],
+          "columnsTo": [
+            "competitorid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "inscriptionsDB.inscriptions": {
+      "name": "inscriptions",
+      "schema": "inscriptionsDB",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
           "notNull": true
         },
-        "country": {
-          "name": "country",
+        "event_id": {
+          "name": "event_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_data": {
+          "name": "event_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "inscriptionsDB",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'open'"
+        },
+        "created_by": {
+          "name": "created_by",
           "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "location": {
-          "name": "location",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_link": {
-          "name": "event_link",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "codex_numbers": {
-          "name": "codex_numbers",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "first_race_date": {
-          "name": "first_race_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "disciplines": {
-          "name": "disciplines",
-          "type": "disciplines[]",
-          "typeSchema": "my_schema",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "race_levels": {
-          "name": "race_levels",
-          "type": "race_levels[]",
-          "typeSchema": "my_schema",
           "primaryKey": false,
           "notNull": true
         },
@@ -74,7 +328,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         }
       },
@@ -88,34 +342,17 @@
     }
   },
   "enums": {
-    "my_schema.disciplines": {
-      "name": "disciplines",
-      "schema": "my_schema",
+    "inscriptionsDB.status": {
+      "name": "status",
+      "schema": "inscriptionsDB",
       "values": [
-        "SL",
-        "GS",
-        "SG",
-        "DH",
-        "AC"
-      ]
-    },
-    "my_schema.race_levels": {
-      "name": "race_levels",
-      "schema": "my_schema",
-      "values": [
-        "FIS",
-        "CIT",
-        "NJR",
-        "NJC",
-        "NC",
-        "SAC",
-        "ANC",
-        "ENL"
+        "open",
+        "validated"
       ]
     }
   },
   "schemas": {
-    "my_schema": "my_schema"
+    "inscriptionsDB": "inscriptionsDB"
   },
   "sequences": {},
   "roles": {},

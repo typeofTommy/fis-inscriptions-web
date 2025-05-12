@@ -1,35 +1,76 @@
 import {NextRequest, NextResponse} from "next/server";
+import {getFisToken} from "@/app/lib/fisAuth";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const codex = req.nextUrl.searchParams.get("codex");
+  const disciplineCode = req.nextUrl.searchParams.get("disciplineCode") || "AL";
   if (!codex) {
     return NextResponse.json({error: "Missing codex"}, {status: 400});
   }
 
-  try {
-    const fisRes = await fetch(
-      `https://api.fis-ski.com/competitions/find-by-codex/AL/${codex}?season=2025`,
-      {
-        headers: {
-          "x-api-key": process.env.FIS_API_KEY!,
-          Accept: "application/json",
-          "X-CSRF-TOKEN": "",
-        },
-      }
-    );
-
-    if (!fisRes.ok) {
-      console.error(fisRes);
-      return NextResponse.json(
-        {error: "FIS API error"},
-        {status: fisRes.status}
-      );
+  // 1. Appel FIS pour récupérer l'eventId
+  const fisCodexRes = await fetch(
+    `https://api.fis-ski.com/competitions/find-by-codex/${disciplineCode}/${codex}`,
+    {
+      headers: {
+        "x-api-key": process.env.FIS_API_KEY!,
+        Accept: "application/json",
+        "X-CSRF-TOKEN": "",
+      },
     }
-
-    const data = await fisRes.json();
-    return NextResponse.json(data);
-  } catch (e) {
-    console.error("FIS API proxy error:", e);
-    return NextResponse.json({error: "Internal error"}, {status: 500});
+  );
+  if (!fisCodexRes.ok) {
+    return NextResponse.json(
+      {error: "FIS API error (find-by-codex)"},
+      {status: fisCodexRes.status}
+    );
   }
-}
+  const fisCodexData = await fisCodexRes.json();
+  const eventId = fisCodexData?.eventId;
+  const usedDisciplineCode = fisCodexData?.disciplineCode || disciplineCode;
+  if (!eventId) {
+    return NextResponse.json(
+      {error: "No eventId found for codex"},
+      {status: 404}
+    );
+  }
+
+  // 2. Récupérer le token dynamique
+  let access_token: string;
+  try {
+    const tokenData = await getFisToken();
+    access_token = tokenData.access_token;
+  } catch {
+    return NextResponse.json({error: "Token error"}, {status: 500});
+  }
+
+  // 3. Appel FIS pour les infos de l'évènement
+  const fisEventRes = await fetch(
+    `https://api.fis-ski.com/events/${usedDisciplineCode.toLowerCase()}/${eventId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        Accept: "application/json",
+        "X-CSRF-TOKEN": "",
+      },
+    }
+  );
+  if (!fisEventRes.ok) {
+    const fisError = await fisEventRes.text();
+    console.log("FIS Codex Data:", fisCodexData);
+    return NextResponse.json(
+      {
+        error: "FIS API error (events)",
+        eventId,
+        disciplineCode: usedDisciplineCode,
+        url: `https://api.fis-ski.com/events/${usedDisciplineCode.toLowerCase()}/${eventId}`,
+        fisCodexData, // réponse brute de la première requête
+        fisError,
+        status: fisEventRes.status,
+      },
+      {status: fisEventRes.status}
+    );
+  }
+  const eventData = await fisEventRes.json();
+  return NextResponse.json(eventData);
+};

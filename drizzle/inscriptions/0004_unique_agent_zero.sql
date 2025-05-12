@@ -1,1 +1,0 @@
-ALTER TABLE "inscriptionsDB"."stations" ADD COLUMN "country" text NOT NULL;

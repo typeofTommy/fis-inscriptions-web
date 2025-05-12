@@ -13,6 +13,7 @@ import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
+import {CompetitionItem} from "@/app/types";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -51,7 +52,7 @@ function useSaveCompetitors(inscriptionId: string) {
       codexNumbers,
     }: {
       competitorIds: string[];
-      codexNumbers: string[];
+      codexNumbers: number[];
     }) => {
       const res = await fetch(
         `/api/inscriptions/${inscriptionId}/save-competitors`,
@@ -95,25 +96,29 @@ export default function AddCompetitorModal({
   codexData,
 }: {
   inscriptionId: string;
-  defaultCodex: string;
+  defaultCodex: number;
   gender: "W" | "M";
-  codexData: {number: string; sex: string; discipline: string}[];
+  codexData: CompetitionItem[];
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
   const [selectedId, setSelectedId] = useState<string | undefined>();
-  const [selectedCodex, setSelectedCodex] = useState<string[]>(() =>
+  const [selectedCodex, setSelectedCodex] = useState<number[]>(() =>
     codexData
-      .filter((c) => (gender === "W" ? c.sex === "F" : c.sex === "M"))
-      .map((c) => c.number)
+      .filter((c) =>
+        gender === "W" ? c.genderCode === "W" : c.genderCode === "M"
+      )
+      .map((c) => c.codex)
   );
 
   useEffect(() => {
     setSelectedCodex(
       codexData
-        .filter((c) => (gender === "W" ? c.sex === "F" : c.sex === "M"))
-        .map((c) => c.number)
+        .filter((c) =>
+          gender === "W" ? c.genderCode === "W" : c.genderCode === "M"
+        )
+        .map((c) => c.codex)
     );
   }, [defaultCodex, gender, codexData]);
 
@@ -196,26 +201,28 @@ export default function AddCompetitorModal({
           </div>
           <div className="flex flex-wrap gap-2">
             {codexData
-              .filter((c) => (gender === "W" ? c.sex === "F" : c.sex === "M"))
+              .filter((c) =>
+                gender === "W" ? c.genderCode === "W" : c.genderCode === "M"
+              )
               .map((c) => (
-                <label key={c.number} className="flex items-center gap-2">
+                <label key={c.codex} className="flex items-center gap-2">
                   <Checkbox
-                    checked={selectedCodex.includes(c.number)}
+                    checked={selectedCodex.includes(c.codex)}
                     onCheckedChange={(checked) => {
                       setSelectedCodex((prev) =>
                         checked
-                          ? [...prev, c.number]
-                          : prev.filter((cod) => cod !== c.number)
+                          ? [...prev, c.codex]
+                          : prev.filter((codex) => codex !== c.codex)
                       );
                     }}
                   />
-                  {c.number}
+                  {c.codex}
                   <Badge
                     className={`ml-1 text-xs px-2 py-1 ${
-                      colorBadgePerDiscipline[c.discipline] || ""
+                      colorBadgePerDiscipline[c.eventCode] || ""
                     }`}
                   >
-                    {c.discipline}
+                    {c.eventCode}
                   </Badge>
                 </label>
               ))}

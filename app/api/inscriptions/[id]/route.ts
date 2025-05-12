@@ -1,10 +1,9 @@
 import {NextRequest, NextResponse} from "next/server";
-import {eq, and, inArray} from "drizzle-orm";
+import {eq} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {
   inscriptions,
   inscriptionCompetitors,
-  stations,
 } from "@/drizzle/schemaInscriptions";
 
 export async function GET(
@@ -23,11 +22,6 @@ export async function GET(
       .where(eq(inscriptions.id, idNum))
       .limit(1);
 
-    const station = await db
-      .select()
-      .from(stations)
-      .where(eq(stations.id, inscription[0].location || 0));
-
     // Check if inscription exists and has data
     if (!inscription || inscription.length === 0) {
       return new NextResponse("Inscription non trouvée", {status: 404});
@@ -35,7 +29,6 @@ export async function GET(
 
     const foundInscription = {
       ...inscription[0],
-      station: station[0],
     };
 
     // Retourne simplement l'id de la station (number ou null)
@@ -43,112 +36,6 @@ export async function GET(
   } catch (error) {
     console.error("Erreur lors de la récupération de l'inscription:", error);
     return new NextResponse("Erreur interne du serveur", {status: 500});
-  }
-}
-
-export async function PATCH(
-  req: NextRequest,
-  {params}: {params: Promise<{id: string}>}
-) {
-  try {
-    const {id} = await params;
-    const inscriptionId = Number(id);
-    const json = await req.json();
-
-    // Extract editable fields from the request body
-    // Status updates are handled separately, so we don't expect status here.
-    let location = json.location;
-    const customStation = json.customStation;
-    const country = json.country;
-    const firstRaceDate = json.firstRaceDate;
-    const lastRaceDate = json.lastRaceDate;
-    const codexData = json.codexData;
-
-    // Basic validation (more can be added with Zod if needed)
-    if (!country || !firstRaceDate || !lastRaceDate || !codexData) {
-      return NextResponse.json(
-        {error: "Données manquantes pour la mise à jour."},
-        {status: 400}
-      );
-    }
-
-    // Si customStation est présent, insérer ou retrouver la station et utiliser son id
-    if (customStation && (!location || location === null)) {
-      const station = await db
-        .select()
-        .from(stations)
-        .where(eq(stations.name, customStation.toLowerCase()));
-      if (!station.length) {
-        const inserted = await db
-          .insert(stations)
-          .values({name: customStation.toLowerCase(), country})
-          .returning();
-        location = inserted[0].id;
-      } else {
-        location = station[0].id;
-      }
-    }
-
-    // Get current inscription data to compare codex data
-    const currentInscription = await db
-      .select({codexData: inscriptions.codexData})
-      .from(inscriptions)
-      .where(eq(inscriptions.id, inscriptionId))
-      .limit(1);
-
-    if (!currentInscription.length) {
-      return NextResponse.json(
-        {error: "Inscription non trouvée"},
-        {status: 404}
-      );
-    }
-
-    // Find removed codex numbers
-    const currentCodices = new Set(
-      currentInscription[0].codexData.map((cd: any) => cd.number)
-    );
-    const newCodices = new Set(codexData.map((cd: any) => cd.number));
-    const removedCodices = [...currentCodices].filter(
-      (codex) => !newCodices.has(codex)
-    );
-
-    // If there are removed codices, delete their inscription_competitors entries
-    if (removedCodices.length > 0) {
-      await db
-        .delete(inscriptionCompetitors)
-        .where(
-          and(
-            eq(inscriptionCompetitors.inscriptionId, inscriptionId),
-            inArray(inscriptionCompetitors.codexNumber, removedCodices)
-          )
-        );
-    }
-
-    // Update the inscription with the new data
-    const updated = await db
-      .update(inscriptions)
-      .set({
-        location,
-        firstRaceDate,
-        lastRaceDate,
-        codexData,
-      })
-      .where(eq(inscriptions.id, inscriptionId))
-      .returning();
-
-    if (!updated.length) {
-      return NextResponse.json(
-        {error: "Inscription non trouvée"},
-        {status: 404}
-      );
-    }
-    return NextResponse.json(updated[0]);
-  } catch (error) {
-    console.error("Erreur lors de la mise à jour de l'inscription:", error);
-    return NextResponse.json(
-      {error: "Erreur interne du serveur"},
-      {status: 500}
-    );
   }
 }
 

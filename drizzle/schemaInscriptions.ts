@@ -1,68 +1,27 @@
-import {Discipline, RaceLevel, Sex} from "@/app/types";
+import {Competition} from "@/app/types";
 import {
   serial,
   text,
   pgSchema,
-  date,
   timestamp,
-  jsonb,
   integer,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const inscriptionsSchema = pgSchema("inscriptionsDB");
 
-export const sexes = inscriptionsSchema.enum("sexes", ["M", "F"]);
 export const inscriptionStatus = inscriptionsSchema.enum("status", [
   "open",
   "validated",
 ]);
 
-export const disciplines = inscriptionsSchema.enum("disciplines", [
-  "SL",
-  "GS",
-  "SG",
-  "DH",
-  "AC",
-]);
-
-export const raceLevels = inscriptionsSchema.enum("race_levels", [
-  "FIS",
-  "CIT",
-  "NJR",
-  "NJC",
-  "NC",
-  "SAC",
-  "ANC",
-  "ENL",
-]);
-
 export const inscriptions = inscriptionsSchema.table("inscriptions", {
   id: serial("id").primaryKey(),
-  email: text("email").notNull(),
-  fullName: text("full_name").notNull(),
-  firstRaceDate: date("first_race_date").notNull(),
-  lastRaceDate: date("last_race_date").notNull(),
-  codexData: jsonb("codex_data")
-    .$type<
-      {
-        number: string;
-        discipline: Discipline[number];
-        sex: Sex[number];
-        raceLevel: RaceLevel[number];
-      }[]
-    >()
-    .notNull(),
-  status: inscriptionStatus("status").notNull().default("open"),
-  location: integer("location").references(() => stations.id),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  eventId: integer("event_id").notNull(),
+  eventData: jsonb("event_data").$type<Competition>().notNull(),
+  status: inscriptionStatus("status").default("open"),
   createdBy: text("created_by").notNull(),
-});
-
-export const stations = inscriptionsSchema.table("stations", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  country: text("country").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const inscriptionCompetitors = inscriptionsSchema.table(

@@ -25,13 +25,13 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {usePermissionToEdit} from "./usePermissionToEdit";
-import {Discipline, InscriptionCompetitor} from "@/app/types";
+import {InscriptionCompetitor} from "@/app/types";
 import {format} from "date-fns";
 
 export const useInscriptionCompetitors = (
   inscriptionId: string,
-  codexNumber: string,
-  discipline: Discipline
+  codexNumber: number,
+  discipline: string
 ) => {
   return useQuery<InscriptionCompetitor[]>({
     queryKey: [
@@ -58,7 +58,7 @@ function useRemoveCompetitor(inscriptionId: string) {
       codexNumbers,
     }: {
       competitorId: number;
-      codexNumbers: string[];
+      codexNumbers: number[];
     }) => {
       const res = await fetch(
         `/api/inscriptions/${inscriptionId}/competitors`,
@@ -98,8 +98,8 @@ export const Competitors = ({
   discipline,
 }: {
   inscriptionId: string;
-  codexNumber: string;
-  discipline: Discipline;
+  codexNumber: number;
+  discipline: string;
 }) => {
   const {
     data: competitors = [],
@@ -114,8 +114,8 @@ export const Competitors = ({
   });
 
   // Dialog state
-  const [openDialog, setOpenDialog] = React.useState<null | number>(null); // competitorId
-  const [selectedCodex, setSelectedCodex] = React.useState<string[]>([]);
+  const [openDialog, setOpenDialog] = useState<null | number>(null); // competitorId
+  const [selectedCodex, setSelectedCodex] = useState<number[]>([]);
   const {mutate: removeCompetitor, isPending: removing} =
     useRemoveCompetitor(inscriptionId);
 
@@ -287,9 +287,9 @@ function DesinscriptionCodexList({
 }: {
   inscriptionId: string;
   competitorId: number;
-  selectedCodex: string[];
-  setSelectedCodex: (v: string[]) => void;
-  currentCodex: string;
+  selectedCodex: number[];
+  setSelectedCodex: (v: number[]) => void;
+  currentCodex: number;
 }) {
   const [codexList, setCodexList] = useState<
     {number: string; discipline: string; sex: string}[]
@@ -321,12 +321,14 @@ function DesinscriptionCodexList({
         {codexList.map((codex) => (
           <label key={codex.number} className="flex items-center gap-2">
             <Checkbox
-              checked={selectedCodex.includes(codex.number)}
+              checked={selectedCodex.includes(Number(codex.number))}
               onCheckedChange={(checked) => {
                 setSelectedCodex(
                   checked
-                    ? [...selectedCodex, codex.number]
-                    : selectedCodex.filter((n: string) => n !== codex.number)
+                    ? [...selectedCodex, Number(codex.number)]
+                    : selectedCodex.filter(
+                        (n: number) => n !== Number(codex.number)
+                      )
                 );
               }}
             />

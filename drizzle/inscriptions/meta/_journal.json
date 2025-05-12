@@ -5,78 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1745538314655,
-      "tag": "0000_stale_nomad",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1745538496291,
-      "tag": "0001_whole_betty_ross",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1745676789318,
-      "tag": "0002_nappy_darwin",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1745689322736,
-      "tag": "0003_soft_annihilus",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1745689884229,
-      "tag": "0004_unique_agent_zero",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1745697102249,
-      "tag": "0005_tricky_yellowjacket",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1745756222065,
-      "tag": "0006_pale_sue_storm",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1745838715566,
-      "tag": "0007_brief_ink",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1746097783329,
-      "tag": "0008_previous_apocalypse",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1746097926964,
-      "tag": "0009_vengeful_wasp",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1746884192747,
-      "tag": "0010_unknown_gladiator",
+      "when": 1747004576373,
+      "tag": "0000_remarkable_proudstar",
       "breakpoints": true
     }
   ]
