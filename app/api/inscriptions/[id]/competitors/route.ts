@@ -32,13 +32,13 @@ export async function GET(
     const codexNumbers = links.map((l) => l.codexNumber);
     // On récupère les infos des codex dans l'inscription
     const inscription = await db
-      .select({codexData: inscriptions.codexData})
+      .select({eventData: inscriptions.eventData})
       .from(inscriptions)
       .where(eq(inscriptions.id, inscriptionId));
-    const codexData = inscription[0]?.codexData || [];
+    const codexData = inscription[0]?.eventData.competitions || [];
     // On filtre pour ne garder que les codex où ce compétiteur est inscrit
-    const result = codexData.filter((c: any) =>
-      codexNumbers.includes(c.number)
+    const result = codexData.filter((c) =>
+      codexNumbers.includes(String(c.codex))
     );
     return NextResponse.json(result);
   }
@@ -51,13 +51,13 @@ export async function GET(
   if (!codexNumber) {
     // On récupère tous les codexNumbers pour cette inscription
     const inscription = await db
-      .select({codexData: inscriptions.codexData})
+      .select({eventData: inscriptions.eventData})
       .from(inscriptions)
       .where(eq(inscriptions.id, inscriptionId));
-    const codexData = inscription[0]?.codexData || [];
+    const codexData = inscription[0]?.eventData.competitions || [];
     // Pour chaque codex, on récupère les competitorIds et leurs infos
     const result = await Promise.all(
-      codexData.map(async (codex: any) => {
+      codexData.map(async (codex) => {
         // 1. Récupérer les competitorIds liés à cette inscription et ce codex
         const links = await db
           .select({competitorId: inscriptionCompetitors.competitorId})
@@ -65,12 +65,12 @@ export async function GET(
           .where(
             and(
               eq(inscriptionCompetitors.inscriptionId, inscriptionId),
-              eq(inscriptionCompetitors.codexNumber, codex.number)
+              eq(inscriptionCompetitors.codexNumber, String(codex.codex))
             )
           );
         const competitorIds = links.map((l) => l.competitorId);
         if (competitorIds.length === 0) {
-          return {codexNumber: codex.number, competitors: []};
+          return {codexNumber: codex.codex, competitors: []};
         }
         // 2. Récupérer les infos des coureurs dans la base FIS
         const competitorsData = await db
@@ -87,7 +87,7 @@ export async function GET(
           })
           .from(competitors)
           .where(inArray(competitors.competitorid, competitorIds.map(Number)));
-        return {codexNumber: codex.number, competitors: competitorsData};
+        return {codexNumber: codex.codex, competitors: competitorsData};
       })
     );
     return NextResponse.json(result);

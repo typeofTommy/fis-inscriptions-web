@@ -1,6 +1,7 @@
 import {NextResponse} from "next/server";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
+import type {Competition} from "@/app/types";
 
 export async function GET(req: Request) {
   const {searchParams} = new URL(req.url);
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
 
   for (const row of result) {
     if (excludeId && String(row.id) === String(excludeId)) continue;
-    const competitions = row.eventData.competitions;
+    const competitions = (row.eventData as Competition).competitions;
     if (Array.isArray(competitions)) {
       if (competitions.some((c) => String(c.codex) === number)) {
         return NextResponse.json({exists: true, inscriptionId: row.id});
