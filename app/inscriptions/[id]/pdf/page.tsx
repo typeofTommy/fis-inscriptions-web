@@ -30,10 +30,6 @@ export default async function PdfPage({
     .where(eq(inscriptions.id, Number(id)))
     .limit(1);
 
-  const countryCode = await fetch(
-    `https://restcountries.com/v3.1/name/${inscription.eventData.placeNationCode}`
-  ).then((res) => res.json());
-
   // Typage explicite du résultat de l'innerJoin
   type RawCompetitorRow = {
     competitors: typeof competitorsTable.$inferSelect;

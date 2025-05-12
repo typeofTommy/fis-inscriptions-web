@@ -24,7 +24,7 @@ export async function GET(
 
     // Check if inscription exists and has data
     if (!inscription || inscription.length === 0) {
-      return new NextResponse("Inscription non trouvée", {status: 404});
+      return NextResponse.json({error: "Not Found"}, {status: 404});
     }
 
     const foundInscription = {

@@ -21,7 +21,7 @@ export const GET = async (req: NextRequest) => {
   );
   if (!fisCodexRes.ok) {
     return NextResponse.json(
-      {error: "FIS API error (find-by-codex)"},
+      {error: fisCodexRes.statusText},
       {status: fisCodexRes.status}
     );
   }

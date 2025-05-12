@@ -68,6 +68,10 @@ export const useCodexCheck = (codex: string, inscriptionId?: string) => {
 async function fetchInscription(id: string): Promise<Inscription> {
   const response = await fetch(`/api/inscriptions/${id}`);
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error("Codex non trouvé");
+    }
+    console.error(response);
     throw new Error("Erreur lors de la récupération de l&apos;inscription");
   }
   return response.json();
