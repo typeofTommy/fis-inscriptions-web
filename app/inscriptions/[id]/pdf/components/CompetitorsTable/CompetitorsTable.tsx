@@ -1,7 +1,7 @@
 import {CompetitionItem, Competitor} from "@/app/types";
 import {format} from "date-fns";
 import React from "react";
-import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
+import {pdfHeaderColorPerDiscipline} from "@/app/lib/colorMappers";
 
 export const CompetitorsTable = ({
   competitors,
@@ -60,7 +60,7 @@ export const CompetitorsTable = ({
             </th>
             {codexData.map((codex, index) => {
               const disciplineBgColor =
-                colorBadgePerDiscipline[codex.eventCode] || "bg-gray-200"; // Fallback for discipline cell
+                pdfHeaderColorPerDiscipline[codex.eventCode] || "bg-gray-200";
               return (
                 <th
                   key={codex.codex}
@@ -71,7 +71,7 @@ export const CompetitorsTable = ({
                   } p-0 font-semibold min-w-[70px] text-center align-middle`}
                 >
                   <div
-                    className={`border-b border-black py-1 text-md ${disciplineBgColor} text-white`}
+                    className={`border-b border-black py-1 text-md ${disciplineBgColor}`}
                   >
                     {codex.eventCode}
                   </div>
