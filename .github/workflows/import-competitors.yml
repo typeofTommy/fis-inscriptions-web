@@ -14,10 +14,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Install pnpm
+        run: npm install -g pnpm
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
       - name: Install script dependencies
-        run: npm install csv-parse @neondatabase/serverless drizzle-orm
+        run: pnpm add csv-parse @neondatabase/serverless drizzle-orm
       - name: Download FIS Points List CSV
         run: curl -o FIS-points-list.csv 'https://data.fis-ski.com/fis_athletes/ajax/fispointslistfunctions/export_fispointslist.html?export_csv=true&sectorcode=AL&seasoncode=2025&listid=412'
       - name: Run import script
