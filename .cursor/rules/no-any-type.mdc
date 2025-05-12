@@ -1,5 +1,31 @@
 ---
 description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---
+# Interdiction du type any
+
+Dans ce projet, il est strictement interdit d'utiliser le type `any` en TypeScript, que ce soit dans les signatures de fonction, les paramètres, les retours, ou les assertions.
+
+- Privilégier l'inférence de TypeScript ou l'utilisation de types explicites.
+- Si le type est inconnu, utiliser `unknown` ou définir un type précis.
+- Les fonctions, callbacks, et méthodes doivent toujours avoir des types explicites ou inférés, jamais `any`.
+- Les exceptions doivent être justifiées par un commentaire explicite et temporaire.
+
+**Exemple interdit :**
+```ts
+function foo(bar: any): any { ... }
+const x: any = ...;
+```
+
+**Exemple correct :**
+```ts
+function foo(bar: string): number { ... }
+const x = getValue(); // inférence
+```
+
+**But :**
+- Sécuriser le typage, éviter les bugs à l'exécution, et améliorer l'autocomplétion.
+
+**Référence :**
+- [TypeScript Handbook - any](mdc:https:/www.typescriptlang.org/docs/handbook/basic-types.html#any)
