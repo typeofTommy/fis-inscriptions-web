@@ -88,9 +88,18 @@ export const InscriptionFormWrapper = () => {
                         {...field}
                         value={codexInput}
                         onChange={(e) => {
-                          setCodexInput(e.target.value);
-                          field.onChange(e);
+                          const onlyDigits = e.target.value.replace(/\D/g, "");
+                          setCodexInput(onlyDigits);
+                          field.onChange({
+                            ...e,
+                            target: {
+                              ...e.target,
+                              value: onlyDigits,
+                            },
+                          });
                         }}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                       />
                     </FormControl>
                     <button
@@ -167,7 +176,9 @@ export const InscriptionFormWrapper = () => {
             {isLoading && <p>Chargement des infos FIS...</p>}
             {error && (
               <p className="text-red-500">
-                Erreur lors de la récupération de l&apos;événement.
+                {error.message === "Codex non trouvé"
+                  ? "Codex non trouvé."
+                  : "Erreur lors de la récupération de l'événement."}
               </p>
             )}
             {event && (
@@ -224,5 +235,7 @@ export const InscriptionFormWrapper = () => {
 };
 
 const inscriptionFormSchema = z.object({
-  codex: z.string().min(3, {message: "Le codex est requis."}),
+  codex: z.string().min(3, {message: "Le codex est requis."}).regex(/^\d+$/, {
+    message: "Le codex doit contenir uniquement des chiffres.",
+  }),
 });

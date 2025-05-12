@@ -14,9 +14,15 @@ export const useCompetitionByCodex = (codex: number) => {
       const res = await fetch(
         `/api/fis-api/codex/competition-by-codex?codex=${codex}`
       );
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error("Codex non trouvé");
+        }
+        throw new Error("API error");
+      }
       return res.json();
     },
     enabled: !!codex,
+    retry: false,
   });
 };
