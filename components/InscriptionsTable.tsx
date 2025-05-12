@@ -33,6 +33,9 @@ import {
 import {DebouncedInput} from "@/components/ui/debounced-input";
 import {Inscription} from "@/app/types";
 import type {CompetitionItem} from "@/app/types";
+import {useCountries} from "@/app/inscriptions/form/api";
+import Image from "next/image";
+import {alpha3ToAlpha2} from "@/app/lib/countryMapper";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -58,6 +61,32 @@ const CompetitorCountCell = ({inscriptionId}: {inscriptionId: number}) => {
   return <span>{Array.isArray(data) ? data.length : "-"}</span>;
 };
 
+// Composant pour afficher le drapeau et le code pays
+const CountryCell = ({country}: {country: string}) => {
+  const {data: countries} = useCountries();
+  let flagUrl: string | undefined;
+  if (countries && country && country !== "Non renseigné") {
+    const alpha2 = alpha3ToAlpha2(country) ?? country;
+    const found = countries.find((c) => c.cca2 === alpha2);
+    flagUrl = found?.flags?.svg;
+  }
+  return (
+    <span className="flex items-center gap-2">
+      {flagUrl && (
+        <Image
+          src={flagUrl}
+          alt={country}
+          className="inline-block w-5 h-4 object-cover border border-gray-200 rounded"
+          loading="lazy"
+          width={20}
+          height={16}
+        />
+      )}
+      {country}
+    </span>
+  );
+};
+
 export function InscriptionsTable() {
   const [sorting, setSorting] = useState<SortingState>([
     {id: "startDate", desc: false},
@@ -70,6 +99,9 @@ export function InscriptionsTable() {
     queryKey: ["inscriptions"],
     queryFn: () => fetch("/api/inscriptions").then((res) => res.json()),
   });
+
+  // Ajout du hook pour les pays (flags)
+  const {data: countries} = useCountries();
 
   // Mémoïsation forte pour éviter les recalculs infinis
   const stableData = useMemo(() => data ?? [], [data]);
@@ -230,7 +262,7 @@ export function InscriptionsTable() {
           row.original.eventData.placeNationCode ||
           row.original.eventData.organiserNationCode ||
           "Non renseigné";
-        return <span>{country}</span>;
+        return <CountryCell country={country} />;
       },
       filterFn: (row, id, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
@@ -506,11 +538,35 @@ export function InscriptionsTable() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>
-              {countryOptions.map((country) => (
-                <SelectItem key={country} value={country}>
-                  {country}
-                </SelectItem>
-              ))}
+              {countryOptions.map((country) => {
+                // Cherche le flag correspondant
+                let flagUrl: string | undefined = undefined;
+                let countryLabel = country;
+                if (countries && country && country !== "Non renseigné") {
+                  const alpha2 = alpha3ToAlpha2(country) ?? country;
+                  const found = countries.find((c) => c.cca2 === alpha2);
+                  flagUrl = found?.flags?.svg;
+                  // Si on a le nom commun, on l'affiche à la place du code
+                  if (found?.name?.common) countryLabel = found.name.common;
+                }
+                return (
+                  <SelectItem key={country} value={country}>
+                    <span className="flex items-center gap-2">
+                      {flagUrl && (
+                        <Image
+                          src={flagUrl}
+                          alt={country}
+                          className="inline-block w-5 h-4 object-cover border border-gray-200 rounded"
+                          loading="lazy"
+                          width={20}
+                          height={16}
+                        />
+                      )}
+                      {countryLabel}
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
