@@ -106,7 +106,7 @@ export const InscriptionFormWrapper = () => {
                       type="button"
                       className="bg-gray-200 px-4 py-2 rounded cursor-pointer border border-gray-300 hover:bg-gray-300"
                       onClick={() => setSearchedCodex(codexInput)}
-                      disabled={codexInput.length < 3 || isLoading}
+                      disabled={isLoading}
                     >
                       Chercher
                     </button>
@@ -130,7 +130,7 @@ export const InscriptionFormWrapper = () => {
                 </FormItem>
               )}
             />
-            {event && isMixte && !codexCheck.exists && (
+            {event && isMixte && !codexCheck?.exists && (
               <div className="mt-4">
                 <label className="block font-semibold mb-2">
                   L&apos;événement est mixte, quels codex souhaitez-vous
@@ -235,7 +235,10 @@ export const InscriptionFormWrapper = () => {
 };
 
 const inscriptionFormSchema = z.object({
-  codex: z.string().min(3, {message: "Le codex est requis."}).regex(/^\d+$/, {
-    message: "Le codex doit contenir uniquement des chiffres.",
-  }),
+  codex: z
+    .string()
+    .min(1, {message: "Le codex est requis."})
+    .regex(/^[\d]+$/, {
+      message: "Le codex doit contenir uniquement des chiffres.",
+    }),
 });

@@ -356,13 +356,12 @@ export function InscriptionsTable() {
       enableColumnFilter: true,
       accessorFn: (row) => row,
       cell: ({row}) => {
-        const sexes = Array.from(
-          new Set(
-            (row.original.eventData.competitions ?? []).map(
-              (c: any) => c.genderCode
-            )
+        // On force l'ordre M puis W
+        const sexes = ["M", "W"].filter((sex) =>
+          (row.original.eventData.competitions ?? []).some(
+            (c: any) => c.genderCode === sex
           )
-        ).filter(Boolean);
+        );
         return (
           <div className="flex gap-1">
             {sexes.map((sex: string) => (
