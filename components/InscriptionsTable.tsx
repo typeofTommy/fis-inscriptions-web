@@ -32,6 +32,7 @@ import {
 } from "@/app/lib/colorMappers";
 import {DebouncedInput} from "@/components/ui/debounced-input";
 import {Inscription} from "@/app/types";
+import type {CompetitionItem} from "@/app/types";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -58,7 +59,9 @@ const CompetitorCountCell = ({inscriptionId}: {inscriptionId: number}) => {
 };
 
 export function InscriptionsTable() {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    {id: "startDate", desc: false},
+  ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
     {id: "status", value: "open"},
   ]);
@@ -97,7 +100,9 @@ export function InscriptionsTable() {
     return Array.from(
       new Set(
         stableData.flatMap((row) =>
-          (row.eventData.competitions ?? []).map((c: any) => c.codex)
+          (row.eventData.competitions ?? []).map(
+            (c: CompetitionItem) => c.codex
+          )
         )
       )
     ).sort((a, b) => String(a).localeCompare(String(b)));
@@ -117,7 +122,9 @@ export function InscriptionsTable() {
     return Array.from(
       new Set(
         stableData.flatMap((row) =>
-          (row.eventData.competitions ?? []).map((c: any) => c.categoryCode)
+          (row.eventData.competitions ?? []).map(
+            (c: CompetitionItem) => c.categoryCode
+          )
         )
       )
     ).sort((a, b) => String(a).localeCompare(String(b)));
@@ -127,7 +134,9 @@ export function InscriptionsTable() {
     return Array.from(
       new Set(
         stableData.flatMap((row) =>
-          (row.eventData.competitions ?? []).map((c: any) => c.genderCode)
+          (row.eventData.competitions ?? []).map(
+            (c: CompetitionItem) => c.genderCode
+          )
         )
       )
     ).sort((a, b) => String(a).localeCompare(String(b)));
@@ -152,7 +161,8 @@ export function InscriptionsTable() {
       header: "Actions",
     },
     {
-      accessorKey: "firstRaceDate",
+      accessorFn: (row) => row.eventData.startDate,
+      id: "startDate",
       cell: ({row}) => {
         return (
           <div>
@@ -173,6 +183,7 @@ export function InscriptionsTable() {
         if (!filterValue) return true;
         return row.original.eventData.startDate.includes(filterValue);
       },
+      sortingFn: "datetime",
     },
     {
       accessorKey: "location",
@@ -238,7 +249,7 @@ export function InscriptionsTable() {
       cell: ({row}) => (
         <div className="flex gap-2 flex-wrap">
           {(row.original.eventData.competitions ?? []).map(
-            (c: any, i: number) => (
+            (c: CompetitionItem, i: number) => (
               <Badge key={c.codex + i} variant={"outline"}>
                 {c.codex}
               </Badge>
@@ -249,7 +260,7 @@ export function InscriptionsTable() {
       filterFn: (row, id, filterValue) => {
         if (!filterValue) return true;
         return Array.isArray(row.original.eventData.competitions)
-          ? row.original.eventData.competitions.some((c: any) =>
+          ? row.original.eventData.competitions.some((c: CompetitionItem) =>
               String(c.codex)
                 .toLowerCase()
                 .includes((filterValue as string).toLowerCase())
@@ -285,7 +296,7 @@ export function InscriptionsTable() {
         if (!filterValue) return true;
         return Array.isArray(row.original.eventData.competitions)
           ? row.original.eventData.competitions.some(
-              (c: any) => c.disciplineCode === filterValue
+              (c: CompetitionItem) => c.eventCode === filterValue
             )
           : true;
       },
@@ -299,7 +310,7 @@ export function InscriptionsTable() {
         const raceLevels = Array.from(
           new Set(
             (row.original.eventData.competitions ?? []).map(
-              (c: any) => c.categoryCode
+              (c: CompetitionItem) => c.categoryCode
             )
           )
         ).filter(Boolean);
@@ -320,7 +331,7 @@ export function InscriptionsTable() {
         if (!filterValue) return true;
         return Array.isArray(row.original.eventData.competitions)
           ? row.original.eventData.competitions.some(
-              (c: any) => c.categoryCode === filterValue
+              (c: CompetitionItem) => c.categoryCode === filterValue
             )
           : true;
       },
@@ -359,7 +370,7 @@ export function InscriptionsTable() {
         // On force l'ordre M puis W
         const sexes = ["M", "W"].filter((sex) =>
           (row.original.eventData.competitions ?? []).some(
-            (c: any) => c.genderCode === sex
+            (c: CompetitionItem) => c.genderCode === sex
           )
         );
         return (
@@ -382,7 +393,7 @@ export function InscriptionsTable() {
         if (!filterValue || filterValue === "all") return true;
         return Array.isArray(row.original.eventData.competitions)
           ? row.original.eventData.competitions.some(
-              (c: any) => c.genderCode === filterValue
+              (c: CompetitionItem) => c.genderCode === filterValue
             )
           : true;
       },
@@ -411,7 +422,7 @@ export function InscriptionsTable() {
   });
 
   const dateValue = String(
-    table.getColumn("firstRaceDate")?.getFilterValue() ?? ""
+    table.getColumn("startDate")?.getFilterValue() ?? ""
   );
 
   if (isLoading) {
@@ -436,7 +447,7 @@ export function InscriptionsTable() {
             value={dateValue}
             onChange={(value) => {
               if (value !== dateValue) {
-                table.getColumn("firstRaceDate")?.setFilterValue(value);
+                table.getColumn("startDate")?.setFilterValue(value);
               }
             }}
             placeholder="Date de la 1ère course"
@@ -524,7 +535,7 @@ export function InscriptionsTable() {
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>
               {codexOptions.map((codex) => (
-                <SelectItem key={codex} value={codex}>
+                <SelectItem key={String(codex)} value={String(codex)}>
                   {codex}
                 </SelectItem>
               ))}
