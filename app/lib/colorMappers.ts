@@ -26,6 +26,6 @@ export const colorBadgePerRaceLevel: Record<string, string> = {
 };
 
 export const colorBadgePerGender: Record<"M" | "W", string> = {
-  M: "bg-blue-500",
-  W: "bg-pink-500",
+  M: "bg-blue-900",
+  W: "bg-purple-500",
 };
