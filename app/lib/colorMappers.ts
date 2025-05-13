@@ -23,6 +23,7 @@ export const colorBadgePerRaceLevel: Record<string, string> = {
   SAC: "bg-black",
   ANC: "bg-gray-500",
   ENL: "bg-purple-500",
+  WC: "bg-yellow-700",
 };
 
 export const colorBadgePerGender: Record<"M" | "W", string> = {

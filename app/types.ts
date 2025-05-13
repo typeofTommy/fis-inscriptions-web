@@ -65,7 +65,13 @@ export type Competition = {
   hasActiveLiveVideo: boolean;
   hasActiveLiveGps: boolean;
   hasActivePreLiveResults: boolean;
-  sponsor: string | null;
+  sponsor: {
+    link: string;
+    name: string;
+    type: string;
+    prefix: string;
+    logoUrl: string;
+  } | null;
   competitions: CompetitionItem[];
   modified: string;
 };
@@ -113,7 +119,13 @@ export type CompetitionItem = {
   liveResultsUrl: string;
   jury: JuryMember[];
   competitionInfo: CompetitionInfo[];
-  sponsor: string | null;
+  sponsor: {
+    link: string;
+    name: string;
+    type: string;
+    prefix: string;
+    logoUrl: string;
+  } | null;
   schedule: CompetitionSchedule[];
 };
 
