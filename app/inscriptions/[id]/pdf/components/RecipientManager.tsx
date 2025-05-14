@@ -108,7 +108,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
               : "opacity-50 cursor-not-allowed"
           }`}
         >
-          Envoyer le PDF aux sélectionnés
+          Envoyer le PDF aux sélectionnés (EN COURS DE DEV)
         </button>
       </form>
     </div>
