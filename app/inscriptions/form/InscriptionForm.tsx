@@ -45,8 +45,6 @@ export const InscriptionFormWrapper = () => {
     event.categoryCodes?.includes("TRA") &&
     event.categoryCodes.length === 1;
 
-  const isMixte = event && event.genderCodes && event.genderCodes.length > 1;
-
   const onSubmit = async () => {
     if (!event || isTrainingEvent || !user || (codexCheck && codexCheck.exists))
       return;
@@ -203,8 +201,7 @@ export const InscriptionFormWrapper = () => {
                 isLoading ||
                 !event ||
                 isTrainingEvent ||
-                (codexCheck && codexCheck.exists) ||
-                (isMixte && !isTrainingEvent)
+                (codexCheck && codexCheck.exists)
               }
             >
               Créer la compétition
