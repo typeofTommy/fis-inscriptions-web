@@ -30,9 +30,6 @@ export const InscriptionFormWrapper = () => {
   });
   const [codexInput, setCodexInput] = useState("");
   const [searchedCodex, setSearchedCodex] = useState<string | null>(null);
-  const [genderChoice, setGenderChoice] = useState<
-    "men" | "women" | "both" | null
-  >(null);
   const {
     data: eventUntyped,
     isLoading,
@@ -83,7 +80,6 @@ export const InscriptionFormWrapper = () => {
       eventId: event.id,
       eventData: eventDataForDb,
       createdBy,
-      genderChoice: isMixte ? genderChoice : undefined,
     };
     const returningInscription: {inscription: Inscription} =
       await createInscription.mutateAsync(newInscription);
@@ -178,49 +174,6 @@ export const InscriptionFormWrapper = () => {
           </Form>
         </Card>
 
-        {event && !isTrainingEvent && isMixte && !codexCheck?.exists && (
-          <Card className="mb-6 p-4 sm:p-6">
-            <label className="block font-semibold mb-2">
-              L&apos;événement est mixte, quels codex souhaitez-vous importer ?
-            </label>
-            <div className="flex flex-wrap gap-4">
-              <button
-                type="button"
-                className={`px-4 py-2 rounded border cursor-pointer ${
-                  genderChoice === "men"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200"
-                }`}
-                onClick={() => setGenderChoice("men")}
-              >
-                Hommes
-              </button>
-              <button
-                type="button"
-                className={`px-4 py-2 rounded border cursor-pointer ${
-                  genderChoice === "women"
-                    ? "bg-pink-500 text-white"
-                    : "bg-gray-200"
-                }`}
-                onClick={() => setGenderChoice("women")}
-              >
-                Femmes
-              </button>
-              <button
-                type="button"
-                className={`px-4 py-2 rounded border cursor-pointer ${
-                  genderChoice === "both"
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200"
-                }`}
-                onClick={() => setGenderChoice("both")}
-              >
-                Les deux
-              </button>
-            </div>
-          </Card>
-        )}
-
         {event && isTrainingEvent && (
           <p className="text-orange-600 mt-4 mb-6">
             Les compétitions de type &apos;Training&apos; (TRA) uniquement ne
@@ -251,7 +204,7 @@ export const InscriptionFormWrapper = () => {
                 !event ||
                 isTrainingEvent ||
                 (codexCheck && codexCheck.exists) ||
-                (isMixte && !isTrainingEvent && !genderChoice)
+                (isMixte && !isTrainingEvent)
               }
             >
               Créer la compétition

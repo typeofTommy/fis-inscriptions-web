@@ -282,7 +282,7 @@ export function InscriptionsTable() {
         <div className="flex gap-2 flex-wrap">
           {(row.original.eventData.competitions ?? []).map(
             (c: CompetitionItem, i: number) => (
-              <Badge key={c.codex + i} variant={"outline"}>
+              <Badge key={`${c.codex}-${i}`} variant={"outline"}>
                 {c.codex}
               </Badge>
             )

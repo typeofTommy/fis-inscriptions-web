@@ -13,7 +13,7 @@ import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
-import {CompetitionItem} from "@/app/types";
+import {CompetitionItem, Competitor} from "@/app/types";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -29,7 +29,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // Remplace le useEffect par un hook react-query
 function useCompetitors(search: string, gender: "W" | "M") {
-  return useQuery({
+  return useQuery<Competitor[]>({
     queryKey: ["competitors", search, gender],
     queryFn: async () => {
       if (search.length < MIN_SEARCH_LENGTH) return [];
@@ -190,7 +190,7 @@ export default function AddCompetitorModal({
                 ? "Aucun compétiteur trouvé"
                 : "Sélectionner un compétiteur"}
             </option>
-            {results.map((c: any) => (
+            {results.map((c) => (
               <option key={c.competitorid} value={c.competitorid}>
                 {c.firstname} {c.lastname} ({c.nationcode})
               </option>

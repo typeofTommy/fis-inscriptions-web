@@ -1,4 +1,3 @@
-// pages/pdf-template.tsx
 import React from "react";
 import {Header} from "./components/Header";
 import {CompetitionBlock} from "./components/CompetitionBlock";
@@ -20,10 +19,14 @@ import {eq} from "drizzle-orm";
 
 export default async function PdfPage({
   params,
+  searchParams,
 }: {
   params: Promise<{id: string}>;
+  searchParams: Promise<{gender?: "M" | "W"}>;
 }) {
   const {id} = await params;
+  const {gender: selectedGender} = await searchParams;
+
   const [inscription] = await db
     .select()
     .from(inscriptions)
@@ -69,7 +72,16 @@ export default async function PdfPage({
     ).values()
   );
 
-  const raceGender = competitors.length > 0 ? competitors[0].gender : "M"; // Default to M if no competitors
+  // Filter competitors by selected gender if provided
+  const filteredCompetitors = selectedGender
+    ? competitors.filter((c) => c.gender === selectedGender)
+    : competitors;
+
+  const raceGender = selectedGender
+    ? selectedGender
+    : filteredCompetitors.length > 0
+    ? filteredCompetitors[0].gender
+    : "M";
 
   return (
     <div className="max-w-4xl mx-auto p-4 bg-white">
@@ -100,7 +112,7 @@ export default async function PdfPage({
         </div>
         <GenderRow gender={raceGender === "M" ? "M" : "W"} />
         <CompetitorsTable
-          competitors={competitors}
+          competitors={filteredCompetitors}
           codexData={inscription.eventData.competitions}
         />
         <TableFooter />

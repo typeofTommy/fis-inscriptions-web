@@ -12,8 +12,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {Inscription} from "@/app/types";
+import {colorBadgePerGender} from "@/app/lib/colorMappers";
 
 interface InscriptionActionsMenuProps {
   inscription: Inscription;
@@ -26,6 +29,7 @@ export function InscriptionActionsMenu({
 }: InscriptionActionsMenuProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [genderDialogOpen, setGenderDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -90,8 +94,29 @@ export function InscriptionActionsMenu({
     setPopoverOpen(false);
   };
 
+  const isMixteEvent =
+    inscription.eventData.genderCodes &&
+    inscription.eventData.genderCodes.length > 1;
+
   const handleGeneratePDF = () => {
-    router.push(`/inscriptions/${inscription.id}/pdf`);
+    if (isMixteEvent) {
+      setGenderDialogOpen(true);
+    } else {
+      const gender = inscription.eventData.genderCodes[0];
+      window.open(
+        `/inscriptions/${inscription.id}/pdf?gender=${gender}`,
+        "_blank"
+      );
+      setPopoverOpen(false);
+    }
+  };
+
+  const handleGenderSelectedAndGeneratePDF = (gender: "M" | "W") => {
+    window.open(
+      `/inscriptions/${inscription.id}/pdf?gender=${gender}`,
+      "_blank"
+    );
+    setGenderDialogOpen(false);
     setPopoverOpen(false);
   };
 
@@ -151,6 +176,32 @@ export function InscriptionActionsMenu({
         >
           Générer PDF
         </Button>
+
+        <Dialog open={genderDialogOpen} onOpenChange={setGenderDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Sélectionner le genre pour le PDF</DialogTitle>
+              <DialogDescription>
+                Cet événement est mixte. Veuillez choisir le genre pour lequel
+                vous souhaitez générer le PDF.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:justify-center">
+              <Button
+                onClick={() => handleGenderSelectedAndGeneratePDF("M")}
+                className={`cursor-pointer ${colorBadgePerGender.M} hover:${colorBadgePerGender.M}/90 text-white`}
+              >
+                Hommes
+              </Button>
+              <Button
+                onClick={() => handleGenderSelectedAndGeneratePDF("W")}
+                className={`cursor-pointer ${colorBadgePerGender.W} hover:${colorBadgePerGender.W}/90 text-white`}
+              >
+                Femmes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {inscription.status !== "validated" && (
           <>

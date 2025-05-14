@@ -27,6 +27,7 @@ import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {usePermissionToEdit} from "./usePermissionToEdit";
 import {InscriptionCompetitor} from "@/app/types";
 import {format} from "date-fns";
+import {CompetitionItem} from "@/app/types";
 
 export const useInscriptionCompetitors = (
   inscriptionId: string,
@@ -195,7 +196,7 @@ export const Competitors = ({
               return Number(aPoints) - Number(bPoints);
             })
             .map((c) => (
-              <TableRow key={c.competitorId + c.codexNumber}>
+              <TableRow key={c.competitorid}>
                 <TableCell>{c.lastname}</TableCell>
                 <TableCell>{c.firstname}</TableCell>
                 <TableCell>{c.skiclub}</TableCell>
@@ -291,9 +292,7 @@ function DesinscriptionCodexList({
   setSelectedCodex: (v: number[]) => void;
   currentCodex: number;
 }) {
-  const [codexList, setCodexList] = useState<
-    {number: string; discipline: string; sex: string}[]
-  >([]);
+  const [codexList, setCodexList] = useState<CompetitionItem[]>([]);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     setLoading(true);
@@ -301,11 +300,13 @@ function DesinscriptionCodexList({
       `/api/inscriptions/${inscriptionId}/competitors?competitorId=${competitorId}`
     )
       .then((r) => r.json())
-      .then((data) => {
+      .then((data: CompetitionItem[]) => {
         setCodexList(data);
         // Par défaut, coche uniquement le codex courant
         setSelectedCodex(
-          data.some((c: any) => c.number === currentCodex) ? [currentCodex] : []
+          data.some((c: CompetitionItem) => c.codex === currentCodex)
+            ? [currentCodex]
+            : []
         );
       })
       .finally(() => setLoading(false));
@@ -318,27 +319,28 @@ function DesinscriptionCodexList({
     <div className="space-y-2">
       <div className="mb-2">Sur quels codex ?</div>
       <div className="flex flex-wrap gap-2">
-        {codexList.map((codex) => (
-          <label key={codex.number} className="flex items-center gap-2">
+        {codexList.map((codexItem) => (
+          <label
+            key={codexItem.id || codexItem.codex} // Use id if available and unique, otherwise codex
+            className="flex items-center gap-2 cursor-pointer"
+          >
             <Checkbox
-              checked={selectedCodex.includes(Number(codex.number))}
+              checked={selectedCodex.includes(codexItem.codex)}
               onCheckedChange={(checked) => {
                 setSelectedCodex(
                   checked
-                    ? [...selectedCodex, Number(codex.number)]
-                    : selectedCodex.filter(
-                        (n: number) => n !== Number(codex.number)
-                      )
+                    ? [...selectedCodex, codexItem.codex]
+                    : selectedCodex.filter((n: number) => n !== codexItem.codex)
                 );
               }}
             />
-            {codex.number}
+            {codexItem.displayCodex || String(codexItem.codex).padStart(4, "0")}
             <Badge
               className={`ml-1 text-xs px-2 py-1 ${
-                colorBadgePerDiscipline[codex.discipline] || ""
+                colorBadgePerDiscipline[codexItem.eventCode] || ""
               }`}
             >
-              {codex.discipline}
+              {codexItem.eventCode}
             </Badge>
           </label>
         ))}

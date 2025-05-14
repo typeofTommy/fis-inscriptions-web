@@ -91,7 +91,29 @@ export const CompetitorsTable = ({
         </thead>
         <tbody>
           {Array.from(
-            new Map(competitors.map((c) => [c.competitorid, c])).values()
+            new Map(
+              [...competitors]
+                .sort((a, b) => {
+                  const aLast = a.lastname || "";
+                  const bLast = b.lastname || "";
+                  if (aLast < bLast) {
+                    return -1;
+                  }
+                  if (aLast > bLast) {
+                    return 1;
+                  }
+                  const aFirst = a.firstname || "";
+                  const bFirst = b.firstname || "";
+                  if (aFirst < bFirst) {
+                    return -1;
+                  }
+                  if (aFirst > bFirst) {
+                    return 1;
+                  }
+                  return 0;
+                })
+                .map((c) => [c.competitorid, c])
+            ).values()
           ).map((competitor, rowIndex, arr) => (
             <tr
               className={`${
