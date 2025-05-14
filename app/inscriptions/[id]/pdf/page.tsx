@@ -154,13 +154,14 @@ export default async function PdfPage({
       return {
         name: "Utilisateur inconnu",
         surname: "",
-        email: `ID: ${clerkId}`, // Keep the ID if user not found
+        email: `ID: ${clerkId}`,
         reason,
         isResolvable: false,
       };
     }
 
     let primaryEmail = "Email inconnu";
+    let hasValidEmail = false;
     if (
       user.email_addresses &&
       Array.isArray(user.email_addresses) &&
@@ -169,10 +170,15 @@ export default async function PdfPage({
       const primaryEmailObject = user.email_addresses.find(
         (ea) => ea.id === user.primary_email_address_id
       );
-      primaryEmail =
+      const foundEmail =
         primaryEmailObject?.email_address ||
-        user.email_addresses[0]?.email_address ||
-        "Email non principal";
+        user.email_addresses[0]?.email_address;
+      if (foundEmail) {
+        primaryEmail = foundEmail;
+        hasValidEmail = true;
+      } else {
+        primaryEmail = "Email non principal introuvable"; // More specific if emails exist but primary/first is not there
+      }
     }
 
     const firstName = user.first_name || "";
@@ -180,11 +186,13 @@ export default async function PdfPage({
     const fullName = `${firstName} ${lastName}`.trim();
 
     return {
-      name: fullName || "Nom inconnu", // If both names are empty
-      surname: "", // Combined into name
+      name: fullName || "Nom inconnu",
+      surname: "",
       email: primaryEmail,
       reason,
-      isResolvable: true, // User was found
+      // User is resolvable only if we have a valid email to send to.
+      // Name being "Nom inconnu" is acceptable if email is present.
+      isResolvable: hasValidEmail,
     };
   };
 
