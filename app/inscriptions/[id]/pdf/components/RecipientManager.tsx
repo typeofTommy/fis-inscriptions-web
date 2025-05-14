@@ -7,6 +7,7 @@ export type Recipient = {
   name: string;
   surname: string;
   reason: string;
+  isResolvable: boolean;
 };
 
 type RecipientManagerProps = {
@@ -23,15 +24,16 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   >({});
 
   useEffect(() => {
-    // Initialize all recipients as selected
+    // Initialize all recipients as selected, only if they are resolvable
     const initialSelection: Record<string, boolean> = {};
     initialRecipients.forEach((recipient) => {
-      initialSelection[recipient.email] = true;
+      initialSelection[recipient.email] = recipient.isResolvable;
     });
     setSelectedRecipients(initialSelection);
   }, [initialRecipients]);
 
-  const handleCheckboxChange = (email: string) => {
+  const handleCheckboxChange = (email: string, isResolvable: boolean) => {
+    if (!isResolvable) return;
     setSelectedRecipients((prev) => ({
       ...prev,
       [email]: !prev[email],
@@ -41,7 +43,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const selectedEmails = initialRecipients
-      .filter((r) => selectedRecipients[r.email])
+      .filter((r) => r.isResolvable && selectedRecipients[r.email])
       .map((r) => r.email);
     // console.log("Selected emails to send to:", selectedEmails); // For debugging
     await onSendPdf(selectedEmails);
@@ -59,16 +61,33 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
               <input
                 type="checkbox"
                 id={`recipient-${recipient.email}`}
-                checked={selectedRecipients[recipient.email] || false}
-                onChange={() => handleCheckboxChange(recipient.email)}
-                className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                checked={
+                  recipient.isResolvable &&
+                  (selectedRecipients[recipient.email] || false)
+                }
+                onChange={() =>
+                  handleCheckboxChange(recipient.email, recipient.isResolvable)
+                }
+                disabled={!recipient.isResolvable}
+                className={`mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
+                  recipient.isResolvable
+                    ? "cursor-pointer"
+                    : "cursor-not-allowed opacity-50"
+                }`}
               />
               <label
                 htmlFor={`recipient-${recipient.email}`}
-                className="cursor-pointer"
+                className={`${
+                  recipient.isResolvable
+                    ? "cursor-pointer"
+                    : "cursor-not-allowed opacity-50"
+                }`}
               >
-                <strong>{`${recipient.name} ${recipient.surname}`}</strong> (
-                {recipient.email}) - <em>{recipient.reason}</em>
+                {`${recipient.name}${
+                  recipient.surname ? " " + recipient.surname : ""
+                }`}
+                {" - "}
+                {recipient.email} - <em>{recipient.reason}</em>
               </label>
             </li>
           ))}

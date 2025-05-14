@@ -138,19 +138,29 @@ export default async function PdfPage({
   // Helper function to get user details or fallbacks
   const getUserDetails = (
     clerkId: string | null | undefined,
-    defaultName: string,
-    defaultSurname: string,
-    defaultEmail: string
+    reason: string
   ) => {
-    if (!clerkId)
-      return {name: defaultName, surname: defaultSurname, email: defaultEmail};
+    if (!clerkId) {
+      return {
+        name: "Utilisateur inconnu",
+        surname: "",
+        email: "ID non fourni",
+        reason,
+        isResolvable: false,
+      };
+    }
     const user = clerkUsersMap.get(clerkId);
-    if (!user)
-      return {name: defaultName, surname: defaultSurname, email: defaultEmail};
+    if (!user) {
+      return {
+        name: "Utilisateur inconnu",
+        surname: "",
+        email: `ID: ${clerkId}`, // Keep the ID if user not found
+        reason,
+        isResolvable: false,
+      };
+    }
 
-    let primaryEmail = defaultEmail; // Default to defaultEmail
-
-    // Check if email_addresses exists and is an array before calling find
+    let primaryEmail = "Email inconnu";
     if (
       user.email_addresses &&
       Array.isArray(user.email_addresses) &&
@@ -162,13 +172,19 @@ export default async function PdfPage({
       primaryEmail =
         primaryEmailObject?.email_address ||
         user.email_addresses[0]?.email_address ||
-        defaultEmail;
+        "Email non principal";
     }
 
+    const firstName = user.first_name || "";
+    const lastName = user.last_name || "";
+    const fullName = `${firstName} ${lastName}`.trim();
+
     return {
-      name: user.first_name || defaultName,
-      surname: user.last_name || defaultSurname,
+      name: fullName || "Nom inconnu", // If both names are empty
+      surname: "", // Combined into name
       email: primaryEmail,
+      reason,
+      isResolvable: true, // User was found
     };
   };
 
@@ -176,13 +192,16 @@ export default async function PdfPage({
   if (inscription.createdBy) {
     const creatorDetails = getUserDetails(
       inscription.createdBy,
-      "Créateur",
-      "Event",
-      "creator@example.com"
+      "Créateur de l'événement"
     );
+    recipients.push(creatorDetails);
+  } else {
     recipients.push({
-      ...creatorDetails,
+      name: "Utilisateur inconnu",
+      surname: "",
+      email: "ID non fourni",
       reason: "Créateur de l'événement",
+      isResolvable: false,
     });
   }
 
@@ -190,49 +209,95 @@ export default async function PdfPage({
   if (currentClerkUserId) {
     const currentUserDetails = getUserDetails(
       currentClerkUserId,
-      "Utilisateur",
-      "Actuel",
-      "current.user@example.com"
+      "Utilisateur actuel de la page"
     );
-    // Avoid adding if already added as creator
+    // Avoid adding if already added as creator (check by ID if possible, or by resolved email if IDs were different)
+    const creatorId = inscription.createdBy;
     if (
-      !recipients.find(
-        (r) =>
-          r.email === currentUserDetails.email &&
-          r.reason === "Créateur de l'événement"
+      !(
+        creatorId &&
+        creatorId === currentClerkUserId &&
+        currentUserDetails.isResolvable
       )
     ) {
-      recipients.push({
-        ...currentUserDetails,
-        reason: "Utilisateur actuel de la page",
-      });
+      recipients.push(currentUserDetails);
     }
+  } else {
+    // No current user, but we expect a slot for it, make it unresolvable
+    recipients.push({
+      name: "Utilisateur inconnu",
+      surname: "",
+      email: "Non connecté",
+      reason: "Utilisateur actuel de la page",
+      isResolvable: false,
+    });
   }
 
   // Modifiers
   const uniqueModifierClerkIds = Array.from(new Set(modifierClerkIds));
   uniqueModifierClerkIds.forEach((clerkId) => {
-    const modifierDetails = getUserDetails(
-      clerkId,
-      "Modificateur",
-      "Inscription",
-      `modifier-${clerkId}@example.com`
-    );
-    // Avoid adding duplicates if a modifier is also the creator or current user
-    if (!recipients.find((r) => r.email === modifierDetails.email)) {
-      recipients.push({
-        ...modifierDetails,
-        reason: "A modifié l'inscription",
-      });
+    const modifierDetails = getUserDetails(clerkId, "A modifié l'inscription");
+    // Avoid adding duplicates - check if this clerkId was already added as creator or current user
+    const creatorId = inscription.createdBy;
+    const currentUserId = currentClerkUserId;
+
+    const isCreator = creatorId === clerkId;
+    const isCurrentUser = currentUserId === clerkId;
+
+    if (!isCreator && !isCurrentUser) {
+      recipients.push(modifierDetails);
+    } else if (
+      isCreator &&
+      !recipients.find(
+        (r) =>
+          r.reason === "Créateur de l'événement" &&
+          r.email === modifierDetails.email
+      )
+    ) {
+      // It's the creator but wasn't added yet (e.g. inscription.createdBy was null but modifier list has them)
+      // This case is less likely if inscription.createdBy is mandatory and correct
+      // OR if the initial creator entry was marked unresolvable and this one is resolvable, we might want to replace/update.
+      // For simplicity, we add if not found by specific role+email. A more robust merge could be done.
+      recipients.push(modifierDetails);
+    } else if (
+      isCurrentUser &&
+      !recipients.find(
+        (r) =>
+          r.reason === "Utilisateur actuel de la page" &&
+          r.email === modifierDetails.email
+      )
+    ) {
+      // Similar logic for current user
+      recipients.push(modifierDetails);
     }
   });
 
-  // Remove duplicate recipients by email (e.g. if current user is also creator, ensure only one entry, prioritizing more specific role if logic was more complex)
-  // The current logic somewhat handles this by checking before pushing, but this is a final safeguard.
-  const uniqueRecipients = Array.from(
-    new Map(recipients.map((r) => [r.email, r])).values()
-  ).sort(
-    (a, b) => a.surname.localeCompare(b.surname) || a.name.localeCompare(b.name)
+  // Refine uniqueRecipients logic to handle potential unresolvable entries better
+  // If multiple entries for the same "logical" user (e.g. creator ID) exist, prioritize the resolvable one.
+  const finalRecipientsMap = new Map<string, Recipient>();
+
+  recipients.forEach((rec) => {
+    const key = `${rec.email}-${rec.reason}`; // A more unique key for role + email
+    const existing = finalRecipientsMap.get(key);
+    if (!existing || (existing && !existing.isResolvable && rec.isResolvable)) {
+      // Add if new, or if current is resolvable and existing was not
+      finalRecipientsMap.set(key, rec);
+    } else if (existing && existing.isResolvable && !rec.isResolvable) {
+      // Don't overwrite a resolvable entry with an unresolvable one
+    } else if (existing && existing.isResolvable && rec.isResolvable) {
+      // Both resolvable, could be a duplicate from modifiers list if user is also creator/current. Prefer first one added by role.
+      // Current logic for adding creator/current/modifier mostly handles this by checking before push.
+    }
+  });
+
+  const uniqueRecipients = Array.from(finalRecipientsMap.values()).sort(
+    (a, b) => {
+      // Optional: Sort by reason or resolvability first if desired
+      return (
+        a.name.localeCompare(b.name) ||
+        (a.surname || "").localeCompare(b.surname || "")
+      );
+    }
   );
 
   const handleSendPdf = async (selectedEmails: string[]) => {
