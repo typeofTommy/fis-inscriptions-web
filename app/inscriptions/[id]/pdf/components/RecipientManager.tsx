@@ -1,5 +1,6 @@
 "use client";
 
+import {useUser} from "@clerk/nextjs";
 import React, {useState, useEffect} from "react";
 
 export type Recipient = {
@@ -22,6 +23,9 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   const [selectedRecipients, setSelectedRecipients] = useState<
     Record<string, boolean>
   >({});
+
+  const {user} = useUser();
+  console.log({user});
 
   useEffect(() => {
     // Initialize all recipients as selected, only if they are resolvable
@@ -46,8 +50,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       .filter((r) => r.isResolvable && selectedRecipients[r.email])
       .map((r) => r.email);
     if (selectedEmails.length === 0) {
-      // console.log("No recipients selected to send to."); // Optional: feedback if needed
-      return; // Don't proceed if no one is selected
+      return;
     }
     await onSendPdf(selectedEmails);
   };

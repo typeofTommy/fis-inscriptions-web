@@ -18,14 +18,12 @@ import {db} from "@/app/db/inscriptionsDB";
 import {eq} from "drizzle-orm";
 import {RecipientManager, Recipient} from "./components/RecipientManager";
 import {clerkClient, auth} from "@clerk/nextjs/server";
-import type {UserJSON, User} from "@clerk/nextjs/server";
+import type {User} from "@clerk/nextjs/server";
 
 // Define more specific types based on common Clerk structures
 // You should ideally import these or more accurate types from Clerk packages
 type AuthObject = {userId: string | null; [key: string]: any}; // Basic Auth object type
 // type ClerkEmailAddress = {id: string; emailAddress: string; [key: string]: any}; // Removed unused type
-// Use UserJSON or a similar detailed type from Clerk if available
-type ClerkUser = UserJSON; // This is used for the Map value type, ensure it's compatible with `User` from SDK
 
 export default async function PdfPage({
   params,
@@ -112,22 +110,18 @@ export default async function PdfPage({
   allUserIdsToFetch.push(...modifierClerkIds);
   const uniqueUserIdsToFetch = Array.from(new Set(allUserIdsToFetch));
 
-  const clerkUsersMap: Map<string, ClerkUser> = new Map();
+  const clerkUsersMap: Map<string, User> = new Map();
   if (uniqueUserIdsToFetch.length > 0) {
     try {
       const client = await clerkClient();
       const usersResponse = await client.users.getUserList({
         userId: uniqueUserIdsToFetch,
       });
-      // Access the data property and use the more specific User type from Clerk SDK if available
       usersResponse.data.forEach((user: User) => {
-        // Assuming User type is compatible enough with UserJSON for the map's value
-        // or you might need to transform `user` to `UserJSON` if `clerkUsersMap` strictly expects `UserJSON`
-        clerkUsersMap.set(user.id, user as unknown as UserJSON); // Casting if types are not directly assignable but structurally compatible for map
+        clerkUsersMap.set(user.id, user);
       });
     } catch (error) {
       console.error("Error fetching users from Clerk:", error);
-      // Handle error appropriately, maybe fall back to placeholders or skip users
     }
   }
   // --- End fetching user details ---
@@ -139,7 +133,7 @@ export default async function PdfPage({
   const getUserDetails = (
     clerkId: string | null | undefined,
     reason: string
-  ) => {
+  ): Recipient => {
     if (!clerkId) {
       return {
         name: "Utilisateur inconnu",
@@ -163,35 +157,34 @@ export default async function PdfPage({
     let primaryEmail = "Email inconnu";
     let hasValidEmail = false;
     if (
-      user.email_addresses &&
-      Array.isArray(user.email_addresses) &&
-      user.email_addresses.length > 0
+      user.emailAddresses &&
+      Array.isArray(user.emailAddresses) &&
+      user.emailAddresses.length > 0
     ) {
-      const primaryEmailObject = user.email_addresses.find(
-        (ea) => ea.id === user.primary_email_address_id
+      const primaryEmailObject = user.emailAddresses.find(
+        (ea) => ea.id === user.primaryEmailAddressId
       );
       const foundEmail =
-        primaryEmailObject?.email_address ||
-        user.email_addresses[0]?.email_address;
+        primaryEmailObject?.emailAddress ||
+        user.emailAddresses[0]?.emailAddress;
       if (foundEmail) {
         primaryEmail = foundEmail;
         hasValidEmail = true;
       } else {
-        primaryEmail = "Email non principal introuvable"; // More specific if emails exist but primary/first is not there
+        primaryEmail = "Email non principal introuvable";
       }
     }
 
-    const firstName = user.first_name || "";
-    const lastName = user.last_name || "";
+    const firstName = user.firstName || "";
+    const lastName = user.lastName || "";
     const fullName = `${firstName} ${lastName}`.trim();
+    const displayName = fullName || user.username || "Nom inconnu";
 
     return {
-      name: fullName || "Nom inconnu",
+      name: displayName,
       surname: "",
       email: primaryEmail,
       reason,
-      // User is resolvable only if we have a valid email to send to.
-      // Name being "Nom inconnu" is acceptable if email is present.
       isResolvable: hasValidEmail,
     };
   };
