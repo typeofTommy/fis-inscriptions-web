@@ -45,9 +45,16 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     const selectedEmails = initialRecipients
       .filter((r) => r.isResolvable && selectedRecipients[r.email])
       .map((r) => r.email);
-    // console.log("Selected emails to send to:", selectedEmails); // For debugging
+    if (selectedEmails.length === 0) {
+      // console.log("No recipients selected to send to."); // Optional: feedback if needed
+      return; // Don't proceed if no one is selected
+    }
     await onSendPdf(selectedEmails);
   };
+
+  const hasSelectedRecipients = Object.values(selectedRecipients).some(
+    (isSelected) => isSelected
+  );
 
   return (
     <div className="mt-8 p-4 border-2 border-dashed border-gray-300">
@@ -94,9 +101,14 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         </ul>
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+          disabled={!hasSelectedRecipients}
+          className={`bg-blue-500 text-white font-bold py-2 px-4 rounded ${
+            hasSelectedRecipients
+              ? "hover:bg-blue-700 cursor-pointer"
+              : "opacity-50 cursor-not-allowed"
+          }`}
         >
-          Envoyer le PDF aux sélectionnés (A IMPLEMENTER)
+          Envoyer le PDF aux sélectionnés
         </button>
       </form>
     </div>
