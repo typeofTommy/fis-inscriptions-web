@@ -3,8 +3,14 @@
 import {useMutation, useQueryClient, useQuery} from "@tanstack/react-query";
 import {Button} from "@/components/ui/button";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {useState} from "react";
-import {Zap} from "lucide-react";
+import {Zap, Loader2} from "lucide-react";
 import {Separator} from "@/components/ui/separator";
 import {useRouter} from "next/navigation";
 import {
@@ -76,7 +82,11 @@ export function InscriptionActionsMenu({
     },
   });
 
-  const {data: competitors = [], isLoading: isLoadingCompetitors} = useQuery({
+  const {
+    data: competitors = [],
+    isLoading: isLoadingCompetitors,
+    refetch: refetchCompetitorsAll,
+  } = useQuery({
     queryKey: ["inscription-competitors-all", inscription.id],
     queryFn: async () => {
       const res = await fetch(
@@ -97,6 +107,11 @@ export function InscriptionActionsMenu({
   const isMixteEvent =
     inscription.eventData.genderCodes &&
     inscription.eventData.genderCodes.length > 1;
+
+  const hasNoMen = !competitors.some((c: {gender: string}) => c.gender === "M");
+  const hasNoWomen = !competitors.some(
+    (c: {gender: string}) => c.gender === "W"
+  );
 
   const handleGeneratePDF = () => {
     if (isMixteEvent) {
@@ -133,7 +148,15 @@ export function InscriptionActionsMenu({
   };
 
   return (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+    <Popover
+      open={popoverOpen}
+      onOpenChange={(open) => {
+        if (open) {
+          refetchCompetitorsAll();
+        }
+        setPopoverOpen(open);
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -174,6 +197,9 @@ export function InscriptionActionsMenu({
             readonly || isLoadingCompetitors || competitors.length === 0
           }
         >
+          {isLoadingCompetitors && (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          )}
           Générer PDF
         </Button>
 
@@ -187,18 +213,60 @@ export function InscriptionActionsMenu({
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 sm:justify-center">
-              <Button
-                onClick={() => handleGenderSelectedAndGeneratePDF("M")}
-                className={`cursor-pointer ${colorBadgePerGender.M} hover:${colorBadgePerGender.M}/90 text-white`}
-              >
-                Hommes
-              </Button>
-              <Button
-                onClick={() => handleGenderSelectedAndGeneratePDF("W")}
-                className={`cursor-pointer ${colorBadgePerGender.W} hover:${colorBadgePerGender.W}/90 text-white`}
-              >
-                Femmes
-              </Button>
+              {hasNoMen ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>
+                        <Button
+                          className={`${colorBadgePerGender.M} text-white cursor-not-allowed opacity-60`}
+                          disabled
+                          style={{pointerEvents: "none"}}
+                        >
+                          Hommes
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Aucun homme inscrit. PDF non générable.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <Button
+                  onClick={() => handleGenderSelectedAndGeneratePDF("M")}
+                  className={`cursor-pointer ${colorBadgePerGender.M} hover:${colorBadgePerGender.M}/90 text-white`}
+                >
+                  Hommes
+                </Button>
+              )}
+              {hasNoWomen ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>
+                        <Button
+                          className={`${colorBadgePerGender.W} text-white cursor-not-allowed opacity-60`}
+                          disabled
+                          style={{pointerEvents: "none"}}
+                        >
+                          Femmes
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Aucune femme inscrite. PDF non générable.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <Button
+                  onClick={() => handleGenderSelectedAndGeneratePDF("W")}
+                  className={`cursor-pointer ${colorBadgePerGender.W} hover:${colorBadgePerGender.W}/90 text-white`}
+                >
+                  Femmes
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
