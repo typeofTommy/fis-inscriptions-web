@@ -19,6 +19,11 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
 
   const {data: inscription, isLoading, error} = useInscription(params.id);
 
+  // Lifted state for gender filter
+  const [genderFilter, setGenderFilter] = React.useState<"both" | "M" | "W">(
+    "both"
+  );
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-8 flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -44,9 +49,19 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
     );
   }
 
+  // Calculate isMixedEvent here based on inscription data
+  const isMixedEvent =
+    !!inscription?.eventData?.genderCodes?.includes("M") &&
+    !!inscription?.eventData?.genderCodes?.includes("W");
+
   return (
     <div className="container mx-auto py-8">
-      <InscriptionDetails id={params.id} />
+      <InscriptionDetails
+        id={params.id}
+        genderFilter={genderFilter}
+        setGenderFilter={setGenderFilter}
+        isMixedEvent={isMixedEvent}
+      />
       <div className="bg-white p-4 mt-6">
         <Tabs defaultValue="recap" className="w-full">
           <TabsList className="inline-flex flex-wrap bg-slate-100 rounded-md border border-slate-200 shadow-sm p-0">
@@ -64,10 +79,10 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="recap">
-            <RecapEvent inscriptionId={params.id} />
+            <RecapEvent inscriptionId={params.id} genderFilter={genderFilter} />
           </TabsContent>
           <TabsContent value="details_competitors">
-            <CodexTabs inscriptionId={params.id} />
+            <CodexTabs inscriptionId={params.id} genderFilter={genderFilter} />
           </TabsContent>
         </Tabs>
       </div>

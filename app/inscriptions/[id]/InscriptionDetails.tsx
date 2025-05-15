@@ -17,12 +17,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {EventDetails} from "@/components/EventDetails";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import {Label} from "@/components/ui/label";
+import {Badge} from "@/components/ui/badge";
+import {colorBadgePerGender} from "@/app/lib/colorMappers";
 
 interface InscriptionDetailsProps {
   id: string;
+  genderFilter: "both" | "M" | "W";
+  setGenderFilter: (value: "both" | "M" | "W") => void;
+  isMixedEvent: boolean;
 }
 
-export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
+export const InscriptionDetails = ({
+  id,
+  genderFilter,
+  setGenderFilter,
+  isMixedEvent,
+}: InscriptionDetailsProps) => {
   const {data: inscription, isLoading, error} = useInscription(id);
 
   const permissionToEdit = usePermissionToEdit(inscription);
@@ -33,6 +45,7 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
   const {flagUrl, countryLabel} = useCountryInfo(countryCode);
 
   const [isEventDetailsModalOpen, setIsEventDetailsModalOpen] = useState(false);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -174,6 +187,65 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
           )}
         </div>
       </header>
+
+      {/* Gender Filter - Only show if mixed event */}
+      {isMixedEvent && inscription && (
+        <div className="container mx-auto px-4 py-6">
+          <h2 className="text-lg font-medium text-slate-700 mb-3">
+            Filtrer par genre
+          </h2>
+          <RadioGroup
+            value={genderFilter}
+            onValueChange={setGenderFilter}
+            className="flex items-center gap-6"
+          >
+            <div className="flex items-center space-x-3 cursor-pointer">
+              <RadioGroupItem
+                value="both"
+                id="r1"
+                className="cursor-pointer h-5 w-5"
+              />
+              <Label htmlFor="r1" className="cursor-pointer text-base">
+                <Badge className="bg-sky-100 text-sky-700 hover:bg-sky-200 px-3 py-1 text-sm">
+                  Tous
+                </Badge>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-3 cursor-pointer">
+              <RadioGroupItem
+                value="M"
+                id="r2"
+                className="cursor-pointer h-5 w-5"
+              />
+              <Label htmlFor="r2" className="cursor-pointer text-base">
+                <Badge
+                  className={
+                    colorBadgePerGender.M + " text-white px-3 py-1 text-sm"
+                  }
+                >
+                  Hommes
+                </Badge>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-3 cursor-pointer">
+              <RadioGroupItem
+                value="W"
+                id="r3"
+                className="cursor-pointer h-5 w-5"
+              />
+              <Label htmlFor="r3" className="cursor-pointer text-base">
+                <Badge
+                  className={
+                    colorBadgePerGender.W + " text-white px-3 py-1 text-sm"
+                  }
+                >
+                  Femmes
+                </Badge>
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+      )}
     </div>
   );
 };

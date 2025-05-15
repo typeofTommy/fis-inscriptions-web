@@ -97,16 +97,30 @@ export const Competitors = ({
   inscriptionId,
   codexNumber,
   discipline,
+  genderFilter,
 }: {
   inscriptionId: string;
   codexNumber: number;
   discipline: string;
+  genderFilter: "both" | "M" | "W";
 }) => {
   const {
-    data: competitors = [],
+    data: competitorsData = [],
     isPending,
     error,
   } = useInscriptionCompetitors(inscriptionId, codexNumber, discipline);
+
+  // Filter competitors based on genderFilter prop
+  const competitors = React.useMemo(() => {
+    if (genderFilter === "both") {
+      return competitorsData;
+    }
+    // Assuming competitor objects have a 'gender' property (e.g., 'M' or 'W')
+    // This matches the assumption in RecapEvent.tsx and CodexTabs.tsx (for TotalInscriptionsInfo)
+    return competitorsData.filter(
+      (c: InscriptionCompetitor) => c.gender === genderFilter
+    );
+  }, [competitorsData, genderFilter]);
 
   const {data: inscription} = useQuery({
     queryKey: ["inscriptions", inscriptionId],
@@ -208,7 +222,7 @@ export const Competitors = ({
                   c.points === undefined ||
                   String(c.points) === "" ||
                   String(c.points) === "-"
-                    ? "-"
+                    ? "999"
                     : c.points}
                 </TableCell>
                 <TableCell>{c.addedByEmail || "-"}</TableCell>

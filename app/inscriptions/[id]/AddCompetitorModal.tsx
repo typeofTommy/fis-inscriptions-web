@@ -94,11 +94,13 @@ export default function AddCompetitorModal({
   defaultCodex,
   gender,
   codexData,
+  triggerText,
 }: {
   inscriptionId: string;
   defaultCodex: number;
   gender: "W" | "M";
   codexData: CompetitionItem[];
+  triggerText?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -161,7 +163,7 @@ export default function AddCompetitorModal({
           className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-base"
           disabled={!selectedCodex}
         >
-          Inscrire un compétiteur
+          {triggerText || "Inscrire un compétiteur"}
         </Button>
       </DialogTrigger>
       <DialogContent>

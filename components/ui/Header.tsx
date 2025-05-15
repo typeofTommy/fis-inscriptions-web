@@ -18,7 +18,7 @@ export const Header = () => {
         <Link href="/">
           <div className="flex items-center gap-3">
             <Snowflake className="h-8 w-8" />
-            <h1 className="text-3xl font-bold">Gestion des Inscriptions FIS</h1>
+            <h1 className="text-3xl font-bold">Inscriptions FIS étrangers</h1>
           </div>
         </Link>
         <div className="flex items-center gap-12">

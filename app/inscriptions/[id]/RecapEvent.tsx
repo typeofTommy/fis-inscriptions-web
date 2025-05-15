@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useMemo, useState, useEffect} from "react";
+import React, {useMemo, useState} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {useInscription} from "../form/api";
 import {Loader2} from "lucide-react";
@@ -54,6 +54,7 @@ const useAllInscriptionCompetitors = (inscriptionId: string) => {
 
 interface RecapEventProps {
   inscriptionId: string;
+  genderFilter: "both" | "M" | "W";
 }
 
 // Define a type for the competitor data used in the table
@@ -69,7 +70,10 @@ type CompetitorRow = {
   addedByEmail?: string;
 };
 
-export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
+export const RecapEvent: React.FC<RecapEventProps> = ({
+  inscriptionId,
+  genderFilter,
+}) => {
   const {
     data: inscription,
     isLoading: isLoadingInscription,
@@ -83,22 +87,36 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
   } = useAllInscriptionCompetitors(inscriptionId);
 
   const [addGender, setAddGender] = useState<"W" | "M">("W");
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [userDrivenSorting, setUserDrivenSorting] = useState<SortingState>([]);
 
-  // Tri par défaut sur le premier codex dès que codexData est dispo
-  useEffect(() => {
+  // Derived sorting state for the table, ensuring it's always valid with current filters
+  const tableSorting = useMemo(() => {
+    const competitions = inscription?.eventData.competitions;
+    if (!competitions) return []; // No competitions, no sort
+
+    const visibleCompetitionsBasedOnFilter = competitions.filter(
+      (comp) => genderFilter === "both" || comp.genderCode === genderFilter
+    );
+
+    if (visibleCompetitionsBasedOnFilter.length === 0) return []; // No visible columns, clear sort
+
+    const visibleCodexColumnIds = visibleCompetitionsBasedOnFilter.map((comp) =>
+      String(comp.codex)
+    );
+    const currentActiveSortColumnId = userDrivenSorting[0]?.id;
+
     if (
-      inscription?.eventData.competitions &&
-      inscription.eventData.competitions.length > 0
+      currentActiveSortColumnId &&
+      visibleCodexColumnIds.includes(currentActiveSortColumnId)
     ) {
-      const firstCodexId = String(inscription.eventData.competitions[0].codex);
-      setSorting((current) =>
-        current.length === 0 || current[0].id !== firstCodexId
-          ? [{id: firstCodexId, desc: false}]
-          : current
-      );
+      // The user's current sort is valid for the visible columns
+      return userDrivenSorting;
     }
-  }, [inscription?.eventData.competitions]);
+
+    // User's sort is not valid (or no sort is active), or no visible columns matching that sort.
+    // Default to sorting by the first visible codex column.
+    return [{id: visibleCodexColumnIds[0], desc: false}];
+  }, [inscription?.eventData.competitions, genderFilter, userDrivenSorting]);
 
   // 1. Data Preparation: on force les champs string à non-null et on normalise le genre
   const allCompetitors: CompetitorRow[] = useMemo(() => {
@@ -113,6 +131,14 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
       addedByEmail: c.addedByEmail,
     }));
   }, [competitorsData]);
+
+  // Filter competitors based on the genderFilter prop
+  const filteredCompetitors = useMemo(() => {
+    if (genderFilter === "both") {
+      return allCompetitors;
+    }
+    return allCompetitors.filter((c) => c.gender === genderFilter);
+  }, [allCompetitors, genderFilter]);
 
   // 2. TanStack Table Columns Definition (for body rows)
   const columnHelper = createColumnHelper<CompetitorRow>();
@@ -134,90 +160,101 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
         enableSorting: true,
       }),
       // Dynamic codex columns
-      ...(inscription?.eventData.competitions ?? []).map((competition) =>
-        columnHelper.accessor(
-          (row) => {
-            const isInscrit =
-              Array.isArray(row.codexNumbers) &&
-              row.codexNumbers.includes(String(competition.codex));
-            // Si inscrit mais pas de points, retourne '-'. Si pas inscrit, retourne '-'.
-            if (isInscrit) {
-              const val = row.points[competition.eventCode];
-              return val === null ||
-                val === undefined ||
-                val === "" ||
-                val === "-"
-                ? "-"
-                : val;
-            }
-            return "-";
-          },
-          {
-            id: String(competition.codex),
-            header: ({column}) => (
-              <div
-                className="flex items-center gap-1 justify-center min-w-[120px] cursor-pointer select-none"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === "asc")
-                }
-              >
-                <span>{competition.codex}</span>
-                <Badge
-                  className={`text-xs px-2 py-1 ${
-                    colorBadgePerDiscipline[competition.eventCode] || ""
-                  }`}
+      ...(inscription?.eventData.competitions ?? [])
+        .filter((competition) => {
+          if (genderFilter === "both") return true;
+          return competition.genderCode === genderFilter;
+        })
+        .map((competition) =>
+          columnHelper.accessor(
+            (row) => {
+              const isInscrit =
+                Array.isArray(row.codexNumbers) &&
+                row.codexNumbers.includes(String(competition.codex));
+              // Si inscrit mais pas de points, retourne '999'. Si pas inscrit, retourne '-'.
+              if (isInscrit) {
+                const val = row.points[competition.eventCode];
+                if (val === 0) return 0; // Explicitly return 0 if points are 0
+                return val === null ||
+                  val === undefined ||
+                  String(val).trim() === "" || // Check for empty string after trim
+                  String(val) === "-"
+                  ? "999"
+                  : val;
+              }
+              return "-"; // Not inscribed
+            },
+            {
+              id: String(competition.codex),
+              header: ({column}) => (
+                <div
+                  className="flex items-center gap-1 justify-center min-w-[120px] cursor-pointer select-none"
+                  onClick={() =>
+                    column.toggleSorting(column.getIsSorted() === "asc")
+                  }
                 >
-                  {competition.eventCode}
-                </Badge>
-                <Badge
-                  className={`text-xs px-2 py-1 text-white ${
-                    colorBadgePerGender[competition.genderCode] || ""
-                  }`}
-                >
-                  {competition.genderCode}
-                </Badge>
-                <Badge
-                  className={`text-xs px-2 py-1 cursor-pointer ${
-                    colorBadgePerRaceLevel[competition.categoryCode] ||
-                    "bg-gray-300"
-                  }`}
-                >
-                  {competition.categoryCode}
-                </Badge>
-                {column.getIsSorted() === "asc" && <span>↑</span>}
-                {column.getIsSorted() === "desc" && <span>↓</span>}
-              </div>
-            ),
-            cell: (info) => {
-              const value = info.getValue();
-              return (
-                <div className="text-center min-w-[120px]">
-                  {value === null ||
-                  value === undefined ||
-                  value === "" ||
-                  value === "-"
-                    ? "-"
-                    : value}
+                  <span>{competition.codex}</span>
+                  <Badge
+                    className={`text-xs px-2 py-1 ${
+                      colorBadgePerDiscipline[competition.eventCode] || ""
+                    }`}
+                  >
+                    {competition.eventCode}
+                  </Badge>
+                  <Badge
+                    className={`text-xs px-2 py-1 text-white ${
+                      colorBadgePerGender[competition.genderCode] || ""
+                    }`}
+                  >
+                    {competition.genderCode}
+                  </Badge>
+                  <Badge
+                    className={`text-xs px-2 py-1 cursor-pointer ${
+                      colorBadgePerRaceLevel[competition.categoryCode] ||
+                      "bg-gray-300"
+                    }`}
+                  >
+                    {competition.categoryCode}
+                  </Badge>
+                  {column.getIsSorted() === "asc" && <span>↑</span>}
+                  {column.getIsSorted() === "desc" && <span>↓</span>}
                 </div>
-              );
-            },
-            enableSorting: true,
-            sortingFn: (rowA, rowB, columnId) => {
-              // On veut trier par valeur numérique, '-' (pas de points) en dernier, 0 (zéro point) en haut
-              const a = rowA.getValue(columnId);
-              const b = rowB.getValue(columnId);
-              const isANoPoints =
-                a === "-" || a === undefined || a === null || a === "";
-              const isBNoPoints =
-                b === "-" || b === undefined || b === null || b === "";
-              if (isANoPoints && isBNoPoints) return 0;
-              if (isANoPoints) return 1; // a va en bas
-              if (isBNoPoints) return -1; // b va en bas
-              return Number(a) - Number(b);
-            },
-          }
-        )
-      ),
+              ),
+              cell: (info) => {
+                const value = info.getValue();
+                return (
+                  <div className="text-center min-w-[120px]">
+                    {value} {/* Simply render the value from accessor */}
+                  </div>
+                );
+              },
+              enableSorting: true,
+              sortingFn: (rowA, rowB, columnId) => {
+                const a = rowA.getValue(columnId);
+                const b = rowB.getValue(columnId);
+
+                const isANotInscribed = a === "-";
+                const isBNotInscribed = b === "-";
+
+                if (isANotInscribed && isBNotInscribed) return 0;
+                if (isANotInscribed) return 1;
+                if (isBNotInscribed) return -1;
+
+                // Handle 0 explicitly, convert "999" for sorting
+                const valA = a === "999" ? 999 : a === 0 ? 0 : Number(a);
+                const valB = b === "999" ? 999 : b === 0 ? 0 : Number(b);
+
+                // If conversion results in NaN (e.g., unexpected string), treat as high value or handle as error
+                // For now, standard numeric sort after conversion.
+                if (isNaN(valA) && isNaN(valB)) return 0;
+                if (isNaN(valA)) return 1; // NaN values go to bottom
+                if (isNaN(valB)) return -1;
+
+                return valA - valB;
+              },
+            }
+          )
+        ),
       // Nouvelle colonne email ajouté par
       columnHelper.accessor((row) => row.addedByEmail ?? "-", {
         id: "addedByEmail",
@@ -226,17 +263,17 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
         enableSorting: false,
       }),
     ],
-    [columnHelper, inscription?.eventData.competitions]
+    [columnHelper, inscription?.eventData.competitions, genderFilter]
   );
 
   // 3. TanStack Table Instance
   const table = useReactTable({
-    data: allCompetitors,
+    data: filteredCompetitors,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    state: {sorting},
-    onSortingChange: setSorting,
+    state: {sorting: tableSorting},
+    onSortingChange: setUserDrivenSorting,
   });
 
   // Découpe en groupes par sexe
@@ -244,6 +281,17 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
     {label: "Femmes", value: "W"},
     {label: "Hommes", value: "M"},
   ];
+
+  // Filter groups based on genderFilter
+  const displayedGroups = useMemo(() => {
+    if (genderFilter === "M") {
+      return groups.filter((g) => g.value === "M");
+    }
+    if (genderFilter === "W") {
+      return groups.filter((g) => g.value === "W");
+    }
+    return groups; // For "both", show all defined groups
+  }, [genderFilter]);
 
   // Détection des sexes présents dans les codex de l'évènement
   const codexSexes = useMemo(() => {
@@ -275,12 +323,12 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
   }
 
   // 5. Render Component (groupé par sexe)
-  // Trie les compétiteurs par sexe (F puis M)
+  // Trie les compétiteurs par sexe (F puis M) - this sorting might be less relevant if filtered
   const sortedRows = table.getRowModel().rows.sort((a, b) => {
     const sexA = a.original.gender;
     const sexB = b.original.gender;
     if (sexA === sexB) return 0;
-    if (sexA === "F") return -1;
+    if (sexA === "F") return -1; // Prioritize 'F' if 'both' is selected, otherwise only one gender will be present
     return 1;
   });
 
@@ -289,14 +337,37 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
       <div className="flex items-center gap-4 mb-4 justify-end">
         <div className="flex gap-2 items-center">
           {permissionToEdit && inscription?.status === "open" ? (
+            genderFilter === "W" ? (
+              <AddCompetitorModal
+                inscriptionId={inscriptionId}
+                defaultCodex={inscription?.eventData.competitions[0].codex}
+                gender="W"
+                codexData={inscription?.eventData.competitions || []}
+                triggerText="Ajouter une compétitrice"
+              />
+            ) : genderFilter === "M" ? (
+              <AddCompetitorModal
+                inscriptionId={inscriptionId}
+                defaultCodex={inscription?.eventData.competitions[0].codex}
+                gender="M"
+                codexData={inscription?.eventData.competitions || []}
+                triggerText="Ajouter un compétiteur"
+              />
+            ) : // genderFilter === "both"
             codexSexes.length === 1 ? (
               <AddCompetitorModal
                 inscriptionId={inscriptionId}
                 defaultCodex={inscription?.eventData.competitions[0].codex}
                 gender={codexSexes[0] as "W" | "M"}
                 codexData={inscription?.eventData.competitions || []}
+                triggerText={
+                  codexSexes[0] === "W"
+                    ? "Ajouter une compétitrice"
+                    : "Ajouter un compétiteur"
+                }
               />
             ) : (
+              // genderFilter === "both" && codexSexes has multiple
               <>
                 <span className="text-sm">
                   Ajouter un{addGender === "W" ? "e" : ""} :
@@ -328,6 +399,11 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
                   defaultCodex={inscription?.eventData.competitions[0].codex}
                   gender={addGender}
                   codexData={inscription?.eventData.competitions || []}
+                  triggerText={
+                    addGender === "W"
+                      ? "Ajouter compétitrice"
+                      : "Ajouter compétiteur"
+                  }
                 />
               </>
             )
@@ -360,11 +436,19 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
           ))}
         </TableHeader>
         <TableBody>
-          {groups.map((group) => {
+          {displayedGroups.map((group) => {
             const groupRows = sortedRows.filter(
               (row) => row.original.gender === group.value
             );
-            if (groupRows.length === 0) return null;
+            // if (groupRows.length === 0) return null; // Keep this if you want to hide empty groups even when selected
+            // If genderFilter is specific (M or W), and groupRows is empty,
+            // it implies no competitors for that gender, so we might want to show nothing or a message.
+            // For now, if filter is M and no Men, or W and no Women, the group won't render.
+            if (genderFilter !== "both" && group.value !== genderFilter) {
+              return null; // Don't render the group if it doesn't match the filter
+            }
+            if (groupRows.length === 0) return null; // Always hide empty groups
+
             return (
               <React.Fragment key={group.value}>
                 <TableRow>
@@ -392,16 +476,37 @@ export const RecapEvent: React.FC<RecapEventProps> = ({inscriptionId}) => {
           })}
         </TableBody>
       </Table>
-      <TotalInscriptionsInfo count={allCompetitors.length} />
+      <TotalInscriptionsInfo
+        filteredCount={filteredCompetitors.length}
+        genderFilter={genderFilter}
+      />
     </div>
   );
 };
 
 // Composant pour afficher le nombre total d'inscriptions
-const TotalInscriptionsInfo = ({count}: {count: number}) => {
+interface TotalInscriptionsInfoProps {
+  filteredCount: number;
+  genderFilter: "both" | "M" | "W";
+}
+
+const TotalInscriptionsInfo: React.FC<TotalInscriptionsInfoProps> = ({
+  filteredCount,
+  genderFilter,
+}) => {
+  let text = "";
+  if (genderFilter === "both") {
+    text = `Nombre total d'inscriptions : <b>${filteredCount}</b>`;
+  } else if (genderFilter === "W") {
+    text = `Nombre total de compétitrices inscrites : <b>${filteredCount}</b>`;
+  } else if (genderFilter === "M") {
+    text = `Nombre total de compétiteurs inscrits : <b>${filteredCount}</b>`;
+  }
+
   return (
-    <div className="text-xl text-center text-slate-500 mt-8 mb-2 border-t border-slate-200 pt-2">
-      Nombre total d&apos;inscriptions : <b>{count}</b>
-    </div>
+    <div
+      className="text-xl text-center text-slate-500 mt-8 mb-2 border-t border-slate-200 pt-2"
+      dangerouslySetInnerHTML={{__html: text}}
+    />
   );
 };
