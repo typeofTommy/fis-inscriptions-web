@@ -91,6 +91,17 @@ export default async function PdfPage({
     ? filteredCompetitors[0].gender
     : "M";
 
+  // Filter codexData based on raceGender
+  // Assuming CompetitionItem has a genderCode property ('M' or 'W')
+  const filteredCodexData = inscription.eventData.competitions.filter(
+    (codexItem: any) => {
+      // If genderCode is not present, or if it matches raceGender, include it.
+      // This handles cases where a competition might be for both genders or gender is not specified.
+      // Adjust this logic if CompetitionItem structure is different or strict filtering is needed.
+      return !codexItem.genderCode || codexItem.genderCode === raceGender;
+    }
+  );
+
   // --- Fetch user details from Clerk ---
   const authResult: AuthObject = await auth();
   const currentClerkUserId = authResult.userId;
@@ -237,7 +248,10 @@ export default async function PdfPage({
   // Modifiers
   const uniqueModifierClerkIds = Array.from(new Set(modifierClerkIds));
   uniqueModifierClerkIds.forEach((clerkId) => {
-    const modifierDetails = getUserDetails(clerkId, "A modifié l'inscription");
+    const modifierDetails = getUserDetails(
+      clerkId,
+      "A ajouté des compétiteurs"
+    );
     // Avoid adding duplicates - check if this clerkId was already added as creator or current user
     const creatorId = inscription.createdBy;
     const currentUserId = currentClerkUserId;
@@ -255,10 +269,6 @@ export default async function PdfPage({
           r.email === modifierDetails.email
       )
     ) {
-      // It's the creator but wasn't added yet (e.g. inscription.createdBy was null but modifier list has them)
-      // This case is less likely if inscription.createdBy is mandatory and correct
-      // OR if the initial creator entry was marked unresolvable and this one is resolvable, we might want to replace/update.
-      // For simplicity, we add if not found by specific role+email. A more robust merge could be done.
       recipients.push(modifierDetails);
     } else if (
       isCurrentUser &&
@@ -268,13 +278,10 @@ export default async function PdfPage({
           r.email === modifierDetails.email
       )
     ) {
-      // Similar logic for current user
       recipients.push(modifierDetails);
     }
   });
 
-  // Refine uniqueRecipients logic to handle potential unresolvable entries better
-  // If multiple entries for the same "logical" user (e.g. creator ID) exist, prioritize the resolvable one.
   const finalRecipientsMap = new Map<string, Recipient>();
 
   recipients.forEach((rec) => {
@@ -339,7 +346,7 @@ export default async function PdfPage({
         <GenderRow gender={raceGender === "M" ? "M" : "W"} />
         <CompetitorsTable
           competitors={filteredCompetitors}
-          codexData={inscription.eventData.competitions}
+          codexData={filteredCodexData}
         />
         <TableFooter />
       </div>
