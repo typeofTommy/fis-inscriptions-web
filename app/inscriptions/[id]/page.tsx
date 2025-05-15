@@ -5,7 +5,6 @@ import {InscriptionDetails} from "./InscriptionDetails";
 import {CodexTabs} from "./CodexTabs";
 import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/components/ui/tabs";
 import {RecapEvent} from "./RecapEvent";
-import {EventDetails} from "@/components/EventDetails";
 import {useInscription} from "@/app/inscriptions/form/api";
 import {Loader2} from "lucide-react";
 
@@ -45,8 +44,6 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
     );
   }
 
-  const firstCodex = inscription.eventData?.competitions?.[0]?.codex;
-
   return (
     <div className="container mx-auto py-8">
       <InscriptionDetails id={params.id} />
@@ -65,28 +62,12 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
             >
               Par codex
             </TabsTrigger>
-            <TabsTrigger
-              value="details_event"
-              className="px-7 py-2 text-base font-bold transition-colors duration-150 border-none rounded-r-md data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
-            >
-              Détail de l&apos;événement
-            </TabsTrigger>
           </TabsList>
           <TabsContent value="recap">
             <RecapEvent inscriptionId={params.id} />
           </TabsContent>
           <TabsContent value="details_competitors">
             <CodexTabs inscriptionId={params.id} />
-          </TabsContent>
-          <TabsContent value="details_event">
-            {firstCodex !== undefined ? (
-              <EventDetails codex={firstCodex} />
-            ) : (
-              <p className="text-slate-500 p-4">
-                Aucun détail d&apos;événement spécifique à afficher (pas de
-                codex trouvé).
-              </p>
-            )}
           </TabsContent>
         </Tabs>
       </div>

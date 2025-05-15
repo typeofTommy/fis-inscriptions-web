@@ -1,10 +1,22 @@
 "use client";
 
-import {Loader2, MapPinIcon, CalendarIcon, LinkIcon} from "lucide-react";
+import {Loader2, MapPinIcon, CalendarIcon, InfoIcon} from "lucide-react";
 import {InscriptionActionsMenu} from "./InscriptionActionsMenu";
 import {usePermissionToEdit} from "./usePermissionToEdit";
 import {useInscription} from "../form/api";
 import {parseLocalDate} from "@/app/lib/dates";
+import {useCountryInfo} from "@/hooks/useCountryInfo";
+import Image from "next/image";
+import {Button} from "@/components/ui/button";
+import React, {useState} from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {EventDetails} from "@/components/EventDetails";
 
 interface InscriptionDetailsProps {
   id: string;
@@ -15,6 +27,12 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
 
   const permissionToEdit = usePermissionToEdit(inscription);
 
+  const countryCode =
+    inscription?.eventData.placeNationCode ||
+    inscription?.eventData.organiserNationCode;
+  const {flagUrl, countryLabel} = useCountryInfo(countryCode);
+
+  const [isEventDetailsModalOpen, setIsEventDetailsModalOpen] = useState(false);
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -34,6 +52,8 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
   if (!inscription) {
     return null;
   }
+
+  const firstCodex = inscription.eventData?.competitions?.[0]?.codex;
 
   return (
     <div className="bg-gradient-to-b from-slate-50 to-slate-100">
@@ -58,60 +78,90 @@ export const InscriptionDetails = ({id}: InscriptionDetailsProps) => {
                 {inscription.status === "open" ? "Ouverte" : "Clôturée"}
               </span>
             </h1>
-            {permissionToEdit && inscription && (
-              <InscriptionActionsMenu
-                inscription={inscription}
-                readonly={!permissionToEdit}
-              />
-            )}
+            <div className="flex items-center gap-2">
+              {firstCodex !== undefined && (
+                <Dialog
+                  open={isEventDetailsModalOpen}
+                  onOpenChange={setIsEventDetailsModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shadow-sm"
+                    >
+                      <InfoIcon className="h-4 w-4 mr-2" />
+                      Détail de l&apos;événement
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-screen-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Détails de l&apos;événement</DialogTitle>
+                    </DialogHeader>
+                    <EventDetails codex={firstCodex} />
+                  </DialogContent>
+                </Dialog>
+              )}
+              {permissionToEdit && inscription && (
+                <InscriptionActionsMenu
+                  inscription={inscription}
+                  readonly={!permissionToEdit}
+                />
+              )}
+            </div>
           </div>
 
           {/* First Row */}
-          <div className="flex flex-wrap justify-around items-start gap-x-12 gap-y-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mr-4">
-                <CalendarIcon className="h-6 w-6 text-sky-500" />
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Lieu Card */}
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start">
+              <div className="shrink-0 w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mr-4">
+                <MapPinIcon className="h-6 w-6 text-sky-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">
-                  Date de la 1ère course
+                <p className="text-xs font-semibold text-sky-600 uppercase tracking-wider mb-1">
+                  Lieu
                 </p>
-                <p className="text-base font-medium text-slate-800">
-                  {parseLocalDate(
-                    inscription.eventData.startDate
-                  )?.toLocaleDateString("fr-FR")}
-                </p>
+                <div className="flex items-center">
+                  <p className="text-lg font-semibold text-slate-800">
+                    {inscription.eventData.place}
+                  </p>
+                  {countryCode && countryCode !== "Non renseigné" && (
+                    <span className="ml-2 flex items-center text-lg font-semibold text-slate-700">
+                      {flagUrl && (
+                        <Image
+                          src={flagUrl}
+                          alt={countryLabel}
+                          width={20}
+                          height={16}
+                          className="mr-1.5 inline-block h-4 w-5 object-cover border border-gray-200 rounded-sm"
+                        />
+                      )}
+                      ({countryLabel})
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center">
-              <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mr-4">
+
+            {/* Période Card */}
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start">
+              <div className="shrink-0 w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mr-4">
                 <CalendarIcon className="h-6 w-6 text-sky-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">
-                  Date de la dernière course
+                <p className="text-xs font-semibold text-sky-600 uppercase tracking-wider mb-1">
+                  Période
                 </p>
-                <p className="text-base font-medium text-slate-800">
+                <p className="text-lg font-semibold text-slate-800">
+                  Du{" "}
+                  {parseLocalDate(
+                    inscription.eventData.startDate
+                  )?.toLocaleDateString("fr-FR")}{" "}
+                  au{" "}
                   {parseLocalDate(
                     inscription.eventData.endDate
                   )?.toLocaleDateString("fr-FR")}
                 </p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mr-4">
-                <MapPinIcon className="h-6 w-6 text-sky-500" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">Lieu</p>
-                <p className="text-base font-medium text-slate-800">
-                  {inscription.eventData.place}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mr-4">
-                <LinkIcon className="h-6 w-6 text-sky-500" />
               </div>
             </div>
           </div>
