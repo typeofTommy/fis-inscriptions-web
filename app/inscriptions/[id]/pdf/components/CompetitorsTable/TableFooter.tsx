@@ -1,7 +1,11 @@
 import React from "react";
 import Image from "next/image";
 
-export const TableFooter = () => {
+type TableFooterProps = {
+  gender: "M" | "W";
+};
+
+export const TableFooter = ({gender}: TableFooterProps) => {
   return (
     // Main container with top border separating from the new totals row in CompetitorsTable
     <div className="border-t border-black">
@@ -10,14 +14,32 @@ export const TableFooter = () => {
         {/* Single cell spanning the entire width */}
         <div className="w-full p-2 flex items-center justify-center gap-32">
           <span className="font-bold">SIGNATURE</span>
-          {/* Replace placeholder with the actual signature image */}
-          <Image
-            src="/pdf/signature.png"
-            alt="Signature"
-            width={160}
-            height={64}
-            className="object-contain"
-          />
+          <div className="flex items-center gap-4">
+            {gender === "M" ? (
+              <Image
+                src="/pdf/pm-signature.jpg"
+                alt="Philippe Martin Signature"
+                width={80}
+                height={32}
+                className="object-contain"
+              />
+            ) : (
+              <Image
+                src="/pdf/ja-signature.png"
+                alt="Jean-Michel Agnellet Signature"
+                width={320}
+                height={128}
+                className="object-contain"
+              />
+            )}
+            <Image
+              src="/pdf/tampon.jpg"
+              alt="FFS Stamp"
+              width={80}
+              height={64}
+              className="object-contain"
+            />
+          </div>
         </div>
       </div>
     </div>

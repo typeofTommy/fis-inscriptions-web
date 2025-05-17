@@ -85,10 +85,10 @@ export default async function PdfPage({
     ? competitors.filter((c) => c.gender === selectedGender)
     : competitors;
 
-  const raceGender = selectedGender
+  const raceGender: "M" | "W" = selectedGender
     ? selectedGender
     : filteredCompetitors.length > 0
-    ? filteredCompetitors[0].gender
+    ? (filteredCompetitors[0].gender as "M" | "W")
     : "M";
 
   // Filter codexData based on raceGender
@@ -340,7 +340,7 @@ export default async function PdfPage({
         </div>
         {/* Responsible and Category Row */}
         <div className="flex border-b border-black">
-          <ResponsibleForEntryBlock />
+          <ResponsibleForEntryBlock gender={raceGender} />
           <NationalAssociationBlock />
         </div>
         <GenderRow gender={raceGender === "M" ? "M" : "W"} />
@@ -348,7 +348,7 @@ export default async function PdfPage({
           competitors={filteredCompetitors}
           codexData={filteredCodexData}
         />
-        <TableFooter />
+        <TableFooter gender={raceGender} />
       </div>
       <Footer />
 
