@@ -4,16 +4,17 @@ import {useState, useEffect} from "react";
 import {Badge} from "@/components/ui/badge";
 import {format, parseISO} from "date-fns";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
+import {Competitor, CompetitorInscriptionDetail, CodexItem} from "@/app/types";
 
 function useAllCompetitorsWithInscriptions() {
-  return useQuery({
+  return useQuery<Competitor[], Error>({
     queryKey: ["all-competitors-with-inscriptions"],
     queryFn: async () => {
       const resM = await fetch(`/api/competitors/with-inscriptions?gender=M`);
       const resW = await fetch(`/api/competitors/with-inscriptions?gender=W`);
       if (!resM.ok && !resW.ok) throw new Error("Erreur API");
-      const dataM = resM.ok ? await resM.json() : [];
-      const dataW = resW.ok ? await resW.json() : [];
+      const dataM: Competitor[] = resM.ok ? await resM.json() : [];
+      const dataW: Competitor[] = resW.ok ? await resW.json() : [];
       return [...dataM, ...dataW];
     },
   });
@@ -24,11 +25,14 @@ export function CompetitorEventsTab() {
   const [gender, setGender] = useState<"M" | "W" | undefined>(undefined);
   const {data: allResults = [], isLoading: loadingAll} =
     useAllCompetitorsWithInscriptions();
-  const results = gender
-    ? allResults.filter((c: any) => c.gender === gender)
+  const results: Competitor[] = gender
+    ? allResults.filter((c: Competitor) => c.gender === gender)
     : [];
 
-  const {data: competitor, isLoading: loadingCompetitor} = useQuery({
+  const {data: competitor, isLoading: loadingCompetitor} = useQuery<
+    Competitor | null,
+    Error
+  >({
     queryKey: ["competitor", selectedId],
     queryFn: async () => {
       if (!selectedId) return null;
@@ -39,7 +43,10 @@ export function CompetitorEventsTab() {
     enabled: !!selectedId,
   });
 
-  const {data: inscriptions, isLoading: loadingInscriptions} = useQuery({
+  const {data: inscriptions, isLoading: loadingInscriptions} = useQuery<
+    CompetitorInscriptionDetail[],
+    Error
+  >({
     queryKey: ["competitor-inscriptions", selectedId],
     queryFn: async () => {
       if (!selectedId) return [];
@@ -97,8 +104,10 @@ export function CompetitorEventsTab() {
                 : "Sélectionner un compétiteur"}
             </option>
             {results
-              .sort((a: any, b: any) => a.lastname.localeCompare(b.lastname))
-              .map((c: any) => (
+              .sort((a: Competitor, b: Competitor) =>
+                (a.lastname ?? "").localeCompare(b.lastname ?? "")
+              )
+              .map((c: Competitor) => (
                 <option key={c.competitorid} value={c.competitorid}>
                   {c.lastname} {c.firstname}
                 </option>
@@ -117,7 +126,9 @@ export function CompetitorEventsTab() {
           </div>
           <div className="text-sm text-slate-600 mb-2">
             FIS: {competitor.fiscode} | Sexe: {competitor.gender} | Naissance:{" "}
-            {format(parseISO(competitor.birthdate), "dd/MM/yyyy")}
+            {competitor.birthdate
+              ? format(parseISO(competitor.birthdate), "dd/MM/yyyy")
+              : "N/A"}
           </div>
         </div>
       )}
@@ -128,17 +139,26 @@ export function CompetitorEventsTab() {
         <div className="mt-6">
           <h3 className="font-semibold mb-2">
             Évènements et codex où le compétiteur est inscrit :
+            {` (${inscriptions.length} événement${
+              inscriptions.length !== 1 ? "s" : ""
+            }, ${inscriptions.reduce(
+              (acc, curr) => acc + curr.codexList.length,
+              0
+            )} codex)`}
           </h3>
           <ul className="space-y-4">
-            {[...inscriptions]
+            {[...(inscriptions ?? [])]
               .sort(
-                (a, b) =>
-                  new Date(a.firstRaceDate).getTime() -
-                  new Date(b.firstRaceDate).getTime()
+                (
+                  a: CompetitorInscriptionDetail,
+                  b: CompetitorInscriptionDetail
+                ) =>
+                  new Date(a.eventStartDate).getTime() -
+                  new Date(b.eventStartDate).getTime()
               )
-              .map((insc: any) => (
+              .map((insc: CompetitorInscriptionDetail) => (
                 <li
-                  key={insc.inscriptionId}
+                  key={insc.inscriptionId.toString()}
                   className="border rounded p-3 bg-white"
                 >
                   <div className="font-medium text-base mb-1">
@@ -148,42 +168,33 @@ export function CompetitorEventsTab() {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {insc.location}
-                      {insc.firstRaceDate
+                      {insc.eventPlace}
+                      {insc.eventStartDate
                         ? ` – ${(() => {
                             try {
                               return format(
-                                parseISO(insc.firstRaceDate),
+                                parseISO(insc.eventStartDate),
                                 "dd/MM/yyyy"
                               );
                             } catch {
-                              return insc.firstRaceDate;
+                              return insc.eventStartDate;
                             }
                           })()}`
                         : ""}
                     </a>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {insc.codexList.map((codex: any) => (
-                      <span
-                        key={codex.number}
-                        className="flex items-center gap-1"
+                    {insc.codexList.map((codex: CodexItem) => (
+                      <Badge
+                        key={codex.displayCodex}
+                        className={`text-xs px-2 py-1 ${
+                          colorBadgePerDiscipline[
+                            codex.eventCode as keyof typeof colorBadgePerDiscipline
+                          ] || ""
+                        }`}
                       >
-                        <Badge
-                          className={`text-xs px-2 py-1 ${
-                            colorBadgePerDiscipline[codex.discipline] || ""
-                          }`}
-                        >
-                          {codex.number}
-                        </Badge>
-                        <Badge
-                          className={`text-xs px-2 py-1 ${
-                            colorBadgePerDiscipline[codex.discipline] || ""
-                          }`}
-                        >
-                          {codex.discipline}
-                        </Badge>
-                      </span>
+                        {`${codex.displayCodex} - ${codex.eventCode}`}
+                      </Badge>
                     ))}
                   </div>
                 </li>

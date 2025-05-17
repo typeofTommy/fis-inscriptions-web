@@ -162,3 +162,15 @@ export type CompetitionSchedule = {
   unitName: string;
   status: string | null;
 };
+
+export type CodexItem = {
+  displayCodex: string;
+  eventCode: string;
+};
+
+export type CompetitorInscriptionDetail = {
+  inscriptionId: string | number;
+  eventPlace: string;
+  eventStartDate: string;
+  codexList: CodexItem[];
+};
