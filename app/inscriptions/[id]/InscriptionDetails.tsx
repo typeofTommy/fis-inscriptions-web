@@ -1,6 +1,12 @@
 "use client";
 
-import {Loader2, MapPinIcon, CalendarIcon, InfoIcon} from "lucide-react";
+import {
+  Loader2,
+  MapPinIcon,
+  CalendarIcon,
+  InfoIcon,
+  ArrowLeft,
+} from "lucide-react";
 import {InscriptionActionsMenu} from "./InscriptionActionsMenu";
 import {usePermissionToEdit} from "./usePermissionToEdit";
 import {useInscription} from "../form/api";
@@ -20,6 +26,7 @@ import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import {Label} from "@/components/ui/label";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
+import Link from "next/link";
 
 interface InscriptionDetailsProps {
   id: string;
@@ -73,23 +80,34 @@ export const InscriptionDetails = ({
       <header className="w-full bg-white border-b border-slate-200 shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-4">
-            <h1
-              className="text-2xl font-medium text-slate-800 flex items-center gap-4"
-              style={{lineHeight: 1}}
-            >
-              Détails de l&apos;inscription
-              <span
-                className={
-                  `px-3 py-0.5 rounded-full text-xs font-semibold flex items-center` +
-                  (inscription.status === "open"
-                    ? " bg-sky-100 text-sky-700 border border-sky-300"
-                    : " bg-emerald-100 text-emerald-700 border border-emerald-300")
-                }
-                style={{minHeight: "2rem"}}
+            <div className="flex items-center gap-3">
+              <Link href="/">
+                <Button
+                  variant="ghost"
+                  className="cursor-pointer bg-transparent hover:bg-slate-100 text-slate-700"
+                >
+                  <ArrowLeft className="h-5 w-5 mr-1" />
+                  Retour
+                </Button>
+              </Link>
+              <h1
+                className="text-2xl font-medium text-slate-800 flex items-center gap-4"
+                style={{lineHeight: 1}}
               >
-                {inscription.status === "open" ? "Ouverte" : "Clôturée"}
-              </span>
-            </h1>
+                Détails de l&apos;inscription
+                <span
+                  className={
+                    `px-3 py-0.5 rounded-full text-xs font-semibold flex items-center` +
+                    (inscription.status === "open"
+                      ? " bg-sky-100 text-sky-700 border border-sky-300"
+                      : " bg-emerald-100 text-emerald-700 border border-emerald-300")
+                  }
+                  style={{minHeight: "2rem"}}
+                >
+                  {inscription.status === "open" ? "Ouverte" : "Clôturée"}
+                </span>
+              </h1>
+            </div>
             <div className="flex items-center gap-2">
               {firstCodex !== undefined && (
                 <Dialog
