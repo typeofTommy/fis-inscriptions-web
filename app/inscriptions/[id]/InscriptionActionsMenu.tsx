@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {useState} from "react";
-import {Zap, Loader2} from "lucide-react";
+import {Zap, Loader2, RefreshCw} from "lucide-react";
 import {Separator} from "@/components/ui/separator";
 import {useRouter} from "next/navigation";
 import {
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import {Inscription} from "@/app/types";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
+import {UpdateEventDataModal} from "./UpdateEventDataModal";
 
 interface InscriptionActionsMenuProps {
   inscription: Inscription;
@@ -36,6 +37,7 @@ export function InscriptionActionsMenu({
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [genderDialogOpen, setGenderDialogOpen] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -166,7 +168,7 @@ export function InscriptionActionsMenu({
           Actions
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-48 p-2 flex flex-col gap-1 items-start text-left">
+      <PopoverContent className="w-56 p-2 flex flex-col gap-1 items-start text-left">
         {inscription.status !== "open" && (
           <Button
             variant="ghost"
@@ -202,6 +204,20 @@ export function InscriptionActionsMenu({
           )}
           Générer PDF
         </Button>
+
+        {!readonly && (
+          <Button
+            variant="ghost"
+            className="justify-start w-full cursor-pointer flex items-center gap-2"
+            onClick={() => {
+              setUpdateModalOpen(true);
+              setPopoverOpen(false);
+            }}
+          >
+            <RefreshCw className="w-4 h-4" />
+            Mettre à jour les données
+          </Button>
+        )}
 
         <Dialog open={genderDialogOpen} onOpenChange={setGenderDialogOpen}>
           <DialogContent>
@@ -292,6 +308,12 @@ export function InscriptionActionsMenu({
           </>
         )}
       </PopoverContent>
+
+      <UpdateEventDataModal
+        isOpen={updateModalOpen}
+        onClose={() => setUpdateModalOpen(false)}
+        inscription={inscription}
+      />
     </Popover>
   );
 }

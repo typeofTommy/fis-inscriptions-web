@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useMemo} from "react";
 import {
   Table,
   TableHeader,
@@ -10,7 +10,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
-import {Loader2, Trash2} from "lucide-react";
+import {Loader2, Settings} from "lucide-react";
 import {
   Dialog,
   DialogTrigger,
@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
@@ -51,7 +52,7 @@ export const useInscriptionCompetitors = (
   });
 };
 
-function useRemoveCompetitor(inscriptionId: string) {
+function useUpdateCompetitorRegistrations(inscriptionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -64,30 +65,28 @@ function useRemoveCompetitor(inscriptionId: string) {
       const res = await fetch(
         `/api/inscriptions/${inscriptionId}/competitors`,
         {
-          method: "DELETE",
+          method: "PUT",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({competitorId, codexNumbers}),
         }
       );
-      if (!res.ok) throw new Error("Erreur lors de la désinscription");
+      if (!res.ok)
+        throw new Error(
+          "Erreur lors de la mise à jour des inscriptions du compétiteur"
+        );
       return res.json();
     },
     onSuccess: (_data, variables) => {
-      // Invalider tous les codex concernés
-      (variables.codexNumbers || []).forEach((codexNumber) => {
-        queryClient.invalidateQueries({
-          queryKey: ["inscription-competitors", inscriptionId, codexNumber],
-        });
+      queryClient.invalidateQueries({
+        queryKey: ["inscription-competitors-all", inscriptionId],
       });
-      // Invalider la liste des inscriptions du compétiteur (onglet Compétiteurs)
       if (variables && variables.competitorId) {
         queryClient.invalidateQueries({
           queryKey: ["competitor-inscriptions", variables.competitorId],
         });
       }
-      // Invalider la liste globale des compétiteurs de l'inscription
       queryClient.invalidateQueries({
-        queryKey: ["inscription-competitors-all", inscriptionId],
+        queryKey: ["inscription-competitors", inscriptionId],
       });
     },
   });
@@ -131,17 +130,17 @@ export const Competitors = ({
   // Dialog state
   const [openDialog, setOpenDialog] = useState<null | number>(null); // competitorId
   const [selectedCodex, setSelectedCodex] = useState<number[]>([]);
-  const {mutate: removeCompetitor, isPending: removing} =
-    useRemoveCompetitor(inscriptionId);
+  const {mutate: updateCompetitor, isPending: updating} =
+    useUpdateCompetitorRegistrations(inscriptionId);
 
   const permissionToEdit = usePermissionToEdit(inscription);
 
   // Quand on ouvre le dialog, on coche par défaut le codex courant
-  React.useEffect(() => {
-    if (openDialog !== null) {
-      setSelectedCodex([codexNumber]);
-    }
-  }, [openDialog, codexNumber]);
+  // React.useEffect(() => {
+  //   if (openDialog !== null) {
+  //     setSelectedCodex([codexNumber]);
+  //   }
+  // }, [openDialog, codexNumber]);
 
   if (isPending) {
     return (
@@ -238,26 +237,36 @@ export const Competitors = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          title="Désinscrire"
+                          title="Gérer les inscriptions"
                           className="cursor-pointer"
                           disabled={inscription?.status !== "open"}
                         >
-                          <Trash2 className="w-5 h-5 text-red-500" />
+                          <Settings className="w-5 h-5 text-slate-500" />
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
                           <DialogTitle>
-                            Confirmer la désinscription de {c.firstname}{" "}
-                            {c.lastname} ?
+                            Gérer les inscriptions de {c.firstname} {c.lastname}
                           </DialogTitle>
+                          <DialogDescription className="mt-2">
+                            Cochez les codex auxquels vous souhaitez inscrire le
+                            compétiteur. Décochez ceux dont vous souhaitez le
+                            désinscrire. Les codex affichés sont filtrés selon
+                            le sexe du compétiteur.
+                          </DialogDescription>
                         </DialogHeader>
                         <DesinscriptionCodexList
                           inscriptionId={inscriptionId}
                           competitorId={c.competitorid}
                           selectedCodex={selectedCodex}
                           setSelectedCodex={setSelectedCodex}
-                          currentCodex={codexNumber}
+                          allEventCodexes={
+                            inscription?.eventData?.competitions || []
+                          }
+                          genderFilterOfCompetitor={
+                            c.gender === null ? undefined : c.gender
+                          }
                         />
                         <DialogFooter>
                           <DialogClose asChild>
@@ -267,17 +276,19 @@ export const Competitors = ({
                           </DialogClose>
                           <Button
                             onClick={() => {
-                              removeCompetitor({
+                              updateCompetitor({
                                 competitorId: c.competitorid,
                                 codexNumbers: selectedCodex,
                               });
                               setOpenDialog(null);
                             }}
-                            disabled={removing || selectedCodex.length === 0}
-                            variant="destructive"
+                            disabled={updating}
+                            variant="default"
                             className="cursor-pointer"
                           >
-                            {removing ? "Suppression..." : "Confirmer"}
+                            {updating
+                              ? "Mise à jour..."
+                              : "Mettre à jour les inscriptions"}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -298,16 +309,47 @@ function DesinscriptionCodexList({
   competitorId,
   selectedCodex,
   setSelectedCodex,
-  currentCodex,
+  allEventCodexes,
+  genderFilterOfCompetitor,
 }: {
   inscriptionId: string;
   competitorId: number;
   selectedCodex: number[];
   setSelectedCodex: (v: number[]) => void;
-  currentCodex: number;
+  allEventCodexes: CompetitionItem[];
+  genderFilterOfCompetitor?: string;
 }) {
-  const [codexList, setCodexList] = useState<CompetitionItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Filter allEventCodexes
+  const relevantEventCodexes = useMemo(() => {
+    const competitorGenderUpper = genderFilterOfCompetitor?.toUpperCase();
+
+    return allEventCodexes.filter((eventCodex) => {
+      const eventGenderUpper = eventCodex.genderCode?.toUpperCase();
+
+      // If competitor's gender is not M or W, general filtering applies:
+      // an event is excluded only if it's for a specific gender different from the competitor's (if known and specific)
+      if (
+        !competitorGenderUpper ||
+        !["M", "W"].includes(competitorGenderUpper)
+      ) {
+        if (competitorGenderUpper === "M" && eventGenderUpper === "W")
+          return false;
+        if (competitorGenderUpper === "W" && eventGenderUpper === "M")
+          return false;
+        return true; // Otherwise, it's relevant (e.g. competitor gender unknown, or event is X/undefined)
+      }
+
+      // If competitor's gender is M or W:
+      // Event is relevant if it's open (no gender or 'X') OR matches competitor's gender.
+      if (!eventGenderUpper || eventGenderUpper === "X") {
+        return true; // Open or mixed gender events are always relevant
+      }
+      return eventGenderUpper === competitorGenderUpper; // Event gender must match competitor's gender
+    });
+  }, [allEventCodexes, genderFilterOfCompetitor]);
+
   useEffect(() => {
     setLoading(true);
     fetch(
@@ -315,47 +357,70 @@ function DesinscriptionCodexList({
     )
       .then((r) => r.json())
       .then((data: CompetitionItem[]) => {
-        setCodexList(data);
-        // Par défaut, coche uniquement le codex courant
-        setSelectedCodex(
-          data.some((c: CompetitionItem) => c.codex === currentCodex)
-            ? [currentCodex]
-            : []
-        );
+        setSelectedCodex(data.map((item: CompetitionItem) => item.codex));
       })
       .finally(() => setLoading(false));
-  }, [inscriptionId, competitorId, setSelectedCodex, currentCodex]);
+  }, [inscriptionId, competitorId, setSelectedCodex]);
 
-  if (loading) return <div>Chargement des codex...</div>;
-  if (!codexList.length)
-    return <div>Aucun codex trouvé pour ce compétiteur.</div>;
+  if (loading)
+    return <div>Chargement des informations d&apos;inscription...</div>;
+
+  if (relevantEventCodexes.length === 0 && !loading) {
+    return (
+      <div>
+        Aucun codex compatible avec le sexe du compétiteur pour cet événement.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
-      <div className="mb-2">Sur quels codex ?</div>
-      <div className="flex flex-wrap gap-2">
-        {codexList.map((codexItem) => (
+      <div className="mb-2 font-medium">
+        Sélectionnez les codex pour l&apos;inscription :
+      </div>
+      <div className="flex flex-wrap gap-3 max-h-60 overflow-y-auto p-1">
+        {relevantEventCodexes.map((eventCodexItem) => (
           <label
-            key={codexItem.id || codexItem.codex} // Use id if available and unique, otherwise codex
-            className="flex items-center gap-2 cursor-pointer"
+            key={eventCodexItem.id || eventCodexItem.codex}
+            className="flex items-center gap-2 cursor-pointer p-2 border rounded-md hover:bg-slate-50 min-w-[120px]"
           >
             <Checkbox
-              checked={selectedCodex.includes(codexItem.codex)}
+              checked={selectedCodex.includes(eventCodexItem.codex)}
               onCheckedChange={(checked) => {
                 setSelectedCodex(
                   checked
-                    ? [...selectedCodex, codexItem.codex]
-                    : selectedCodex.filter((n: number) => n !== codexItem.codex)
+                    ? [...selectedCodex, eventCodexItem.codex]
+                    : selectedCodex.filter(
+                        (n: number) => n !== eventCodexItem.codex
+                      )
                 );
               }}
+              className="cursor-pointer"
             />
-            {codexItem.displayCodex || String(codexItem.codex).padStart(4, "0")}
+            <span className="font-mono text-sm">
+              {eventCodexItem.displayCodex ||
+                String(eventCodexItem.codex).padStart(4, "0")}
+            </span>
             <Badge
-              className={`ml-1 text-xs px-2 py-1 ${
-                colorBadgePerDiscipline[codexItem.eventCode] || ""
+              className={`ml-auto text-xs px-1.5 py-0.5 ${
+                colorBadgePerDiscipline[eventCodexItem.eventCode] ||
+                "bg-gray-200"
               }`}
             >
-              {codexItem.eventCode}
+              {eventCodexItem.eventCode}
             </Badge>
+            {eventCodexItem.genderCode &&
+              eventCodexItem.genderCode.toUpperCase() !== "X" && (
+                <Badge
+                  className={`ml-1 text-xs px-1.5 py-0.5 ${
+                    eventCodexItem.genderCode.toUpperCase() === "M"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-pink-100 text-pink-700"
+                  }`}
+                >
+                  {eventCodexItem.genderCode.toUpperCase()}
+                </Badge>
+              )}
           </label>
         ))}
       </div>

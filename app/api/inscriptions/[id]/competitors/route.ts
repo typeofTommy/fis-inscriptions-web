@@ -173,6 +173,106 @@ export async function GET(
   return NextResponse.json(result);
 }
 
+export async function PUT(
+  req: NextRequest,
+  {params}: {params: Promise<{id: string}>}
+) {
+  const {id} = await params;
+  const inscriptionId = Number(id);
+  if (!inscriptionId) {
+    return NextResponse.json({error: "Missing inscriptionId"}, {status: 400});
+  }
+
+  let body: {competitorId?: number; codexNumbers?: number[]} = {};
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({error: "Invalid JSON body"}, {status: 400});
+  }
+
+  const {competitorId, codexNumbers} = body;
+  if (!competitorId || !Array.isArray(codexNumbers)) {
+    return NextResponse.json(
+      {error: "competitorId and codexNumbers array are required"},
+      {status: 400}
+    );
+  }
+
+  // Validate codexNumbers (ensure they are numbers)
+  if (!codexNumbers.every((cn) => typeof cn === "number" && !isNaN(cn))) {
+    return NextResponse.json(
+      {error: "codexNumbers must be an array of numbers"},
+      {status: 400}
+    );
+  }
+
+  const codexNumbersAsStrings = codexNumbers.map((cn) => String(cn));
+
+  try {
+    // Check if inscription exists
+    const inscriptionExists = await db
+      .select()
+      .from(inscriptions)
+      .where(eq(inscriptions.id, inscriptionId))
+      .limit(1);
+
+    if (!inscriptionExists.length) {
+      return NextResponse.json({error: "Inscription not found"}, {status: 404});
+    }
+
+    // Check if competitor exists
+    const competitorExists = await db
+      .select()
+      .from(competitors)
+      .where(eq(competitors.competitorid, competitorId))
+      .limit(1);
+
+    if (!competitorExists.length) {
+      return NextResponse.json({error: "Competitor not found"}, {status: 404});
+    }
+
+    // Get current user from Clerk
+    const {auth} = await import("@clerk/nextjs/server");
+    const {userId} = await auth();
+    if (!userId) {
+      return NextResponse.json({error: "Not authenticated"}, {status: 401});
+    }
+
+    // Since neon-http driver doesn't support transactions, perform operations sequentially
+    // 1. Delete all existing registrations for this competitor in this inscription
+    await db
+      .delete(inscriptionCompetitors)
+      .where(
+        and(
+          eq(inscriptionCompetitors.inscriptionId, inscriptionId),
+          eq(inscriptionCompetitors.competitorId, competitorId)
+        )
+      );
+
+    // 2. Create new registrations for each selected codex
+    if (codexNumbersAsStrings.length > 0) {
+      const newEntries = codexNumbersAsStrings.map((codexNumStr) => ({
+        inscriptionId: inscriptionId,
+        competitorId: competitorId,
+        codexNumber: codexNumStr,
+        addedBy: userId,
+      }));
+
+      await db.insert(inscriptionCompetitors).values(newEntries);
+    }
+
+    return NextResponse.json({
+      message: "Competitor registrations updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating competitor registrations:", error);
+    return NextResponse.json(
+      {error: "Failed to update competitor registrations"},
+      {status: 500}
+    );
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   {params}: {params: Promise<{id: string}>}
