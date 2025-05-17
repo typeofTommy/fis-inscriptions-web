@@ -3,10 +3,10 @@ import {Competition} from "./types";
 
 /**
  * Fetch competition details by codex from the FIS public API.
- * @param disciplineCode - The discipline code (e.g., 'AL' for Alpine)
  * @param codex - The competition codex (unique identifier)
+ * @param enabled - Whether to enable the query (defaults to true)
  */
-export const useCompetitionByCodex = (codex: number) => {
+export const useCompetitionByCodex = (codex: number, enabled = true) => {
   return useQuery<Competition>({
     queryKey: ["competitionByCodex", codex],
     queryFn: async () => {
@@ -22,7 +22,7 @@ export const useCompetitionByCodex = (codex: number) => {
       }
       return res.json();
     },
-    enabled: !!codex,
+    enabled: enabled && !!codex,
     retry: false,
   });
 };

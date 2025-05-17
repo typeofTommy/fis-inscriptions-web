@@ -12,7 +12,6 @@ import React, {useState} from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -106,11 +105,16 @@ export const InscriptionDetails = ({
                       Détail de l&apos;événement
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-screen-2xl">
-                    <DialogHeader>
-                      <DialogTitle>Détails de l&apos;événement</DialogTitle>
-                    </DialogHeader>
-                    <EventDetails codex={firstCodex} />
+                  <DialogContent className="w-11/12 !max-w-none max-h-[90vh] overflow-y-auto">
+                    <DialogTitle className="text-xl">
+                      Détails de l&apos;événement
+                    </DialogTitle>
+                    <div className="mt-4">
+                      <EventDetails
+                        codex={firstCodex}
+                        inscriptionId={Number(inscription.id)}
+                      />
+                    </div>
                   </DialogContent>
                 </Dialog>
               )}
