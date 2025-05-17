@@ -133,7 +133,10 @@ export const Competitors = ({
   const {mutate: updateCompetitor, isPending: updating} =
     useUpdateCompetitorRegistrations(inscriptionId);
 
-  const permissionToEdit = usePermissionToEdit(inscription, "addCompetitorBtn");
+  const permissionToEdit = usePermissionToEdit(
+    inscription,
+    "manageCompetitorInscriptions"
+  );
 
   if (isPending) {
     return (

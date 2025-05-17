@@ -1,10 +1,10 @@
 "use client";
 
-import React, {useMemo, useState} from "react";
-import {useQuery} from "@tanstack/react-query";
+import React, {useMemo, useState, useEffect, useCallback} from "react";
+import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {useInscription} from "../form/api";
-import {Loader2} from "lucide-react";
-import type {InscriptionCompetitor} from "@/app/types";
+import {Loader2, Settings} from "lucide-react";
+import type {InscriptionCompetitor, CompetitionItem} from "@/app/types";
 import {
   Table,
   TableHeader,
@@ -29,6 +29,18 @@ import {
 } from "@/app/lib/colorMappers";
 import AddCompetitorModal from "./AddCompetitorModal";
 import {usePermissionToEdit} from "./usePermissionToEdit";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {Button} from "@/components/ui/button";
+import {Checkbox} from "@/components/ui/checkbox";
 
 type InscriptionCompetitorWithCodex = InscriptionCompetitor & {
   codexNumbers: string[];
@@ -70,6 +82,275 @@ type CompetitorRow = {
   addedByEmail?: string;
 };
 
+// Copied from Competitors.tsx
+function useUpdateCompetitorRegistrations(inscriptionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      competitorId,
+      codexNumbers,
+    }: {
+      competitorId: number;
+      codexNumbers: number[];
+    }) => {
+      const res = await fetch(
+        `/api/inscriptions/${inscriptionId}/competitors`,
+        {
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({competitorId, codexNumbers}),
+        }
+      );
+      if (!res.ok)
+        throw new Error(
+          "Erreur lors de la mise à jour des inscriptions du compétiteur"
+        );
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["inscription-competitors-all", inscriptionId],
+      });
+      if (variables && variables.competitorId) {
+        queryClient.invalidateQueries({
+          queryKey: ["competitor-inscriptions", variables.competitorId],
+        });
+      }
+      // Also invalidate the specific codex-based query if it's used elsewhere,
+      // though RecapEvent primarily uses 'inscription-competitors-all'
+      queryClient.invalidateQueries({
+        queryKey: ["inscription-competitors", inscriptionId],
+      });
+    },
+  });
+}
+
+// Copied and adapted from Competitors.tsx
+// Composant pour afficher la liste des codex où le compétiteur est inscrit
+function DesinscriptionCodexList({
+  inscriptionId,
+  competitorId,
+  selectedCodex,
+  setSelectedCodex,
+  allEventCodexes,
+  genderFilterOfCompetitor,
+}: {
+  inscriptionId: string;
+  competitorId: number;
+  selectedCodex: number[];
+  setSelectedCodex: (v: number[]) => void;
+  allEventCodexes: CompetitionItem[];
+  genderFilterOfCompetitor?: string; // 'M', 'W', or undefined if unknown/not applicable
+}) {
+  const [loading, setLoading] = useState(true);
+
+  // Filter allEventCodexes to show only those relevant to the competitor's gender
+  const relevantEventCodexes = useMemo(() => {
+    const competitorGenderUpper = genderFilterOfCompetitor?.toUpperCase();
+
+    return allEventCodexes.filter((eventCodex) => {
+      const eventGenderUpper = eventCodex.genderCode?.toUpperCase();
+
+      // If competitor's gender is not M or W (e.g. undefined, or some other value if data changes),
+      // or if the event is 'X' (mixed) or has no gender specified, it's generally relevant.
+      // We only filter out if event is explicitly for the *other* gender.
+      if (
+        !competitorGenderUpper ||
+        !["M", "W"].includes(competitorGenderUpper)
+      ) {
+        if (competitorGenderUpper === "M" && eventGenderUpper === "W")
+          return false;
+        if (competitorGenderUpper === "W" && eventGenderUpper === "M")
+          return false;
+        return true;
+      }
+
+      // If competitor's gender is M or W:
+      // Event is relevant if it's open (no gender or 'X') OR matches competitor's gender.
+      if (!eventGenderUpper || eventGenderUpper === "X") {
+        return true;
+      }
+      return eventGenderUpper === competitorGenderUpper;
+    });
+  }, [allEventCodexes, genderFilterOfCompetitor]);
+
+  useEffect(() => {
+    setLoading(true);
+    // Fetch current inscriptions for this competitor
+    fetch(
+      `/api/inscriptions/${inscriptionId}/competitors?competitorId=${competitorId}`
+    )
+      .then((r) => r.json())
+      .then((data: CompetitionItem[]) => {
+        // Assuming API returns CompetitionItem[] with codex
+        setSelectedCodex(data.map((item: CompetitionItem) => item.codex));
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inscriptionId, competitorId]); // setSelectedCodex removed as it's a stable state setter
+
+  if (loading)
+    return <div>Chargement des informations d&apos;inscription...</div>;
+
+  if (relevantEventCodexes.length === 0 && !loading) {
+    return (
+      <div>
+        Aucun codex compatible avec le sexe du compétiteur pour cet événement.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="mb-2 font-medium">
+        Sélectionnez les codex pour l&apos;inscription :
+      </div>
+      <div className="flex flex-wrap gap-3 max-h-60 overflow-y-auto p-1">
+        {relevantEventCodexes.map((eventCodexItem) => (
+          <label
+            key={eventCodexItem.id || eventCodexItem.codex} // Use id if available, fallback to codex
+            className="flex items-center gap-2 cursor-pointer p-2 border rounded-md hover:bg-slate-50 min-w-[120px]"
+          >
+            <Checkbox
+              checked={selectedCodex.includes(eventCodexItem.codex)}
+              onCheckedChange={(checked) => {
+                setSelectedCodex(
+                  checked
+                    ? [...selectedCodex, eventCodexItem.codex]
+                    : selectedCodex.filter(
+                        (n: number) => n !== eventCodexItem.codex
+                      )
+                );
+              }}
+              className="cursor-pointer"
+            />
+            <span className="font-mono text-sm">
+              {eventCodexItem.displayCodex ||
+                String(eventCodexItem.codex).padStart(4, "0")}
+            </span>
+            <Badge
+              className={`ml-auto text-xs px-1.5 py-0.5 ${
+                colorBadgePerDiscipline[eventCodexItem.eventCode] ||
+                "bg-gray-200"
+              }`}
+            >
+              {eventCodexItem.eventCode}
+            </Badge>
+            {eventCodexItem.genderCode &&
+              eventCodexItem.genderCode.toUpperCase() !== "X" && (
+                <Badge
+                  className={`ml-1 text-xs px-1.5 py-0.5 ${
+                    eventCodexItem.genderCode.toUpperCase() === "M"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-pink-100 text-pink-700"
+                  }`}
+                >
+                  {eventCodexItem.genderCode.toUpperCase()}
+                </Badge>
+              )}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Extract the dialog to a separate memoized component
+const CompetitorRegistrationDialog = React.memo(
+  ({
+    competitor,
+    isOpen,
+    onOpenChange,
+    inscriptionId,
+    allEventCodexes,
+    inscriptionStatus,
+    onUpdate,
+  }: {
+    competitor: CompetitorRow;
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    inscriptionId: string;
+    allEventCodexes: CompetitionItem[];
+    inscriptionStatus: string;
+    onUpdate: (competitorId: number, codexNumbers: number[]) => void;
+  }) => {
+    const [selectedCodex, setSelectedCodex] = useState<number[]>([]);
+    const [updating, setUpdating] = useState(false);
+
+    // Create a stable onUpdateClick callback
+    const handleUpdate = useCallback(() => {
+      setUpdating(true);
+      onUpdate(competitor.competitorid, selectedCodex);
+      onOpenChange(false); // Close dialog
+      setUpdating(false);
+    }, [competitor.competitorid, onUpdate, onOpenChange, selectedCodex]);
+
+    return (
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Gérer les inscriptions"
+            className="cursor-pointer"
+            disabled={inscriptionStatus !== "open" || updating}
+          >
+            <Settings className="w-5 h-5 text-slate-500" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Gérer les inscriptions de {competitor.firstname}{" "}
+              {competitor.lastname}
+            </DialogTitle>
+            <DialogDescription className="mt-2">
+              Cochez les codex auxquels vous souhaitez inscrire le compétiteur.
+              Décochez ceux dont vous souhaitez le désinscrire. Les codex
+              affichés sont filtrés selon le sexe du compétiteur.
+            </DialogDescription>
+          </DialogHeader>
+          <DesinscriptionCodexList
+            inscriptionId={inscriptionId}
+            competitorId={competitor.competitorid}
+            selectedCodex={selectedCodex}
+            setSelectedCodex={setSelectedCodex}
+            allEventCodexes={allEventCodexes}
+            genderFilterOfCompetitor={
+              competitor.gender as "M" | "W" | undefined
+            }
+          />
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="ghost" className="cursor-pointer">
+                Annuler
+              </Button>
+            </DialogClose>
+            <Button
+              onClick={handleUpdate}
+              disabled={updating}
+              variant="default"
+              className="cursor-pointer"
+            >
+              {updating ? "Mise à jour..." : "Mettre à jour les inscriptions"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Only re-render if these specific props change
+    return (
+      prevProps.isOpen === nextProps.isOpen &&
+      prevProps.competitor.competitorid === nextProps.competitor.competitorid
+    );
+  }
+);
+
+// Set display name for the memoized component to satisfy linter
+CompetitorRegistrationDialog.displayName = "CompetitorRegistrationDialog";
+
 export const RecapEvent: React.FC<RecapEventProps> = ({
   inscriptionId,
   genderFilter,
@@ -88,6 +369,23 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
 
   const [addGender, setAddGender] = useState<"W" | "M">("W");
   const [userDrivenSorting, setUserDrivenSorting] = useState<SortingState>([]);
+
+  // Dialog state for managing competitor registrations
+  const [openDialog, setOpenDialog] = useState<null | number>(null); // Stores competitorId or null
+  const {mutate: updateCompetitor} =
+    useUpdateCompetitorRegistrations(inscriptionId);
+
+  const handleUpdateCompetitor = useCallback(
+    (competitorId: number, codexNumbers: number[]) => {
+      updateCompetitor({competitorId, codexNumbers});
+    },
+    [updateCompetitor]
+  );
+
+  const permissionToEdit = usePermissionToEdit(
+    inscription,
+    "manageCompetitorInscriptions"
+  );
 
   // Derived sorting state for the table, ensuring it's always valid with current filters
   const tableSorting = useMemo(() => {
@@ -262,8 +560,36 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
         cell: (info) => <span>{info.getValue() || "-"}</span>,
         enableSorting: false,
       }),
+      // Action column for managing registrations
+      columnHelper.display({
+        id: "actions",
+        header: () => "Actions",
+        cell: (info) => {
+          const competitor = info.row.original;
+          if (!permissionToEdit) return null;
+
+          return (
+            <CompetitorRegistrationDialog
+              competitor={competitor}
+              isOpen={openDialog === competitor.competitorid}
+              onOpenChange={(open) =>
+                setOpenDialog(open ? competitor.competitorid : null)
+              }
+              inscriptionId={inscriptionId}
+              allEventCodexes={inscription?.eventData?.competitions || []}
+              inscriptionStatus={inscription?.status || ""}
+              onUpdate={handleUpdateCompetitor}
+            />
+          );
+        },
+      }),
     ],
-    [columnHelper, inscription?.eventData.competitions, genderFilter]
+    [
+      columnHelper,
+      inscription?.eventData.competitions,
+      genderFilter,
+      permissionToEdit,
+    ]
   );
 
   // 3. TanStack Table Instance
@@ -303,8 +629,6 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
     }
     return Array.from(sexes);
   }, [inscription?.eventData.competitions]);
-
-  const permissionToEdit = usePermissionToEdit(inscription, "addCompetitorBtn");
 
   // 4. Loading / Error / Empty States
   if (isLoadingInscription || isPending) {

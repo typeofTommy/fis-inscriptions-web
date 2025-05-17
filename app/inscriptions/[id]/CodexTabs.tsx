@@ -33,7 +33,10 @@ export function CodexTabs({inscriptionId, genderFilter}: CodexTabsProps) {
     queryKey: ["inscriptions", inscriptionId],
     queryFn: () => fetchInscription(inscriptionId),
   });
-  const permissionToEdit = usePermissionToEdit(inscription, "addCompetitorBtn");
+  const permissionToEdit = usePermissionToEdit(
+    inscription,
+    "manageCompetitorInscriptions"
+  );
 
   const competitionsFromInscription = inscription?.eventData.competitions;
 

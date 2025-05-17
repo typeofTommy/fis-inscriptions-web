@@ -2,7 +2,7 @@ import {useRole} from "@/app/lib/useRole";
 import {Inscription} from "@/app/types";
 import {useUser} from "@clerk/nextjs";
 
-type Type = "actionsBtn" | "addCompetitorBtn";
+type Type = "actionsBtn" | "manageCompetitorInscriptions";
 
 export const usePermissionToEdit = (
   inscription: Inscription | undefined,
@@ -17,7 +17,7 @@ export const usePermissionToEdit = (
     return role === "admin";
   }
 
-  if (type === "addCompetitorBtn") {
+  if (type === "manageCompetitorInscriptions") {
     return !!user.user;
   }
 
