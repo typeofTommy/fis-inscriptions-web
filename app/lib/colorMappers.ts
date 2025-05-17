@@ -2,7 +2,7 @@ export const colorBadgePerDiscipline: Record<string, string> = {
   SL: "bg-blue-500 text-white",
   GS: "bg-pink-500 text-white",
   SG: "bg-green-500 text-white",
-  DH: "bg-yellow-500 text-black",
+  DH: "bg-yellow-300 text-black",
   AC: "bg-black text-white",
 };
 

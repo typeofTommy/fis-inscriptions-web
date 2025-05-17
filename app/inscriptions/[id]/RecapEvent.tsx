@@ -459,6 +459,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
       }),
       // Dynamic codex columns
       ...(inscription?.eventData.competitions ?? [])
+        .sort((a, b) => a.codex - b.codex) // Sort by codex ascending
         .filter((competition) => {
           if (genderFilter === "both") return true;
           return competition.genderCode === genderFilter;
@@ -484,40 +485,65 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
             },
             {
               id: String(competition.codex),
-              header: ({column}) => (
-                <div
-                  className="flex items-center gap-1 justify-center min-w-[120px] cursor-pointer select-none"
-                  onClick={() =>
-                    column.toggleSorting(column.getIsSorted() === "asc")
+              header: ({column}) => {
+                const codexStr = String(competition.codex);
+                const countForThisCodex = allCompetitors.filter((c) => {
+                  const isRegisteredToCodex = c.codexNumbers.includes(codexStr);
+                  if (!isRegisteredToCodex) return false;
+
+                  // Gender compatibility check
+                  if (!competition.genderCode) {
+                    return true; // Compatible if event is mixed or has no gender specified
                   }
-                >
-                  <span>{competition.codex}</span>
-                  <Badge
-                    className={`text-xs px-2 py-1 ${
-                      colorBadgePerDiscipline[competition.eventCode] || ""
-                    }`}
-                  >
-                    {competition.eventCode}
-                  </Badge>
-                  <Badge
-                    className={`text-xs px-2 py-1 text-white ${
-                      colorBadgePerGender[competition.genderCode] || ""
-                    }`}
-                  >
-                    {competition.genderCode}
-                  </Badge>
-                  <Badge
-                    className={`text-xs px-2 py-1 cursor-pointer ${
-                      colorBadgePerRaceLevel[competition.categoryCode] ||
-                      "bg-gray-300"
-                    }`}
-                  >
-                    {competition.categoryCode}
-                  </Badge>
-                  {column.getIsSorted() === "asc" && <span>↑</span>}
-                  {column.getIsSorted() === "desc" && <span>↓</span>}
-                </div>
-              ),
+                  // At this point, competition.genderCode is 'M' or 'W'.
+                  // c.gender is also 'M' or 'W'.
+                  return c.gender === competition.genderCode;
+                }).length;
+
+                return (
+                  <div className="flex flex-col items-center justify-center min-w-[120px] select-none">
+                    <div
+                      className="flex items-center gap-1 cursor-pointer"
+                      onClick={() =>
+                        column.toggleSorting(column.getIsSorted() === "asc")
+                      }
+                    >
+                      <span>{competition.codex}</span>
+                      <Badge
+                        className={`text-xs px-2 py-1 ${
+                          colorBadgePerDiscipline[competition.eventCode] || ""
+                        }`}
+                      >
+                        {competition.eventCode}
+                      </Badge>
+                      <Badge
+                        className={`text-xs px-2 py-1 text-white ${
+                          colorBadgePerGender[competition.genderCode] || ""
+                        }`}
+                      >
+                        {competition.genderCode}
+                      </Badge>
+                      <Badge
+                        className={`text-xs px-2 py-1 ${
+                          colorBadgePerRaceLevel[competition.categoryCode] ||
+                          "bg-gray-300"
+                        }`}
+                      >
+                        {competition.categoryCode}
+                      </Badge>
+                      {column.getIsSorted() === "asc" && (
+                        <span className="ml-1">↑</span>
+                      )}
+                      {column.getIsSorted() === "desc" && (
+                        <span className="ml-1">↓</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-600 mt-1">
+                      ({countForThisCodex} inscrits)
+                    </div>
+                  </div>
+                );
+              },
               cell: (info) => {
                 const value = info.getValue();
                 return (
@@ -589,6 +615,9 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
       inscription?.eventData.competitions,
       genderFilter,
       permissionToEdit,
+      openDialog,
+      handleUpdateCompetitor,
+      allCompetitors,
     ]
   );
 
