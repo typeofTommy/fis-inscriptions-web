@@ -138,7 +138,6 @@ export default function AddCompetitorModal({
       {competitorIds: [selectedId], codexNumbers: selectedCodex},
       {
         onSuccess: () => {
-          setOpen(false);
           setSearch("");
           setSelectedId(undefined);
         },

@@ -355,6 +355,7 @@ export default async function PdfPage({
       <RecipientManager
         initialRecipients={uniqueRecipients}
         onSendPdf={handleSendPdf}
+        gender={raceGender}
       />
     </div>
   );

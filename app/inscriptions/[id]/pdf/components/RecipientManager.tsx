@@ -24,6 +24,39 @@ type DisplayRecipient = {
 type RecipientManagerProps = {
   initialRecipients: Recipient[];
   onSendPdf: (selectedEmails: string[]) => Promise<void>;
+  gender?: "M" | "W"; // Optional gender parameter for race-specific emails
+};
+
+// Email constants for predefined recipients
+const PREDEFINED_EMAILS = {
+  ALL_RACES: [
+    {email: "pmartin@ffs.fr", name: "P. Martin", reason: "Automatique FFS"},
+    {
+      email: "jmagnellet@orange.fr",
+      name: "J. Magnellet",
+      reason: "Automatique FFS",
+    },
+    {email: "dchastan@ffs.fr", name: "D. Chastan", reason: "Automatique FFS"},
+    {
+      email: "mbeauregard@ffs.fr",
+      name: "M. Beauregard",
+      reason: "Automatique FFS",
+    },
+  ],
+  WOMEN: [
+    {
+      email: "lionelpellicier@gmail.com",
+      name: "L. Pellicier",
+      reason: "Courses Femmes",
+    },
+  ],
+  MEN: [
+    {
+      email: "perrin.frederic3@gmail.com",
+      name: "F. Perrin",
+      reason: "Courses Hommes",
+    },
+  ],
 };
 
 const getBadgeClassForReason = (reason: string): string => {
@@ -44,19 +77,76 @@ const getBadgeClassForReason = (reason: string): string => {
   ) {
     return `${baseClasses} bg-gray-100 text-gray-700`;
   }
+  if (reason.toLowerCase().includes("automatique")) {
+    return `${baseClasses} bg-indigo-100 text-indigo-700`;
+  }
+  if (reason.toLowerCase().includes("femmes")) {
+    return `${baseClasses} bg-pink-100 text-pink-700`;
+  }
+  if (reason.toLowerCase().includes("hommes")) {
+    return `${baseClasses} bg-blue-100 text-blue-700`;
+  }
   return `${baseClasses} bg-purple-100 text-purple-700`; // Default for other reasons
 };
 
 export const RecipientManager: React.FC<RecipientManagerProps> = ({
   initialRecipients,
   onSendPdf,
+  gender,
 }) => {
   const [selectedRecipients, setSelectedRecipients] = useState<
     Record<string, boolean>
   >({});
+  const [customEmails, setCustomEmails] = useState<DisplayRecipient[]>([]);
+  const [newEmail, setNewEmail] = useState<string>("");
+  const [emailError, setEmailError] = useState<string>("");
 
   const {user} = useUser();
   console.log({user}); // Keep for debugging if needed, or remove
+
+  // Process all predefined emails based on race type
+  const predefinedRecipients = useMemo(() => {
+    const processedEmails: DisplayRecipient[] = [];
+
+    // Add emails for all races
+    PREDEFINED_EMAILS.ALL_RACES.forEach(({email, name, reason}) => {
+      processedEmails.push({
+        id: `predefined-${email}`,
+        email,
+        name,
+        surname: "",
+        reasons: [reason],
+        isResolvable: true,
+      });
+    });
+
+    // Add gender-specific emails
+    if (gender === "W") {
+      PREDEFINED_EMAILS.WOMEN.forEach(({email, name, reason}) => {
+        processedEmails.push({
+          id: `predefined-${email}`,
+          email,
+          name,
+          surname: "",
+          reasons: [reason],
+          isResolvable: true,
+        });
+      });
+    } else if (gender === "M") {
+      PREDEFINED_EMAILS.MEN.forEach(({email, name, reason}) => {
+        processedEmails.push({
+          id: `predefined-${email}`,
+          email,
+          name,
+          surname: "",
+          reasons: [reason],
+          isResolvable: true,
+        });
+      });
+    }
+
+    return processedEmails;
+  }, [gender]);
 
   const displayRecipients = useMemo(() => {
     const processedMap = new Map<string, DisplayRecipient>();
@@ -86,16 +176,35 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         });
       }
     });
+
+    // Merge in predefined recipients, but don't override existing ones
+    predefinedRecipients.forEach((rec) => {
+      if (!processedMap.has(rec.email)) {
+        processedMap.set(rec.email, rec);
+      } else {
+        // If email already exists, add the predefined reason to it
+        const existing = processedMap.get(rec.email)!;
+        if (!existing.reasons.includes(rec.reasons[0])) {
+          existing.reasons.push(rec.reasons[0]);
+        }
+      }
+    });
+
     return Array.from(processedMap.values());
-  }, [initialRecipients]);
+  }, [initialRecipients, predefinedRecipients]);
+
+  // Combine system recipients and custom emails
+  const allRecipients = useMemo(() => {
+    return [...displayRecipients, ...customEmails];
+  }, [displayRecipients, customEmails]);
 
   useEffect(() => {
     const initialSelection: Record<string, boolean> = {};
-    displayRecipients.forEach((recipient) => {
+    allRecipients.forEach((recipient) => {
       initialSelection[recipient.email] = recipient.isResolvable;
     });
     setSelectedRecipients(initialSelection);
-  }, [displayRecipients]);
+  }, [allRecipients]);
 
   const handleCheckboxChange = (email: string, isResolvable: boolean) => {
     if (!isResolvable) return;
@@ -105,9 +214,56 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     }));
   };
 
+  const validateEmail = (email: string): boolean => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  };
+
+  const addCustomEmail = () => {
+    if (!newEmail.trim()) {
+      setEmailError("Veuillez entrer une adresse email");
+      return;
+    }
+
+    if (!validateEmail(newEmail)) {
+      setEmailError("Veuillez entrer une adresse email valide");
+      return;
+    }
+
+    // Check if email already exists
+    if (allRecipients.some((recipient) => recipient.email === newEmail)) {
+      setEmailError("Cette adresse email est déjà ajoutée");
+      return;
+    }
+
+    const customRecipient: DisplayRecipient = {
+      id: `custom-${newEmail}`,
+      email: newEmail,
+      name: "Email personnalisé",
+      surname: "",
+      reasons: ["Email ajouté manuellement"],
+      isResolvable: true,
+    };
+
+    setCustomEmails((prev) => [...prev, customRecipient]);
+    setNewEmail("");
+    setEmailError("");
+  };
+
+  const removeCustomEmail = (email: string) => {
+    setCustomEmails((prev) =>
+      prev.filter((recipient) => recipient.email !== email)
+    );
+    setSelectedRecipients((prev) => {
+      const updated = {...prev};
+      delete updated[email];
+      return updated;
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const selectedEmails = displayRecipients
+    const selectedEmails = allRecipients
       .filter((r) => r.isResolvable && selectedRecipients[r.email])
       .map((r) => r.email);
     if (selectedEmails.length === 0) {
@@ -129,9 +285,10 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       <h2 className="text-xl font-semibold mb-4 text-gray-700">
         Sélectionnez les destinataires du PDF :
       </h2>
+
       <form onSubmit={handleSubmit}>
         <ul className="list-none mb-6 space-y-3">
-          {displayRecipients.map((recipient) => (
+          {allRecipients.map((recipient) => (
             <li
               key={recipient.id}
               className="flex items-start p-2 rounded-md hover:bg-gray-50 transition-colors duration-150"
@@ -182,9 +339,63 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
                   ))}
                 </div>
               </label>
+
+              {/* Add remove button for custom emails */}
+              {recipient.id.startsWith("custom-") && (
+                <button
+                  type="button"
+                  onClick={() => removeCustomEmail(recipient.email)}
+                  className="ml-2 text-red-500 hover:text-red-700 cursor-pointer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              )}
             </li>
           ))}
         </ul>
+
+        {/* Custom email input */}
+        <div className="mb-6">
+          <h3 className="text-md font-medium mb-2 text-gray-700">
+            Ajouter d&apos;autres destinataires
+          </h3>
+          <p className="text-sm text-gray-500 mb-3">
+            Vous pouvez entrer des adresses email supplémentaires
+          </p>
+          <div className="flex items-start gap-2">
+            <div className="flex-grow">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Ajouter une adresse email..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {emailError && (
+                <p className="mt-1 text-sm text-red-600">{emailError}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={addCustomEmail}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition cursor-pointer"
+            >
+              Ajouter
+            </button>
+          </div>
+        </div>
+
         <button
           type="submit"
           disabled={!hasSelectedRecipients}
