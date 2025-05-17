@@ -133,14 +133,7 @@ export const Competitors = ({
   const {mutate: updateCompetitor, isPending: updating} =
     useUpdateCompetitorRegistrations(inscriptionId);
 
-  const permissionToEdit = usePermissionToEdit(inscription);
-
-  // Quand on ouvre le dialog, on coche par défaut le codex courant
-  // React.useEffect(() => {
-  //   if (openDialog !== null) {
-  //     setSelectedCodex([codexNumber]);
-  //   }
-  // }, [openDialog, codexNumber]);
+  const permissionToEdit = usePermissionToEdit(inscription, "addCompetitorBtn");
 
   if (isPending) {
     return (

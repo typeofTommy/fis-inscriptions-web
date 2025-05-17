@@ -304,7 +304,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
     return Array.from(sexes);
   }, [inscription?.eventData.competitions]);
 
-  const permissionToEdit = usePermissionToEdit(inscription);
+  const permissionToEdit = usePermissionToEdit(inscription, "addCompetitorBtn");
 
   // 4. Loading / Error / Empty States
   if (isLoadingInscription || isPending) {

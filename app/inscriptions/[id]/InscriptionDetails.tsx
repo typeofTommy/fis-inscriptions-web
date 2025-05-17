@@ -36,7 +36,7 @@ export const InscriptionDetails = ({
 }: InscriptionDetailsProps) => {
   const {data: inscription, isLoading, error} = useInscription(id);
 
-  const permissionToEdit = usePermissionToEdit(inscription);
+  const permissionToEdit = usePermissionToEdit(inscription, "actionsBtn");
 
   const countryCode =
     inscription?.eventData.placeNationCode ||
