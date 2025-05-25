@@ -250,40 +250,95 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     });
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const selectedEmails = Object.entries(selectedRecipients)
-      .filter(([, isSelected]) => isSelected)
-      .map(([email]) => email);
+  const handleSendPdf = async () => {
+    const element = document.getElementById("pdf-content");
+    if (!element) return;
 
-    if (selectedEmails.length === 0) {
-      setSendStatus({
-        message: "Veuillez sélectionner au moins un destinataire.",
-        type: "error",
-      });
-      return;
-    }
+    // Import dynamique pour éviter les erreurs de type
+    const html2canvas = (await import("html2canvas-pro")).default;
+    const jsPDF = (await import("jspdf")).default;
+
+    // Génère le canvas avec html2canvas-pro (qualité élevée, poids réduit)
+    const canvas = await html2canvas(element, {
+      scale: 2.5,
+      useCORS: true,
+      backgroundColor: "#fff",
+    });
+    // Convertit le canvas en image JPEG (poids réduit)
+    const imgData = canvas.toDataURL("image/jpeg", 0.98);
+
+    // Crée le PDF avec jsPDF
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "cm",
+      format: "a4",
+    });
+    // Dimensions du canvas/image
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    // Marge horizontale de 1cm
+    const margin = 1;
+    const availableWidth = pageWidth - 2 * margin;
+    const availableHeight = pageHeight - 2 * margin;
+    const ratio = Math.min(
+      availableWidth / imgWidth,
+      availableHeight / imgHeight
+    );
+    const displayWidth = imgWidth * ratio;
+    const displayHeight = imgHeight * ratio;
+    const x = (pageWidth - displayWidth) / 2;
+    const y = (pageHeight - displayHeight) / 2;
+    pdf.addImage(imgData, "JPEG", x, y, displayWidth, displayHeight);
+
+    // Blob du PDF
+    const pdfBlob = pdf.output("blob");
 
     setIsSending(true);
     setSendStatus(null);
 
     try {
-      const subject = `Inscription FIS: ${competitionName}${gender ? ` (${gender})` : ""}`;
+      const formData = new FormData();
+      const selectedEmails = Object.entries(selectedRecipients)
+        .filter(([, isSelected]) => isSelected)
+        .map(([email]) => email);
+      if (selectedEmails.length === 0) {
+        setSendStatus({
+          message: "Veuillez sélectionner au moins un destinataire.",
+          type: "error",
+        });
+        setIsSending(false);
+        return;
+      }
+      formData.append("pdf", pdfBlob, "inscription.pdf");
+      formData.append("to", JSON.stringify(selectedEmails));
+      formData.append("inscriptionId", inscriptionId);
+      formData.append(
+        "subject",
+        (() => {
+          let subject = `Inscription FIS: ${competitionName}`;
+          if (typeof window !== "undefined") {
+            const place = document
+              .querySelector("[data-fis-place]")
+              ?.textContent?.trim();
+            const date = document
+              .querySelector("[data-fis-date]")
+              ?.textContent?.trim();
+            if (place) subject += ` - ${place}`;
+            if (date) subject += ` - ${date}`;
+          }
+          if (gender) subject += ` (${gender})`;
+          return subject;
+        })()
+      );
+      if (gender) formData.append("gender", gender);
+
       const response = await fetch("/api/send-inscription-pdf", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: selectedEmails,
-          inscriptionId: inscriptionId, // from props
-          subject: subject,
-          gender: gender, // from props
-        }),
+        body: formData,
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(
           result.details || result.error || "Erreur lors de l'envoi de l'email"
@@ -295,7 +350,6 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         type: "success",
       });
     } catch (error: any) {
-      console.error("Failed to send PDF:", error);
       setSendStatus({
         message: error.message || "Une erreur est survenue lors de l'envoi.",
         type: "error",
@@ -324,7 +378,12 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSendPdf();
+        }}
+      >
         <div className="space-y-4">
           {allRecipients.map((recipient) => (
             <div

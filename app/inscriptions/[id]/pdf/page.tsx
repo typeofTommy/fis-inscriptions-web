@@ -321,39 +321,41 @@ export default async function PdfPage({
 
   return (
     <div className="max-w-4xl mx-auto p-4 bg-white">
-      <Header />
-      <div className="border-2 border-black">
-        {/* Competition and Date Row */}
-        <div className="flex border-b border-black">
-          <CompetitionBlock
-            station={
-              inscription.eventData.place
-                ? inscription.eventData.place[0].toUpperCase() +
-                  inscription.eventData.place.slice(1)
-                : ""
-            }
-            countryTrigram={
-              inscription.eventData.placeNationCode?.toUpperCase() || ""
-            }
+      <div id="pdf-content" className="bg-white w-[21cm] mx-auto">
+        <Header />
+        <div className="border-2 border-black">
+          {/* Competition and Date Row */}
+          <div className="flex border-b border-black">
+            <CompetitionBlock
+              station={
+                inscription.eventData.place
+                  ? inscription.eventData.place[0].toUpperCase() +
+                    inscription.eventData.place.slice(1)
+                  : ""
+              }
+              countryTrigram={
+                inscription.eventData.placeNationCode?.toUpperCase() || ""
+              }
+            />
+            <DateOfRaceBlock
+              startDate={format(inscription.eventData.startDate, "dd/MM/yyyy")}
+              endDate={format(inscription.eventData.endDate, "dd/MM/yyyy")}
+            />
+          </div>
+          {/* Responsible and Category Row */}
+          <div className="flex border-b border-black">
+            <ResponsibleForEntryBlock gender={raceGender} />
+            <NationalAssociationBlock />
+          </div>
+          <GenderRow gender={raceGender === "M" ? "M" : "W"} />
+          <CompetitorsTable
+            competitors={filteredCompetitors}
+            codexData={filteredCodexData}
           />
-          <DateOfRaceBlock
-            startDate={format(inscription.eventData.startDate, "dd/MM/yyyy")}
-            endDate={format(inscription.eventData.endDate, "dd/MM/yyyy")}
-          />
+          <TableFooter gender={raceGender} />
         </div>
-        {/* Responsible and Category Row */}
-        <div className="flex border-b border-black">
-          <ResponsibleForEntryBlock gender={raceGender} />
-          <NationalAssociationBlock />
-        </div>
-        <GenderRow gender={raceGender === "M" ? "M" : "W"} />
-        <CompetitorsTable
-          competitors={filteredCompetitors}
-          codexData={filteredCodexData}
-        />
-        <TableFooter gender={raceGender} />
+        <Footer />
       </div>
-      <Footer />
 
       <RecipientManager
         initialRecipients={uniqueRecipients}

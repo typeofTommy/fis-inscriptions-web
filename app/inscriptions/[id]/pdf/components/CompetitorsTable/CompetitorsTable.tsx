@@ -71,17 +71,17 @@ export const CompetitorsTable = ({
                   } p-0 font-semibold min-w-[70px] text-center align-middle`}
                 >
                   <div
-                    className={`border-b border-black py-1 text-md ${disciplineBgColor}`}
+                    className={`border-b border-black py-1 text-md ${disciplineBgColor} flex items-center justify-center text-center align-middle`}
                   >
                     {codex.eventCode}
                   </div>
-                  <div className="border-b border-black py-1 text-md">
+                  <div className="border-b border-black py-1 text-md flex items-center justify-center text-center align-middle">
                     {codex.codex}
                   </div>
-                  <div className="border-b border-black py-1 text-md">
+                  <div className="border-b border-black py-1 text-md flex items-center justify-center text-center align-middle">
                     {codex.categoryCode}
                   </div>
-                  <div className="py-1 text-md">
+                  <div className="py-1 text-md flex items-center justify-center text-center align-middle">
                     {format(codex.date, "dd/MM/yy")}
                   </div>
                 </th>

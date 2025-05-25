@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Inscription FIS",
-  description: "Inscription FIS",
+  title: "Inscriptions FIS Etranger",
+  description: "Inscriptions FIS Etranger",
   icons: {
     icon: [
       {url: "/favicons/favicon-16x16.png", sizes: "16x16", type: "image/png"},

@@ -1,152 +1,136 @@
 import {NextResponse} from "next/server";
 import {Resend} from "resend";
-import puppeteer from "puppeteer";
-// Suppression de chrome-aws-lambda
+import {db} from "@/app/db/inscriptionsDB";
+import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {eq} from "drizzle-orm";
+import {format} from "date-fns";
 
-// Initialize Resend with your API key
-// It's best to use an environment variable for the API key
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-// Ensure NEXT_PUBLIC_APP_URL is set in your environment variables
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
 export async function POST(request: Request) {
   try {
-    if (!APP_URL) {
-      console.error("NEXT_PUBLIC_APP_URL is not set in environment variables.");
-      return NextResponse.json(
-        {error: "Application URL is not configured."},
-        {status: 500}
-      );
-    }
+    console.log("Starting PDF email send process...");
 
-    const body = await request.json();
-    // Destructure gender, default to undefined if not provided
-    const {to, inscriptionId, subject, gender} = body as {
-      to: string[];
-      inscriptionId: string;
-      subject: string;
-      gender?: "M" | "W";
-    };
+    // On attend un formData (multipart)
+    const formData = await request.formData();
+    const pdfFile = formData.get("pdf");
+    const toRaw = formData.get("to");
+    const inscriptionId = formData.get("inscriptionId") as string | null;
+    const subject = formData.get("subject") as string | null;
+    const gender = formData.get("gender") as string | null;
 
-    if (!to || to.length === 0 || !inscriptionId || !subject) {
+    console.log("Received form data:", {
+      hasPdfFile: !!pdfFile,
+      toRaw,
+      inscriptionId,
+      subject,
+      gender,
+    });
+
+    if (!pdfFile || !toRaw || !inscriptionId || !subject) {
+      console.log("Missing required fields");
       return NextResponse.json(
-        {
-          error: "Missing required fields: to (array), inscriptionId, subject",
-        },
+        {error: "Missing required fields: pdf, to, inscriptionId, subject"},
         {status: 400}
       );
     }
 
-    // Construct the PDF page URL
-    // Example: https://your-app.com/inscriptions/123/pdf?gender=M
-    let pdfPageUrl = `${APP_URL}/inscriptions/${inscriptionId}/pdf`;
-    if (gender) {
-      pdfPageUrl += `?gender=${gender}`;
+    // toRaw est un JSON.stringify d'un array
+    let to: string[] = [];
+    try {
+      to = JSON.parse(toRaw as string);
+      console.log("Parsed recipients:", to);
+    } catch (error) {
+      console.error("Error parsing recipients:", error);
+      return NextResponse.json(
+        {error: "Invalid 'to' field: must be a JSON array of emails."},
+        {status: 400}
+      );
     }
 
-    // 1. Generate PDF using Puppeteer
-    let browser = null;
-    try {
-      browser = await puppeteer.launch({
-        headless: "new", // ou true selon ta version de puppeteer
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
-      const page = await browser.newPage();
+    // Récupérer les informations de l'inscription depuis la base de données
+    const inscription = await db
+      .select()
+      .from(inscriptions)
+      .where(eq(inscriptions.id, Number(inscriptionId)))
+      .limit(1);
 
-      console.log(`Navigating to PDF page: ${pdfPageUrl}`);
-      await page.goto(pdfPageUrl, {waitUntil: "networkidle0", timeout: 15000}); // Increased timeout for page loading
+    if (!inscription.length) {
+      console.log("Inscription not found:", inscriptionId);
+      return NextResponse.json({error: "Inscription not found"}, {status: 404});
+    }
 
-      // Optional: Add a small delay to ensure all dynamic content (if any) is loaded
-      // await new Promise(resolve => setTimeout(resolve, 1000));
+    const eventData = inscription[0].eventData;
+    const formattedStartDate = format(
+      new Date(eventData.startDate),
+      "dd/MM/yyyy"
+    );
+    const formattedEndDate = format(new Date(eventData.endDate), "dd/MM/yyyy");
 
-      const pdfBuffer = await page.pdf({
-        format: "A4",
-        printBackground: true,
-        margin: {top: "1cm", right: "1cm", bottom: "1cm", left: "1cm"}, // Standard margins
-        preferCSSPageSize: true, // Use CSS @page size if defined
-      });
+    // pdfFile est un Blob (File)
+    const arrayBuffer = await (pdfFile as Blob).arrayBuffer();
+    const pdfAsBuffer = Buffer.from(arrayBuffer);
 
-      // Convert Uint8Array to Buffer for Resend
-      const pdfAsBuffer = Buffer.from(pdfBuffer);
+    const fromAddress =
+      process.env.RESEND_FROM_EMAIL ||
+      "Inscriptions FIS Etranger <noreply@inscriptions-fis-etranger.fr>";
 
-      // 2. Send email with PDF attachment using Resend
-      // IMPORTANT: Replace with your verified sender domain in Resend
-      const fromAddress =
-        process.env.RESEND_FROM_EMAIL ||
-        "FIS Inscriptions <noreply@yourdomain.com>";
+    console.log("Sending email to:", to);
+    console.log("From address:", fromAddress);
 
-      console.log(`Sending PDF to: ${to.join(", ")}, from: ${fromAddress}`);
+    // Construction du subject complet côté serveur
+    const subjectParts = [
+      "Inscription FIS Etranger :",
+      eventData.name,
+      eventData.place ? `- ${eventData.place}` : "",
+      eventData.startDate && eventData.endDate
+        ? `- du ${formattedStartDate} au ${formattedEndDate}`
+        : "",
+      gender ? `(${gender})` : "",
+    ];
+    const fullSubject = subjectParts
+      .filter(Boolean)
+      .join(" ")
+      .replace(/ +/g, " ")
+      .trim();
 
-      const {data, error: emailError} = await resend.emails.send({
-        from: fromAddress,
-        // to: to,
-        to: "tommymartin1234@gmail.com",
-        subject: subject,
-        html: "<p>Veuillez trouver ci-joint l'inscription PDF demandée.</p>",
-        attachments: [
-          {
-            filename: `inscription-${inscriptionId}-${gender ? gender : "ALL"}.pdf`,
-            content: pdfAsBuffer,
-          },
-        ],
-      });
+    console.log("Subject:", fullSubject);
 
-      if (emailError) {
-        console.error(
-          "Error sending email:",
-          JSON.stringify(emailError, null, 2)
-        );
-        return NextResponse.json(
-          {error: "Failed to send email", details: emailError},
-          {status: 500}
-        );
-      }
+    const {data, error: emailError} = await resend.emails.send({
+      from: fromAddress,
+      to: to,
+      subject: fullSubject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2c3e50;">${eventData.name}</h2>
+          <p>Lieu : ${eventData.place} (${eventData.placeNationCode})</p>
+          <p>Dates : du ${formattedStartDate} au ${formattedEndDate}</p>
+          <p>Catégorie : ${gender === "M" ? "Hommes (M)" : gender === "W" ? "Femmes (W)" : "Non précisé"}</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: `inscription-${inscriptionId}-${gender ? gender : "ALL"}.pdf`,
+          content: pdfAsBuffer,
+        },
+      ],
+    });
 
-      console.log("Email sent successfully! ID:", data?.id);
-      return NextResponse.json({
-        message: "Email sent successfully!",
-        emailId: data?.id,
-      });
-    } catch (e: unknown) {
-      console.error("Error during PDF generation or page navigation:", e);
-      // Ensure browser is closed even if page.goto or page.pdf fails
-      if (browser !== null) {
-        try {
-          await browser.close();
-        } catch (closeError) {
-          console.error("Error closing browser after failure:", closeError);
-        }
-      }
+    if (emailError) {
+      console.error("Email sending error:", emailError);
       return NextResponse.json(
-        {error: "Failed to generate PDF", details: (e as Error).message},
+        {error: "Failed to send email", details: emailError},
         {status: 500}
       );
-    } finally {
-      if (browser !== null && browser.isConnected()) {
-        // Check if browser is still connected before trying to close
-        console.log("Closing browser...");
-        try {
-          await browser.close();
-          console.log("Browser closed successfully.");
-        } catch (closeError: unknown) {
-          // Handle cases where browser might already be closing or closed
-          if (
-            closeError instanceof Error &&
-            closeError.message.includes("Target closed")
-          ) {
-            console.warn("Browser was already closing or closed.");
-          } else {
-            console.error(
-              "Error closing browser in finally block:",
-              closeError
-            );
-          }
-        }
-      }
     }
+
+    console.log("Email sent successfully:", data?.id);
+    return NextResponse.json({
+      message: "Email sent successfully!",
+      emailId: data?.id,
+    });
   } catch (error: unknown) {
-    console.error("Error in send-inscription-pdf POST handler:", error);
+    console.error("Unexpected error:", error);
     return NextResponse.json(
       {error: "Failed to process request", details: (error as Error).message},
       {status: 500}
