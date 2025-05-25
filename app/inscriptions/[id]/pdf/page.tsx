@@ -41,6 +41,17 @@ export default async function PdfPage({
     .where(eq(inscriptions.id, Number(id)))
     .limit(1);
 
+  // Ensure inscription and eventData exist
+  if (!inscription) {
+    return <p>Inscription non trouvée.</p>;
+  }
+  if (!inscription.eventData) {
+    return <p>Données d&apos;événement non trouvées pour cette inscription.</p>;
+  }
+  // Assuming inscription.eventData is an object that might contain eventName
+  const eventData = inscription.eventData as any; // Keep as any to avoid restructuring user's existing code
+  const competitionNameForEmail = eventData.eventName || "Inscription";
+
   // Typage explicite du résultat de l'innerJoin
   type RawCompetitorRow = {
     competitors: typeof competitorsTable.$inferSelect;
@@ -88,8 +99,8 @@ export default async function PdfPage({
   const raceGender: "M" | "W" = selectedGender
     ? selectedGender
     : filteredCompetitors.length > 0
-    ? (filteredCompetitors[0].gender as "M" | "W")
-    : "M";
+      ? (filteredCompetitors[0].gender as "M" | "W")
+      : "M";
 
   // Filter codexData based on raceGender
   // Assuming CompetitionItem has a genderCode property ('M' or 'W')
@@ -308,14 +319,6 @@ export default async function PdfPage({
     }
   );
 
-  const handleSendPdf = async (selectedEmails: string[]) => {
-    "use server";
-    // TODO: Implement PDF sending logic with selectedEmails
-    console.log("A IMPLEMENTER: Envoi du PDF aux emails:", selectedEmails);
-    // alert() is a browser API and not available in server actions.
-    // If feedback to the client is needed, return a value from the action and handle it in the client component.
-  };
-
   return (
     <div className="max-w-4xl mx-auto p-4 bg-white">
       <Header />
@@ -354,8 +357,9 @@ export default async function PdfPage({
 
       <RecipientManager
         initialRecipients={uniqueRecipients}
-        onSendPdf={handleSendPdf}
         gender={raceGender}
+        inscriptionId={id}
+        competitionName={competitionNameForEmail}
       />
     </div>
   );

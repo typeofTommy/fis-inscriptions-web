@@ -1,6 +1,5 @@
 "use client";
 
-import {useUser} from "@clerk/nextjs";
 import React, {useState, useEffect, useMemo} from "react";
 
 export type Recipient = {
@@ -21,10 +20,12 @@ type DisplayRecipient = {
   isResolvable: boolean;
 };
 
+// Update RecipientManagerProps to include new props and remove onSendPdf
 type RecipientManagerProps = {
   initialRecipients: Recipient[];
-  onSendPdf: (selectedEmails: string[]) => Promise<void>;
-  gender?: "M" | "W"; // Optional gender parameter for race-specific emails
+  gender?: "M" | "W";
+  inscriptionId: string; // Added
+  competitionName: string; // Added
 };
 
 // Email constants for predefined recipients
@@ -91,8 +92,9 @@ const getBadgeClassForReason = (reason: string): string => {
 
 export const RecipientManager: React.FC<RecipientManagerProps> = ({
   initialRecipients,
-  onSendPdf,
   gender,
+  inscriptionId, // Use new prop
+  competitionName, // Use new prop
 }) => {
   const [selectedRecipients, setSelectedRecipients] = useState<
     Record<string, boolean>
@@ -101,14 +103,18 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   const [newEmail, setNewEmail] = useState<string>("");
   const [emailError, setEmailError] = useState<string>("");
 
-  const {user} = useUser();
-  console.log({user}); // Keep for debugging if needed, or remove
+  // State for API call UI feedback
+  const [isSending, setIsSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  // Process all predefined emails based on race type
+  // const {user} = useUser(); // Removed as unused
+  // console.log({user}); // Keep for debugging if needed, or remove
+
   const predefinedRecipients = useMemo(() => {
     const processedEmails: DisplayRecipient[] = [];
-
-    // Add emails for all races
     PREDEFINED_EMAILS.ALL_RACES.forEach(({email, name, reason}) => {
       processedEmails.push({
         id: `predefined-${email}`,
@@ -119,8 +125,6 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         isResolvable: true,
       });
     });
-
-    // Add gender-specific emails
     if (gender === "W") {
       PREDEFINED_EMAILS.WOMEN.forEach(({email, name, reason}) => {
         processedEmails.push({
@@ -144,7 +148,6 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         });
       });
     }
-
     return processedEmails;
   }, [gender]);
 
@@ -158,8 +161,6 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         }
         if (rec.isResolvable && !existing.isResolvable) {
           existing.isResolvable = true;
-          // Update name/surname if the new one is from a resolvable source
-          // and the current one might be from an unresolvable one (e.g. "Utilisateur Inconnu")
           if (rec.name !== "Utilisateur inconnu") {
             existing.name = rec.name;
             existing.surname = rec.surname;
@@ -167,7 +168,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         }
       } else {
         processedMap.set(rec.email, {
-          id: rec.email, // Use email as a unique ID for map keys and React keys
+          id: rec.email,
           email: rec.email,
           name: rec.name,
           surname: rec.surname,
@@ -176,24 +177,19 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         });
       }
     });
-
-    // Merge in predefined recipients, but don't override existing ones
     predefinedRecipients.forEach((rec) => {
       if (!processedMap.has(rec.email)) {
         processedMap.set(rec.email, rec);
       } else {
-        // If email already exists, add the predefined reason to it
         const existing = processedMap.get(rec.email)!;
         if (!existing.reasons.includes(rec.reasons[0])) {
           existing.reasons.push(rec.reasons[0]);
         }
       }
     });
-
     return Array.from(processedMap.values());
   }, [initialRecipients, predefinedRecipients]);
 
-  // Combine system recipients and custom emails
   const allRecipients = useMemo(() => {
     return [...displayRecipients, ...customEmails];
   }, [displayRecipients, customEmails]);
@@ -224,18 +220,14 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       setEmailError("Veuillez entrer une adresse email");
       return;
     }
-
     if (!validateEmail(newEmail)) {
       setEmailError("Veuillez entrer une adresse email valide");
       return;
     }
-
-    // Check if email already exists
     if (allRecipients.some((recipient) => recipient.email === newEmail)) {
       setEmailError("Cette adresse email est déjà ajoutée");
       return;
     }
-
     const customRecipient: DisplayRecipient = {
       id: `custom-${newEmail}`,
       email: newEmail,
@@ -244,169 +236,194 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       reasons: ["Email ajouté manuellement"],
       isResolvable: true,
     };
-
     setCustomEmails((prev) => [...prev, customRecipient]);
     setNewEmail("");
     setEmailError("");
   };
 
   const removeCustomEmail = (email: string) => {
-    setCustomEmails((prev) =>
-      prev.filter((recipient) => recipient.email !== email)
-    );
+    setCustomEmails((prev) => prev.filter((rec) => rec.email !== email));
     setSelectedRecipients((prev) => {
-      const updated = {...prev};
-      delete updated[email];
-      return updated;
+      const newState = {...prev};
+      delete newState[email];
+      return newState;
     });
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const selectedEmails = allRecipients
-      .filter((r) => r.isResolvable && selectedRecipients[r.email])
-      .map((r) => r.email);
+    const selectedEmails = Object.entries(selectedRecipients)
+      .filter(([, isSelected]) => isSelected)
+      .map(([email]) => email);
+
     if (selectedEmails.length === 0) {
-      // Optionally, provide feedback to the user (e.g., with a toast notification)
-      console.log("No recipients selected or none are resolvable.");
+      setSendStatus({
+        message: "Veuillez sélectionner au moins un destinataire.",
+        type: "error",
+      });
       return;
     }
-    await onSendPdf(selectedEmails);
-    // Optionally, provide feedback on successful initiation of send
-    // alert("PDF send process initiated for: " + selectedEmails.join(", "));
+
+    setIsSending(true);
+    setSendStatus(null);
+
+    try {
+      const subject = `Inscription FIS: ${competitionName}${gender ? ` (${gender})` : ""}`;
+      const response = await fetch("/api/send-inscription-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: selectedEmails,
+          inscriptionId: inscriptionId, // from props
+          subject: subject,
+          gender: gender, // from props
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.details || result.error || "Erreur lors de l'envoi de l'email"
+        );
+      }
+      setSendStatus({
+        message:
+          "PDF envoyé avec succès ! Email ID: " + (result.emailId || "N/A"),
+        type: "success",
+      });
+    } catch (error: any) {
+      console.error("Failed to send PDF:", error);
+      setSendStatus({
+        message: error.message || "Une erreur est survenue lors de l'envoi.",
+        type: "error",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
-  const hasSelectedRecipients = Object.values(selectedRecipients).some(
-    (isSelected) => isSelected
-  );
-
   return (
-    <div className="mt-8 p-4 border-2 border-dashed border-gray-300 rounded-lg">
-      <h2 className="text-xl font-semibold mb-4 text-gray-700">
-        Sélectionnez les destinataires du PDF :
-      </h2>
+    <div className="mt-6 p-4 border-t border-gray-200 print:hidden">
+      <h3 className="text-lg font-semibold mb-3">
+        Gérer les destinataires et envoyer le PDF
+      </h3>
+
+      {/* Display API Call Status */}
+      {sendStatus && (
+        <div
+          className={`p-3 mb-3 rounded-md text-sm ${
+            sendStatus.type === "success"
+              ? "bg-green-50 text-green-700"
+              : "bg-red-50 text-red-700"
+          }`}
+        >
+          {sendStatus.message}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <ul className="list-none mb-6 space-y-3">
+        <div className="space-y-4">
           {allRecipients.map((recipient) => (
-            <li
+            <div
               key={recipient.id}
-              className="flex items-start p-2 rounded-md hover:bg-gray-50 transition-colors duration-150"
+              className={`p-3 border rounded-lg flex items-start space-x-3 ${
+                recipient.isResolvable
+                  ? "border-gray-300"
+                  : "border-red-300 bg-red-50"
+              }`}
             >
               <input
                 type="checkbox"
-                id={`recipient-${recipient.id}`}
-                checked={
-                  recipient.isResolvable &&
-                  (selectedRecipients[recipient.email] || false)
-                }
+                id={`recipient-${recipient.email}`}
+                checked={selectedRecipients[recipient.email] || false}
                 onChange={() =>
                   handleCheckboxChange(recipient.email, recipient.isResolvable)
                 }
-                disabled={!recipient.isResolvable}
-                className={`mt-1 mr-3 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 ${
-                  recipient.isResolvable
-                    ? "cursor-pointer"
-                    : "cursor-not-allowed opacity-60"
-                }`}
+                disabled={!recipient.isResolvable || isSending}
+                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 cursor-pointer"
               />
-              <label
-                htmlFor={`recipient-${recipient.id}`}
-                className={`flex-1 flex flex-wrap items-baseline ${
-                  recipient.isResolvable
-                    ? "cursor-pointer"
-                    : "cursor-not-allowed opacity-60"
-                }`}
-              >
-                <div className="mr-2">
-                  <span className="font-medium text-gray-800">
-                    {`${recipient.name}${
-                      recipient.surname ? " " + recipient.surname : ""
-                    }`}
-                  </span>
-                  <span className="text-sm text-gray-500 ml-1">
-                    ({recipient.email})
-                  </span>
-                </div>
-                <div className="flex flex-wrap">
-                  {recipient.reasons.map((reason, index) => (
+              <div className="flex-1">
+                <label
+                  htmlFor={`recipient-${recipient.email}`}
+                  className={`font-medium ${
+                    recipient.isResolvable ? "text-gray-800" : "text-red-600"
+                  }`}
+                >
+                  {recipient.name} {recipient.surname}
+                  {!recipient.isResolvable && " (Email Invalide/Manquant)"}
+                </label>
+                <p className="text-xs text-gray-500">{recipient.email}</p>
+                <div>
+                  {recipient.reasons.map((reason) => (
                     <span
-                      key={index}
+                      key={reason}
                       className={getBadgeClassForReason(reason)}
                     >
                       {reason}
                     </span>
                   ))}
                 </div>
-              </label>
-
-              {/* Add remove button for custom emails */}
+              </div>
               {recipient.id.startsWith("custom-") && (
                 <button
                   type="button"
                   onClick={() => removeCustomEmail(recipient.email)}
-                  className="ml-2 text-red-500 hover:text-red-700 cursor-pointer"
+                  disabled={isSending}
+                  className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 cursor-pointer"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  Supprimer
                 </button>
               )}
-            </li>
-          ))}
-        </ul>
-
-        {/* Custom email input */}
-        <div className="mb-6">
-          <h3 className="text-md font-medium mb-2 text-gray-700">
-            Ajouter d&apos;autres destinataires
-          </h3>
-          <p className="text-sm text-gray-500 mb-3">
-            Vous pouvez entrer des adresses email supplémentaires
-          </p>
-          <div className="flex items-start gap-2">
-            <div className="flex-grow">
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="Ajouter une adresse email..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {emailError && (
-                <p className="mt-1 text-sm text-red-600">{emailError}</p>
-              )}
             </div>
+          ))}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <label
+            htmlFor="customEmail"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Ajouter un email personnalisé :
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <input
+              type="email"
+              id="customEmail"
+              value={newEmail}
+              onChange={(e) => {
+                setNewEmail(e.target.value);
+                if (emailError) setEmailError("");
+              }}
+              placeholder="adresse@example.com"
+              disabled={isSending}
+              className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:opacity-50"
+            />
             <button
               type="button"
               onClick={addCustomEmail}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition cursor-pointer"
+              disabled={isSending}
+              className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 rounded-r-md hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 cursor-pointer"
             >
               Ajouter
             </button>
           </div>
+          {emailError && (
+            <p className="mt-1 text-xs text-red-600">{emailError}</p>
+          )}
         </div>
 
-        <button
-          type="submit"
-          disabled={!hasSelectedRecipients}
-          className={`w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-150 ease-in-out ${
-            hasSelectedRecipients
-              ? "hover:bg-blue-700 cursor-pointer transform hover:scale-105"
-              : "opacity-50 cursor-not-allowed"
-          }`}
-        >
-          Envoyer le PDF aux sélectionnés (EN COURS DE DEV)
-        </button>
+        <div className="mt-6 text-right">
+          <button
+            type="submit"
+            disabled={isSending || allRecipients.length === 0}
+            className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:opacity-70 cursor-pointer"
+          >
+            {isSending ? "Envoi en cours..." : "Envoyer le PDF par Email"}
+          </button>
+        </div>
       </form>
     </div>
   );
