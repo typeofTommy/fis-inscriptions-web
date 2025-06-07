@@ -61,11 +61,6 @@ export async function POST(request: Request) {
     }
 
     const eventData = inscription[0].eventData;
-    const formattedStartDate = format(
-      new Date(eventData.startDate),
-      "dd/MM/yyyy"
-    );
-    const formattedEndDate = format(new Date(eventData.endDate), "dd/MM/yyyy");
 
     // pdfFile est un Blob (File)
     const arrayBuffer = await (pdfFile as Blob).arrayBuffer();
@@ -78,39 +73,89 @@ export async function POST(request: Request) {
     console.log("Sending email to:", to);
     console.log("From address:", fromAddress);
 
-    // Construction du subject complet côté serveur
-    const subjectParts = [
-      "Inscription FIS Etranger :",
-      eventData.name,
-      eventData.place ? `- ${eventData.place}` : "",
-      eventData.startDate && eventData.endDate
-        ? `- du ${formattedStartDate} au ${formattedEndDate}`
-        : "",
-      gender ? `(${gender})` : "",
-    ];
-    const fullSubject = subjectParts
-      .filter(Boolean)
-      .join(" ")
-      .replace(/ +/g, " ")
-      .trim();
+    // Construction du sujet au format demandé
+    // Ex: French 🇫🇷 MEN entries for 11-12 Apr 25 ➞ Prali (ITA)-FIS
+    const isMen = gender === "M";
+    const isWomen = gender === "W";
+    // Format date courte type '11-12 Apr 25'
+    const formatShortDate = (start: Date, end: Date) => {
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const startD = new Date(start);
+      const endD = new Date(end);
+      const sameMonth = startD.getMonth() === endD.getMonth();
+      const sameYear = startD.getFullYear() === endD.getFullYear();
+      const yearStr = String(endD.getFullYear()).slice(-2);
+      if (sameMonth && sameYear) {
+        return `${startD.getDate()}-${endD.getDate()} ${months[endD.getMonth()]} ${yearStr}`;
+      } else {
+        // fallback: full dates
+        return `${format(startD, "dd/MM/yyyy")}-${format(endD, "dd/MM/yyyy")}`;
+      }
+    };
+    const shortDate = formatShortDate(
+      new Date(eventData.startDate),
+      new Date(eventData.endDate)
+    );
+    const place = eventData.place || "";
+    const nation = eventData.placeNationCode
+      ? `(${eventData.placeNationCode})`
+      : "";
+    const subjectGender = isMen ? "MEN" : isWomen ? "WOMEN" : "TEAM";
+    const subjectLine =
+      `French 🇫🇷 ${subjectGender} entries for ${shortDate} ➞ ${place} ${nation}-FIS`
+        .replace(/ +/g, " ")
+        .replace(" ()", "")
+        .trim();
 
-    console.log("Subject:", fullSubject);
+    console.log("Subject:", subjectLine);
 
     const {data, error: emailError} = await resend.emails.send({
       from: fromAddress,
       to: to,
-      subject: fullSubject,
+      subject: subjectLine,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2c3e50;">${eventData.name}</h2>
-          <p>Lieu : ${eventData.place} (${eventData.placeNationCode})</p>
-          <p>Dates : du ${formattedStartDate} au ${formattedEndDate}</p>
-          <p>Catégorie : ${gender === "M" ? "Hommes (M)" : gender === "W" ? "Femmes (W)" : "Non précisé"}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f5f6f7; padding: 24px; color: #222;">
+          <p style="font-size: 18px; margin-bottom: 18px;">Dear Ski Friend,</p>
+          <p style="font-size: 16px; margin-bottom: 18px;">
+            Please find attached the French 🇫🇷 <b><i>${subjectGender}</i></b> Team entries for the following races:
+          </p>
+          <ul style="margin-bottom: 18px;">
+            <li style="font-size: 16px;">
+              <a style="color: #1976d2; text-decoration: underline;" href="https://www.inscriptions-fis-etranger.fr/inscriptions/${inscriptionId}">${shortDate}</a>
+              ➞ ${place} ${nation}-FIS
+            </li>
+          </ul>
+          <p style="font-size: 16px; margin-bottom: 18px;">
+            We kindly ask you to <b><a style="color: #1976d2; text-decoration: underline;" href="mailto:${to.join(",")}?subject=Re:%20${encodeURIComponent(subjectLine)}">reply to all</a></b> to confirm receipt, or if you need to provide us with any information or the program.
+          </p>
+          <p style="font-size: 16px; margin-bottom: 18px;">
+            We wish you great races, and please feel free to contact me at <a href="mailto:pmartin@ffs.fr" style="color: #1976d2; text-decoration: underline;">pmartin@ffs.fr</a> if you have any questions.
+          </p>
+          <p style="font-size: 16px;">Best regards.</p>
+          <div style="text-align: center; margin-top: 32px;">
+            <img src="https://i.imgur.com/tSwmL0f.png" alt="French Team Email Signature" style="max-width: 320px; width: 100%; height: auto; display: inline-block;" />
+          </div>
         </div>
       `,
       attachments: [
         {
-          filename: `inscription-${inscriptionId}-${gender ? gender : "ALL"}.pdf`,
+          filename: `${shortDate} ➞ ${place} ${nation}-FIS-${subjectGender}.pdf`
+            .replace(/ +/g, " ")
+            .replace(" ()", "")
+            .trim(),
           content: pdfAsBuffer,
         },
       ],

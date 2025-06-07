@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useState, useEffect, useMemo} from "react";
+import {toast} from "@/components/ui/use-toast";
 
 export type Recipient = {
   email: string;
@@ -254,6 +255,14 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     const element = document.getElementById("pdf-content");
     if (!element) return;
 
+    const toastInstance = toast({
+      title: "Envoi de l'email en cours...",
+      description: "Le PDF est en cours d'envoi aux destinataires.",
+      open: true,
+      duration: 1000000, // très long
+    });
+    const toastId = toastInstance.id;
+
     // Import dynamique pour éviter les erreurs de type
     const html2canvas = (await import("html2canvas-pro")).default;
     const jsPDF = (await import("jspdf")).default;
@@ -349,11 +358,34 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
           "PDF envoyé avec succès ! Email ID: " + (result.emailId || "N/A"),
         type: "success",
       });
+      // Met à jour le toast en succès
+      if (toastInstance && toastInstance.update) {
+        toastInstance.update({
+          id: toastId,
+          title: "Email envoyé !",
+          description: "Le PDF a bien été envoyé aux destinataires.",
+          open: true,
+          duration: 1000000,
+          variant: "default",
+        });
+      }
     } catch (error: any) {
       setSendStatus({
         message: error.message || "Une erreur est survenue lors de l'envoi.",
         type: "error",
       });
+      // Met à jour le toast en erreur
+      if (toastInstance && toastInstance.update) {
+        toastInstance.update({
+          id: toastId,
+          title: "Erreur lors de l'envoi",
+          description:
+            error.message || "Une erreur est survenue lors de l'envoi.",
+          open: true,
+          duration: 1000000,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSending(false);
     }
