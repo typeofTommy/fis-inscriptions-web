@@ -196,11 +196,21 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   }, [displayRecipients, customEmails]);
 
   useEffect(() => {
-    const initialSelection: Record<string, boolean> = {};
-    allRecipients.forEach((recipient) => {
-      initialSelection[recipient.email] = recipient.isResolvable;
+    setSelectedRecipients((prev) => {
+      const updated: Record<string, boolean> = {...prev};
+      allRecipients.forEach((recipient) => {
+        if (!(recipient.email in updated)) {
+          updated[recipient.email] = recipient.isResolvable;
+        }
+      });
+      // Optionnel : supprimer les emails qui n'existent plus dans allRecipients
+      Object.keys(updated).forEach((email) => {
+        if (!allRecipients.some((r) => r.email === email)) {
+          delete updated[email];
+        }
+      });
+      return updated;
     });
-    setSelectedRecipients(initialSelection);
   }, [allRecipients]);
 
   const handleCheckboxChange = (email: string, isResolvable: boolean) => {
