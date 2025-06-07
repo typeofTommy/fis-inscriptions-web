@@ -34,7 +34,7 @@ const PREDEFINED_EMAILS = {
     {email: "pmartin@ffs.fr", name: "P. Martin", reason: "Automatique FFS"},
     {
       email: "jmagnellet@orange.fr",
-      name: "J. Magnellet",
+      name: "J.M Agnellet",
       reason: "Automatique FFS",
     },
     {email: "dchastan@ffs.fr", name: "D. Chastan", reason: "Automatique FFS"},

@@ -130,24 +130,49 @@ export const CompetitorsTable = ({
               <td className="border-r border-black p-1 text-center">
                 {competitor.birthyear}
               </td>
-              {codexData.map((codex, colIndex) => (
-                <td
-                  key={codex.codex}
-                  className={`${
-                    colIndex === codexData.length - 1
-                      ? ""
-                      : "border-r border-black"
-                  } p-1 text-center text-md`}
-                >
-                  {competitor.codexNumbers?.includes(String(codex.codex))
-                    ? (codex.eventCode === "SL" && competitor.slpoints) ||
-                      (codex.eventCode === "GS" && competitor.gspoints) ||
-                      (codex.eventCode === "SG" && competitor.sgpoints) ||
-                      (codex.eventCode === "DH" && competitor.dhpoints) ||
-                      (codex.eventCode === "AC" && competitor.acpoints)
-                    : null}
-                </td>
-              ))}
+              {codexData.map((codex, colIndex) => {
+                let points: string | number | null | undefined = null;
+                if (competitor.codexNumbers?.includes(String(codex.codex))) {
+                  if (codex.eventCode === "SL") points = competitor.slpoints;
+                  else if (codex.eventCode === "GS")
+                    points = competitor.gspoints;
+                  else if (codex.eventCode === "SG")
+                    points = competitor.sgpoints;
+                  else if (codex.eventCode === "DH")
+                    points = competitor.dhpoints;
+                  else if (codex.eventCode === "AC")
+                    points = competitor.acpoints;
+                }
+                let displayValue: string | number | null = null;
+                if (String(points) === "0") {
+                  displayValue = 0;
+                } else if (
+                  points !== null &&
+                  points !== undefined &&
+                  String(points).trim() !== "" &&
+                  String(points) !== "-"
+                ) {
+                  displayValue = points;
+                } else if (
+                  competitor.codexNumbers?.includes(String(codex.codex))
+                ) {
+                  displayValue = "999";
+                } else {
+                  displayValue = null;
+                }
+                return (
+                  <td
+                    key={codex.codex}
+                    className={`${
+                      colIndex === codexData.length - 1
+                        ? ""
+                        : "border-r border-black"
+                    } p-1 text-center text-md`}
+                  >
+                    {displayValue}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
