@@ -19,7 +19,7 @@ export const GenderRow = ({gender}: {gender: "M" | "W"}) => {
                 height: "30px",
               }}
             />
-            <span className="ml-2 leading-none">L</span>
+            <span className="ml-2 leading-none">W</span>
           </div>
           <div className="flex items-center">
             <Checkbox

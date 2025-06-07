@@ -27,8 +27,8 @@ export const TableFooter = ({gender}: TableFooterProps) => {
               <Image
                 src="/pdf/ja-signature.png"
                 alt="Jean-Michel Agnellet Signature"
-                width={320}
-                height={128}
+                width={120}
+                height={48}
                 className="object-contain"
               />
             )}
