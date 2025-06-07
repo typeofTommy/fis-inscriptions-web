@@ -149,7 +149,7 @@ export function InscriptionsTable() {
           )
         )
       )
-    ).sort((a, b) => String(a).localeCompare(String(b)));
+    ).sort((a, b) => Number(a) - Number(b));
   }, [stableData]);
 
   const disciplineOptions = useMemo(() => {
@@ -396,8 +396,8 @@ export function InscriptionsTable() {
           {row.original.status === "open"
             ? "Ouverte"
             : row.original.status === "validated"
-            ? "Validée"
-            : row.original.status}
+              ? "Validée"
+              : row.original.status}
         </Badge>
       ),
       filterFn: (row, id, value) => {
