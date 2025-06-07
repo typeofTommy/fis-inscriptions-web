@@ -2,7 +2,7 @@ name: Import FIS Competitors CSV
 
 on:
   schedule:
-    - cron: "0 3 * * 1" # Every Monday at 3am UTC
+    - cron: "0 3 * * *" # Every day at 3am UTC
   workflow_dispatch: # Allow manual trigger
 
 jobs:
