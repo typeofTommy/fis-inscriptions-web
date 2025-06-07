@@ -9,7 +9,6 @@ const BASE_URL =
   "https://data.fis-ski.com/fis_athletes/ajax/fispointslistfunctions/export_fispointslist.html?export_csv=true&sectorcode=AL&seasoncode=2025&listid=";
 const LAST_LISTID_FILE = path.join(__dirname, ".last-listid");
 const CSV_FILENAME = process.argv[2] || "FIS-points-list.csv";
-const HEADER_SIGNATURE = "FIS Code"; // Le header attendu dans le CSV
 const MAX_ATTEMPTS = 50; // Sécurité pour éviter une boucle infinie
 
 // Check for database URL
@@ -37,8 +36,23 @@ const fetchCsv = (listid) => {
   });
 };
 
-const isValidCsv = (csv) => {
-  return csv && csv.includes(HEADER_SIGNATURE) && csv.trim().length > 100; // 100 = heuristique anti-vide
+const isValidCsv = (csv, expectedListid) => {
+  if (!csv || csv.trim().length < 100) return false;
+  const lines = csv.split(/\r?\n/).filter(Boolean);
+  if (lines.length < 2) return false;
+  const header = lines[0];
+  const firstData = lines[1];
+  // Vérifie les colonnes clés
+  if (
+    !header.includes("Listid") ||
+    !header.includes("Competitorid") ||
+    !header.includes("Fiscode")
+  )
+    return false;
+  // Vérifie la première valeur de la première ligne de données
+  const firstCell = firstData.split(",")[0];
+  if (String(firstCell).trim() !== String(expectedListid)) return false;
+  return true;
 };
 
 const readLastListId = () => {
@@ -213,7 +227,7 @@ const main = async () => {
   while (attempts < MAX_ATTEMPTS) {
     console.log(`Test listid=${listid}...`);
     const csv = await fetchCsv(listid);
-    if (isValidCsv(csv)) {
+    if (isValidCsv(csv, listid)) {
       lastValidListId = listid;
       lastValidCsv = csv;
       listid++;
