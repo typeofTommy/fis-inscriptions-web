@@ -27,6 +27,19 @@ interface UpdateEventDataModalProps {
 // const getDeletedDiff = (_original: any, _updated: any) : any => ({});
 // const getUpdatedDiff = (_original: any, _updated: any) : any => ({});
 
+// Fonction utilitaire pour filtrer les compétitions et catégories 'TRA'
+const filterOutTRA = (eventData: Competition): Competition => {
+  return {
+    ...eventData,
+    competitions: Array.isArray(eventData.competitions)
+      ? eventData.competitions.filter((comp) => comp.categoryCode !== "TRA")
+      : [],
+    categoryCodes: Array.isArray(eventData.categoryCodes)
+      ? eventData.categoryCodes.filter((code) => code !== "TRA")
+      : [],
+  };
+};
+
 export const UpdateEventDataModal = ({
   isOpen,
   onClose,
@@ -375,7 +388,7 @@ export const UpdateEventDataModal = ({
 
   const handleUpdate = () => {
     if (updatedEventData) {
-      updateMutation.mutate(updatedEventData);
+      updateMutation.mutate(filterOutTRA(updatedEventData));
     }
   };
 

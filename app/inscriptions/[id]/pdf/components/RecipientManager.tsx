@@ -458,7 +458,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
               }}
               placeholder="adresse@example.com"
               disabled={isSending}
-              className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:opacity-50"
+              className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:opacity-50 px-3"
             />
             <button
               type="button"

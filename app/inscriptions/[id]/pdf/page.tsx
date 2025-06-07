@@ -293,6 +293,29 @@ export default async function PdfPage({
     }
   });
 
+  // Ajout du destinataire spécifique à l'event (emailEntries)
+  if (
+    eventData?.contactInformation?.emailEntries &&
+    typeof eventData.contactInformation.emailEntries === "string" &&
+    eventData.contactInformation.emailEntries.trim() !== ""
+  ) {
+    // On évite les doublons d'email
+    const alreadyPresent = recipients.some(
+      (r) =>
+        r.email.toLowerCase() ===
+        eventData.contactInformation.emailEntries.toLowerCase()
+    );
+    if (!alreadyPresent) {
+      recipients.push({
+        name: "Contact compétition",
+        surname: "",
+        email: eventData.contactInformation.emailEntries,
+        reason: "Contact spécifique à l'événement",
+        isResolvable: true,
+      });
+    }
+  }
+
   const finalRecipientsMap = new Map<string, Recipient>();
 
   recipients.forEach((rec) => {
