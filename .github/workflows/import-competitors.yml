@@ -26,3 +26,12 @@ jobs:
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: node scripts/import-competitors.cjs FIS-points-list.csv
+      - name: Commit and push .last-listid if changed
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add scripts/.last-listid
+          git commit -m "chore: update last-listid [skip ci]" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
