@@ -6,8 +6,6 @@ import {
   inscriptionCompetitors,
   inscriptions,
 } from "@/drizzle/schemaInscriptions";
-import {sendNotificationEmail} from "@/app/lib/sendNotificationEmail";
-import {getAuth} from "@clerk/nextjs/server";
 
 export async function GET(
   req: NextRequest,
@@ -179,7 +177,6 @@ export async function PUT(
 ) {
   const {id} = await params;
   const inscriptionId = Number(id);
-  const {userId} = getAuth(req);
   if (!inscriptionId) {
     return NextResponse.json({error: "Missing inscriptionId"}, {status: 400});
   }
@@ -255,39 +252,6 @@ export async function PUT(
       await db.insert(inscriptionCompetitors).values(newEntries);
     }
 
-    const [competitor] = await db
-      .select()
-      .from(competitors)
-      .where(eq(competitors.competitorid, Number(competitorId)));
-    const [insc] = await db
-      .select()
-      .from(inscriptions)
-      .where(eq(inscriptions.id, inscriptionId));
-    const codexList = Array.isArray(codexNumbers)
-      ? codexNumbers.join(", ")
-      : codexNumbers;
-    await sendNotificationEmail({
-      to: ["pmartin@ffs.fr"],
-      subject: `Modification d'inscription d'un compétiteur (id: ${inscriptionId})`,
-      html: `
-        <div style='font-family: Arial, sans-serif; max-width:600px; margin:0 auto; background:#f9f9f9; padding:24px; border-radius:8px;'>
-          <h2 style='color:#1976d2;'>Modification d'inscription</h2>
-          <table style='margin-bottom:24px;'>
-            <tr><td style='font-weight:bold;'>Événement :</td><td>${insc?.eventData?.place || "-"}</td></tr>
-            <tr><td style='font-weight:bold;'>Codex :</td><td>${codexList}</td></tr>
-            <tr><td style='font-weight:bold;'>Nom :</td><td>${competitor?.lastname || "-"}</td></tr>
-            <tr><td style='font-weight:bold;'>Prénom :</td><td>${competitor?.firstname || "-"}</td></tr>
-            <tr><td style='font-weight:bold;'>Modifié par :</td><td>__USER__</td></tr>
-          </table>
-          <a href='https://www.inscriptions-fis-etranger.fr/inscriptions/${inscriptionId}' style='display:inline-block; padding:12px 28px; background:#1976d2; color:#fff; border-radius:6px; text-decoration:none; font-weight:bold; font-size:16px;'>Voir l'événement</a>
-          <div style='margin-top:32px; color:#888; font-size:13px;'>
-            ${new Date().toLocaleString("fr-FR")}
-          </div>
-        </div>
-      `,
-      userId: userId ?? undefined,
-    });
-
     return NextResponse.json({
       message: "Competitor registrations updated successfully",
     });
@@ -306,7 +270,6 @@ export async function DELETE(
 ) {
   const {id} = await params;
   const inscriptionId = Number(id);
-  const {userId} = getAuth(req);
   if (!inscriptionId) {
     return NextResponse.json({error: "Missing inscriptionId"}, {status: 400});
   }
@@ -342,43 +305,6 @@ export async function DELETE(
     .delete(inscriptionCompetitors)
     .where(whereClause)
     .returning();
-
-  try {
-    const [competitor] = await db
-      .select()
-      .from(competitors)
-      .where(eq(competitors.competitorid, Number(competitorId)));
-    const [insc] = await db
-      .select()
-      .from(inscriptions)
-      .where(eq(inscriptions.id, inscriptionId));
-    const codexList = Array.isArray(codexNumbers)
-      ? codexNumbers.join(", ")
-      : codexNumbers;
-    await sendNotificationEmail({
-      to: ["pmartin@ffs.fr"],
-      subject: `Suppression d'un compétiteur (id: ${inscriptionId})`,
-      html: `
-        <div style='font-family: Arial, sans-serif; max-width:600px; margin:0 auto; background:#f9f9f9; padding:24px; border-radius:8px;'>
-          <h2 style='color:#1976d2;'>Suppression d'un compétiteur</h2>
-          <table style='margin-bottom:24px;'>
-            <tr><td style='font-weight:bold;'>Événement :</td><td>${insc?.eventData?.place || "-"}</td></tr>
-            <tr><td style='font-weight:bold;'>Codex :</td><td>${codexList}</td></tr>
-            <tr><td style='font-weight:bold;'>Nom :</td><td>${competitor?.lastname || "-"}</td></tr>
-            <tr><td style='font-weight:bold;'>Prénom :</td><td>${competitor?.firstname || "-"}</td></tr>
-            <tr><td style='font-weight:bold;'>Supprimé par :</td><td>__USER__</td></tr>
-          </table>
-          <a href='https://www.inscriptions-fis-etranger.fr/inscriptions/${inscriptionId}' style='display:inline-block; padding:12px 28px; background:#1976d2; color:#fff; border-radius:6px; text-decoration:none; font-weight:bold; font-size:16px;'>Voir l'événement</a>
-          <div style='margin-top:32px; color:#888; font-size:13px;'>
-            ${new Date().toLocaleString("fr-FR")}
-          </div>
-        </div>
-      `,
-      userId: userId ?? undefined,
-    });
-  } catch (e) {
-    console.error(e);
-  }
 
   return NextResponse.json({deleted});
 }

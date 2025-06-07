@@ -50,6 +50,7 @@ export async function POST(
       .values(toInsert)
       .onConflictDoNothing();
     // Envoi email notification
+    /*
     try {
       // Récupérer infos compétiteur et event
       const [competitor] = await db
@@ -64,7 +65,7 @@ export async function POST(
         ? codexNumbers.join(", ")
         : codexNumbers;
       await sendNotificationEmail({
-        to: ["pmartin@ffs.fr"],
+        to: ["tommymartin1234@gmail.com"],
         subject: `Ajout de compétiteur à l'événement (id: ${inscriptionId})`,
         html: `
           <div style='font-family: Arial, sans-serif; max-width:600px; margin:0 auto; background:#f9f9f9; padding:24px; border-radius:8px;'>
@@ -87,6 +88,7 @@ export async function POST(
     } catch (e) {
       console.error(e);
     }
+    */
   }
 
   return NextResponse.json({success: true});
