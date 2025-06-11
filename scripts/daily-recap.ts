@@ -6,6 +6,9 @@ import {clerkClient} from "@clerk/clerk-sdk-node";
 
 const dbUrl = process.env.NEON_DATABASE_URL!;
 const emailTo = process.env.RECAP_EMAIL_TO!.split(",");
+const emailCc = process.env.RECAP_EMAIL_CC
+  ? process.env.RECAP_EMAIL_CC.split(",")
+  : undefined;
 
 const main = async () => {
   const client = new Client({connectionString: dbUrl});
@@ -174,6 +177,7 @@ const main = async () => {
     to: emailTo,
     subject: "Récapitulatif quotidien des inscriptions",
     html,
+    cc: emailCc,
   });
 
   console.log("Récapitulatif envoyé !");

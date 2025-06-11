@@ -6,11 +6,13 @@ export const sendNotificationEmail = async ({
   subject,
   html,
   userId,
+  cc,
 }: {
   to: string[];
   subject: string;
   html: string;
   userId?: string;
+  cc?: string[];
 }) => {
   let userDisplay = userId;
   if (userId) {
@@ -30,5 +32,6 @@ export const sendNotificationEmail = async ({
     to,
     subject,
     html: html.replace(/__USER__/g, userDisplay || "-"),
+    ...(cc ? {cc} : {}),
   });
 };
