@@ -2,7 +2,7 @@ name: Daily Recap
 
 on:
   schedule:
-    - cron: "0 20 * * *" # tous les jours à 20h UTC
+    - cron: "0 18 * * *" # tous les jours à 18h UTC
   workflow_dispatch:
 
 jobs:
