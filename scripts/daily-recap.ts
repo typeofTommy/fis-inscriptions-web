@@ -21,7 +21,8 @@ const main = async () => {
       ic.created_at,
       c.firstname,
       c.lastname,
-      ic.codex_number
+      ic.codex_number,
+      ic.added_by
     FROM "inscriptionsDB".inscription_competitors ic
     JOIN "inscriptionsDB".competitors c ON ic.competitor_id = c.competitorid
     JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
@@ -64,40 +65,81 @@ const main = async () => {
   const eventsById = groupBy(events, "event_id");
   const competitorsByEvent = groupBy(competitors, "event_id");
 
-  let html = `<h2>Récapitulatif quotidien des inscriptions</h2>`;
-
-  // Créations d'événements
-  html += `<h3>Événements créés</h3>`;
-  if (Object.keys(eventsById).length === 0) {
-    html += `<i>Aucun événement créé aujourd'hui.</i>`;
-  } else {
-    for (const [, evts] of Object.entries(eventsById)) {
-      const evt = evts[0];
-      html += `<b>Codex ${evt.event_id} - ${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</b><br>`;
-      html += `Créé le : ${evt.created_at}<br><br>`;
+  // Récupère tous les userId Clerk uniques pour fetch les emails
+  const userIds = Array.from(
+    new Set(competitors.map((c) => c.added_by).filter(Boolean))
+  );
+  const userIdToEmail: Record<string, string> = {};
+  for (const userId of userIds) {
+    try {
+      const user = await (
+        await import("@clerk/clerk-sdk-node")
+      ).clerkClient.users.getUser(userId);
+      userIdToEmail[userId] =
+        user.emailAddresses?.[0]?.emailAddress || user.username || user.id;
+    } catch {
+      userIdToEmail[userId] = userId;
     }
   }
 
-  // Ajouts de compétiteurs
-  html += `<h3>Ajouts de coureurs</h3>`;
-  if (Object.keys(competitorsByEvent).length === 0) {
-    html += `<i>Aucun ajout de coureur aujourd'hui.</i>`;
-  } else {
-    for (const [, comps] of Object.entries(competitorsByEvent)) {
-      const evt = comps[0];
-      html += `<b>Codex ${evt.event_id} - ${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</b><ul>`;
-      // Group by codex_number
-      const byCodex = groupBy(comps, "codex_number");
-      for (const [codex, runners] of Object.entries(byCodex)) {
-        html += `<li><b>Codex ${codex}</b><ul>`;
-        for (const runner of runners) {
-          html += `<li>${runner.firstname} ${runner.lastname} (ajouté le ${runner.created_at})</li>`;
-        }
-        html += `</ul></li>`;
+  const html = `
+  <div style="font-family:Segoe UI,Arial,sans-serif;background:#f9fafb;padding:32px;">
+    <h2 style="color:#2563eb;">Récapitulatif quotidien des inscriptions</h2>
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#111827;">Événements créés</h3>
+      ${
+        Object.keys(eventsById).length === 0
+          ? `<i style='color:#6b7280;'>Aucun événement créé aujourd'hui.</i>`
+          : Object.values(eventsById)
+              .map((evts) => {
+                const evt = evts[0];
+                return `<div style='margin-bottom:16px;'>
+              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.event_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a><br>
+              <span style='color:#6b7280;'>Créé le : ${evt.created_at}</span>
+            </div>`;
+              })
+              .join("")
       }
-      html += `</ul>`;
-    }
-  }
+    </div>
+    <div>
+      <h3 style="color:#111827;">Ajouts de coureurs</h3>
+      ${
+        Object.keys(competitorsByEvent).length === 0
+          ? `<i style='color:#6b7280;'>Aucun ajout de coureur aujourd'hui.</i>`
+          : Object.values(competitorsByEvent)
+              .map((comps) => {
+                const evt = comps[0];
+                return `<div style='margin-bottom:24px;'>
+              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.event_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a>
+              <ul style='margin:8px 0 0 16px;padding:0;'>
+                ${(() => {
+                  const byCodex = groupBy(comps, "codex_number");
+                  return Object.entries(byCodex)
+                    .map(
+                      ([codex, runners]) => `
+                    <li style='margin-bottom:8px;'>
+                      <span style='color:#111827;font-weight:500;'>Codex ${codex}</span>
+                      <ul style='margin:4px 0 0 16px;padding:0;'>
+                        ${runners
+                          .map((runner) => {
+                            const email =
+                              userIdToEmail[runner.added_by] || runner.added_by;
+                            return `<li style='color:#374151;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(ajouté le ${runner.created_at} par ${email})</span></li>`;
+                          })
+                          .join("")}
+                      </ul>
+                    </li>
+                  `
+                    )
+                    .join("");
+                })()}
+              </ul>
+            </div>`;
+              })
+              .join("")
+      }
+    </div>
+  </div>`;
 
   // Envoi du mail via Resend
   await sendNotificationEmail({
