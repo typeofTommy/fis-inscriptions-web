@@ -1,13 +1,7 @@
 import {NextRequest, NextResponse} from "next/server";
 import {db} from "@/app/db/inscriptionsDB";
-import {
-  inscriptionCompetitors,
-  competitors,
-  inscriptions,
-} from "@/drizzle/schemaInscriptions";
+import {inscriptionCompetitors} from "@/drizzle/schemaInscriptions";
 import {getAuth} from "@clerk/nextjs/server";
-import {sendNotificationEmail} from "@/app/lib/sendNotificationEmail";
-import {eq} from "drizzle-orm";
 
 export async function POST(
   req: NextRequest,
