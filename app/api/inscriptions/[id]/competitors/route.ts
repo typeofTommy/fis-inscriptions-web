@@ -6,6 +6,7 @@ import {
   inscriptionCompetitors,
   inscriptions,
 } from "@/drizzle/schemaInscriptions";
+import {clerkClient} from "@clerk/clerk-sdk-node";
 
 export async function GET(
   req: NextRequest,
@@ -150,7 +151,7 @@ export async function GET(
       const safeUserId = typeof userId === "string" ? userId : String(userId);
       if (!safeUserId || safeUserId === "Unknown") return;
       try {
-        const user = await clerk.users.getUser(safeUserId);
+        const user = await clerkClient.users.getUser(safeUserId);
         userEmailMap[safeUserId] =
           user?.emailAddresses?.[0]?.emailAddress || safeUserId;
       } catch {
