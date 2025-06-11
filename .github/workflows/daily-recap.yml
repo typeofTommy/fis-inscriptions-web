@@ -1,0 +1,25 @@
+name: Daily Recap
+
+on:
+  schedule:
+    - cron: "0 20 * * *" # tous les jours à 20h UTC
+  workflow_dispatch:
+
+jobs:
+  recap:
+    runs-on: ubuntu-latest
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      RECAP_EMAIL_TO: ${{ secrets.RECAP_EMAIL_TO }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }} # optionnel
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: pnpm install
+      - run: pnpm tsx scripts/daily-recap.ts

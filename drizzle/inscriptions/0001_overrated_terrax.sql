@@ -1,0 +1,1 @@
+ALTER TABLE "inscriptionsDB"."inscription_competitors" ADD COLUMN "created_at" timestamp DEFAULT now();
