@@ -1,5 +1,7 @@
 import {Client} from "pg";
 import {sendNotificationEmail} from "../app/lib/sendNotificationEmail";
+import {format} from "date-fns";
+import {fr} from "date-fns/locale";
 
 const dbUrl = process.env.NEON_DATABASE_URL!;
 const emailTo = process.env.RECAP_EMAIL_TO!.split(",");
@@ -75,8 +77,13 @@ const main = async () => {
       const user = await (
         await import("@clerk/clerk-sdk-node")
       ).clerkClient.users.getUser(userId);
-      userIdToEmail[userId] =
-        user.emailAddresses?.[0]?.emailAddress || user.username || user.id;
+      const email =
+        user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId)
+          ?.emailAddress ||
+        user.emailAddresses?.[0]?.emailAddress ||
+        user.username ||
+        user.id;
+      userIdToEmail[userId] = email;
     } catch {
       userIdToEmail[userId] = userId;
     }
@@ -93,9 +100,14 @@ const main = async () => {
           : Object.values(eventsById)
               .map((evts) => {
                 const evt = evts[0];
+                const formattedDate = format(
+                  new Date(evt.created_at),
+                  "dd MMMM yyyy 'à' HH:mm",
+                  {locale: fr}
+                );
                 return `<div style='margin-bottom:16px;'>
               <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.event_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a><br>
-              <span style='color:#6b7280;'>Créé le : ${evt.created_at}</span>
+              <span style='color:#6b7280;'>Créé le : ${formattedDate}</span>
             </div>`;
               })
               .join("")
@@ -124,7 +136,12 @@ const main = async () => {
                           .map((runner) => {
                             const email =
                               userIdToEmail[runner.added_by] || runner.added_by;
-                            return `<li style='color:#374151;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(ajouté le ${runner.created_at} par ${email})</span></li>`;
+                            const formattedDate = format(
+                              new Date(runner.created_at),
+                              "dd MMMM yyyy 'à' HH:mm",
+                              {locale: fr}
+                            );
+                            return `<li style='color:#374151;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(ajouté le ${formattedDate} par ${email})</span></li>`;
                           })
                           .join("")}
                       </ul>
