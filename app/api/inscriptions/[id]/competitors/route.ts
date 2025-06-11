@@ -7,6 +7,7 @@ import {
   inscriptions,
 } from "@/drizzle/schemaInscriptions";
 import {clerkClient} from "@clerk/clerk-sdk-node";
+import {auth} from "@clerk/nextjs/server";
 
 export async function GET(
   req: NextRequest,
@@ -176,6 +177,7 @@ export async function PUT(
   req: NextRequest,
   {params}: {params: Promise<{id: string}>}
 ) {
+  const {userId} = auth();
   const {id} = await params;
   const inscriptionId = Number(id);
   if (!inscriptionId) {
