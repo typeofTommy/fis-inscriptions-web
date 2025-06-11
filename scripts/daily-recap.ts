@@ -2,6 +2,7 @@ import {Client} from "pg";
 import {sendNotificationEmail} from "../app/lib/sendNotificationEmail";
 import {format} from "date-fns";
 import {fr} from "date-fns/locale";
+import {clerkClient} from "@clerk/clerk-sdk-node";
 
 const dbUrl = process.env.NEON_DATABASE_URL!;
 const emailTo = process.env.RECAP_EMAIL_TO!.split(",");
@@ -74,9 +75,7 @@ const main = async () => {
   const userIdToEmail: Record<string, string> = {};
   for (const userId of userIds) {
     try {
-      const user = await (
-        await import("@clerk/clerk-sdk-node")
-      ).clerkClient.users.getUser(userId);
+      const user = await clerkClient.users.getUser(userId);
       const email =
         user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId)
           ?.emailAddress ||
@@ -84,8 +83,9 @@ const main = async () => {
         user.username ||
         user.id;
       userIdToEmail[userId] = email;
-    } catch {
+    } catch (err) {
       userIdToEmail[userId] = userId;
+      console.error("Erreur Clerk pour", userId, err);
     }
   }
 
