@@ -106,7 +106,7 @@ const main = async () => {
                   {locale: fr}
                 );
                 return `<div style='margin-bottom:16px;'>
-              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.event_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a><br>
+              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a><br>
               <span style='color:#6b7280;'>Créé le : ${formattedDate}</span>
             </div>`;
               })
@@ -122,7 +122,7 @@ const main = async () => {
               .map((comps) => {
                 const evt = comps[0];
                 return `<div style='margin-bottom:24px;'>
-              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.event_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a>
+              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a>
               <ul style='margin:8px 0 0 16px;padding:0;'>
                 ${(() => {
                   const byCodex = groupBy(comps, "codex_number");
