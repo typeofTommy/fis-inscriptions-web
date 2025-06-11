@@ -43,7 +43,8 @@ const main = async () => {
       event_data->>'place' AS event_location,
       event_data->>'startDate' AS event_start_date,
       event_data->>'endDate' AS event_end_date,
-      created_at
+      created_at,
+      created_by
     FROM "inscriptionsDB".inscriptions
     WHERE created_at >= CURRENT_DATE
       AND created_at < CURRENT_DATE + INTERVAL '1 day'
@@ -51,6 +52,12 @@ const main = async () => {
   `);
 
   await client.end();
+
+  // Si aucun événement ni ajout de compétiteur, on n'envoie pas d'email
+  if (events.length === 0 && competitors.length === 0) {
+    console.log("Aucun changement aujourd'hui, aucun email envoyé.");
+    return;
+  }
 
   // Groupement utilitaire
   const groupBy = <T, K extends keyof T>(arr: T[], key: K) =>
@@ -68,9 +75,12 @@ const main = async () => {
   const eventsById = groupBy(events, "event_id");
   const competitorsByEvent = groupBy(competitors, "event_id");
 
-  // Récupère tous les userId Clerk uniques pour fetch les emails
+  // Récupère tous les userId Clerk uniques pour fetch les emails (added_by + created_by)
   const userIds = Array.from(
-    new Set(competitors.map((c) => c.added_by).filter(Boolean))
+    new Set([
+      ...competitors.map((c) => c.added_by).filter(Boolean),
+      ...events.map((e) => e.created_by).filter(Boolean),
+    ])
   );
   const userIdToEmail: Record<string, string> = {};
   for (const userId of userIds) {
@@ -105,9 +115,10 @@ const main = async () => {
                   "dd MMMM yyyy 'à' HH:mm",
                   {locale: fr}
                 );
+                const email = userIdToEmail[evt.created_by] || evt.created_by;
                 return `<div style='margin-bottom:16px;'>
               <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a><br>
-              <span style='color:#6b7280;'>Créé le : ${formattedDate}</span>
+              <span style='color:#6b7280;'>Créé le : ${formattedDate} par ${email}</span>
             </div>`;
               })
               .join("")
