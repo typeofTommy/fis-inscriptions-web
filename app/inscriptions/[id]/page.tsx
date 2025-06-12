@@ -55,27 +55,29 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
     !!inscription?.eventData?.genderCodes?.includes("W");
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-4 md:py-8">
       <InscriptionDetails
         id={params.id}
         genderFilter={genderFilter}
         setGenderFilter={setGenderFilter}
         isMixedEvent={isMixedEvent}
       />
-      <div className="bg-white p-4 mt-6">
+      <div className="bg-white p-3 md:p-4 mt-4 md:mt-6">
         <Tabs defaultValue="recap" className="w-full">
           <TabsList className="inline-flex flex-wrap bg-slate-100 rounded-md border border-slate-200 shadow-sm p-0">
             <TabsTrigger
               value="recap"
-              className="px-7 py-2 text-base font-bold transition-colors duration-150 border-none rounded-l-md data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
+              className="px-4 md:px-7 py-2 text-sm md:text-base font-bold transition-colors duration-150 border-none rounded-l-md data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
             >
-              Récapitulatif
+              <span className="md:hidden">Récap</span>
+              <span className="hidden md:inline">Récapitulatif</span>
             </TabsTrigger>
             <TabsTrigger
               value="details_competitors"
-              className="px-7 py-2 text-base font-bold transition-colors duration-150 border-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
+              className="px-4 md:px-7 py-2 text-sm md:text-base font-bold transition-colors duration-150 border-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
             >
-              Par codex
+              <span className="md:hidden">Codex</span>
+              <span className="hidden md:inline">Par codex</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="recap">

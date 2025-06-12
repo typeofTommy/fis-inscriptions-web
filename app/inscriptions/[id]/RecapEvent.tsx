@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
+import {CompetitorCard} from "./CompetitorCard";
 
 type InscriptionCompetitorWithCodex = InscriptionCompetitor & {
   codexNumbers: string[];
@@ -298,13 +299,13 @@ const CompetitorRegistrationDialog = React.memo(
             <Settings className="w-5 h-5 text-slate-500" />
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="w-[95vw] md:w-auto max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base md:text-lg">
               Gérer les inscriptions de {competitor.firstname}{" "}
               {competitor.lastname}
             </DialogTitle>
-            <DialogDescription className="mt-2">
+            <DialogDescription className="mt-2 text-sm">
               Cochez les codex auxquels vous souhaitez inscrire le compétiteur.
               Décochez ceux dont vous souhaitez le désinscrire. Les codex
               affichés sont filtrés selon le sexe du compétiteur.
@@ -686,9 +687,9 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
   });
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex items-center gap-4 mb-4 justify-end">
-        <div className="flex gap-2 items-center">
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 md:gap-4 mb-4 justify-end">
+        <div className="flex gap-1 md:gap-2 items-center flex-wrap">
           {permissionToEdit && inscription?.status === "open" ? (
             genderFilter === "W" ? (
               <AddCompetitorModal
@@ -697,6 +698,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                 gender="W"
                 codexData={inscription?.eventData.competitions || []}
                 triggerText="Ajouter une compétitrice"
+                triggerTextMobile="+ Femme"
               />
             ) : genderFilter === "M" ? (
               <AddCompetitorModal
@@ -705,6 +707,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                 gender="M"
                 codexData={inscription?.eventData.competitions || []}
                 triggerText="Ajouter un compétiteur"
+                triggerTextMobile="+ Homme"
               />
             ) : // genderFilter === "both"
             codexSexes.length === 1 ? (
@@ -718,34 +721,39 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                     ? "Ajouter une compétitrice"
                     : "Ajouter un compétiteur"
                 }
+                triggerTextMobile={
+                  codexSexes[0] === "W" ? "+ Femme" : "+ Homme"
+                }
               />
             ) : (
               // genderFilter === "both" && codexSexes has multiple
               <>
-                <span className="text-sm">
+                <span className="text-xs md:text-sm hidden md:inline">
                   Ajouter un{addGender === "W" ? "e" : ""} :
                 </span>
                 <button
                   type="button"
-                  className={`px-3 py-1 rounded border cursor-pointer ${
+                  className={`px-2 md:px-3 py-1 rounded border cursor-pointer text-xs md:text-sm ${
                     addGender === "W"
                       ? "bg-blue-100 border-blue-500 text-blue-700"
                       : "bg-white border-gray-300"
                   }`}
                   onClick={() => setAddGender("W")}
                 >
-                  Femme
+                  <span className="md:hidden">F</span>
+                  <span className="hidden md:inline">Femme</span>
                 </button>
                 <button
                   type="button"
-                  className={`px-3 py-1 rounded border cursor-pointer ${
+                  className={`px-2 md:px-3 py-1 rounded border cursor-pointer text-xs md:text-sm ${
                     addGender === "M"
                       ? "bg-blue-100 border-blue-500 text-blue-700"
                       : "bg-white border-gray-300"
                   }`}
                   onClick={() => setAddGender("M")}
                 >
-                  Homme
+                  <span className="md:hidden">H</span>
+                  <span className="hidden md:inline">Homme</span>
                 </button>
                 <AddCompetitorModal
                   inscriptionId={inscriptionId}
@@ -757,6 +765,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                       ? "Ajouter compétitrice"
                       : "Ajouter compétiteur"
                   }
+                  triggerTextMobile="+"
                 />
               </>
             )
@@ -773,7 +782,10 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
           )}
         </div>
       </div>
-      <Table>
+      
+      {/* Vue desktop - table */}
+      <div className="hidden md:block overflow-x-auto">
+        <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -828,11 +840,62 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
             );
           })}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
+
+      {/* Vue mobile - cartes */}
+      <div className="md:hidden space-y-3">
+        {displayedGroups.map((group) => {
+          const groupRows = sortedRows.filter(
+            (row) => row.original.gender === group.value
+          );
+          
+          if (genderFilter !== "both" && group.value !== genderFilter) {
+            return null;
+          }
+          if (groupRows.length === 0) return null;
+
+          return (
+            <div key={group.value} className="space-y-3">
+              {/* En-tête de groupe */}
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <h3 className="font-bold text-base text-slate-700">{group.label}</h3>
+              </div>
+              
+              {/* Cartes des compétiteurs */}
+              {groupRows.map((row) => (
+                <CompetitorCard
+                  key={row.id}
+                  competitor={row.original}
+                  competitions={inscription?.eventData?.competitions || []}
+                  genderFilter={genderFilter}
+                  permissionToEdit={permissionToEdit}
+                  inscriptionStatus={inscription?.status || ""}
+                  onManageRegistrations={(competitorId) => setOpenDialog(competitorId)}
+                />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
       <TotalInscriptionsInfo
         filteredCount={filteredCompetitors.length}
         genderFilter={genderFilter}
       />
+
+      {/* Dialog pour la gestion des inscriptions - mobile */}
+      {openDialog && (
+        <CompetitorRegistrationDialog
+          competitor={filteredCompetitors.find(c => c.competitorid === openDialog)!}
+          isOpen={true}
+          onOpenChange={(open) => setOpenDialog(open ? openDialog : null)}
+          inscriptionId={inscriptionId}
+          allEventCodexes={inscription?.eventData?.competitions || []}
+          inscriptionStatus={inscription?.status || ""}
+          onUpdate={handleUpdateCompetitor}
+        />
+      )}
     </div>
   );
 };

@@ -29,6 +29,7 @@ import {usePermissionToEdit} from "./usePermissionToEdit";
 import {InscriptionCompetitor} from "@/app/types";
 import {format} from "date-fns";
 import {CompetitionItem} from "@/app/types";
+import {CompetitorCodexCard} from "./CompetitorCodexCard";
 
 export const useInscriptionCompetitors = (
   inscriptionId: string,
@@ -172,7 +173,10 @@ export const Competitors = ({
           l&apos;inscription est <b>ouverte</b>.
         </div>
       )}
-      <Table>
+      
+      {/* Vue desktop - table */}
+      <div className="hidden md:block">
+        <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Nom</TableHead>
@@ -294,7 +298,85 @@ export const Competitors = ({
               </TableRow>
             ))}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
+
+      {/* Vue mobile - cartes */}
+      <div className="md:hidden space-y-3">
+        {(competitors || [])
+          .sort((a, b) => {
+            const aPoints = a.points;
+            const bPoints = b.points;
+            if (aPoints === null && bPoints === null) return 0;
+            if (aPoints === null) return 1;
+            if (bPoints === null) return -1;
+            return aPoints - bPoints;
+          })
+          .map((competitor) => (
+            <CompetitorCodexCard
+              key={competitor.competitorid}
+              competitor={competitor}
+              permissionToEdit={permissionToEdit}
+              inscriptionStatus={inscription?.status || ""}
+              onManageRegistrations={(competitorId) => setOpenDialog(competitorId)}
+            />
+          ))}
+      </div>
+
+      {/* Dialog pour la gestion des inscriptions - mobile */}
+      {openDialog && (
+        <Dialog
+          open={true}
+          onOpenChange={(open) => setOpenDialog(open ? openDialog : null)}
+        >
+          <DialogContent className="w-[95vw] md:w-auto max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-base md:text-lg">
+                Gérer les inscriptions de{" "}
+                {competitors?.find(c => c.competitorid === openDialog)?.firstname}{" "}
+                {competitors?.find(c => c.competitorid === openDialog)?.lastname}
+              </DialogTitle>
+              <DialogDescription className="mt-2 text-sm">
+                Cochez les codex auxquels vous souhaitez inscrire le compétiteur.
+                Décochez ceux dont vous souhaitez le désinscrire.
+              </DialogDescription>
+            </DialogHeader>
+            <DesinscriptionCodexList
+              inscriptionId={inscriptionId}
+              competitorId={openDialog}
+              selectedCodex={selectedCodex}
+              setSelectedCodex={setSelectedCodex}
+              allEventCodexes={inscription?.eventData?.competitions || []}
+              genderFilterOfCompetitor={
+                competitors?.find(c => c.competitorid === openDialog)?.gender
+              }
+            />
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="ghost" className="cursor-pointer">
+                  Annuler
+                </Button>
+              </DialogClose>
+              <Button
+                onClick={() => {
+                  updateCompetitor({
+                    competitorId: openDialog,
+                    codexNumbers: selectedCodex,
+                  });
+                  setOpenDialog(null);
+                }}
+                disabled={updating}
+                variant="default"
+                className="cursor-pointer"
+              >
+                {updating
+                  ? "Mise à jour..."
+                  : "Mettre à jour les inscriptions"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

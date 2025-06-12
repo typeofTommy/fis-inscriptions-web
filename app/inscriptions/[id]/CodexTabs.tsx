@@ -11,6 +11,13 @@ import AddCompetitorModal from "./AddCompetitorModal";
 import {usePermissionToEdit} from "./usePermissionToEdit";
 import {Inscription} from "@/app/types";
 import {Loader2} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CodexTabsProps {
   inscriptionId: string;
@@ -116,8 +123,47 @@ export function CodexTabs({inscriptionId, genderFilter}: CodexTabsProps) {
 
   return (
     <>
+      {/* Select mobile */}
+      <div className="md:hidden mt-6">
+        <Select
+          value={currentOrDefaultActiveCodex?.toString()}
+          onValueChange={(value) => setActiveCodex(Number(value))}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Choisir un codex" />
+          </SelectTrigger>
+          <SelectContent>
+            {filteredAndSortedCompetitions.map((competition) => (
+              <SelectItem
+                key={competition.codex}
+                value={competition.codex.toString()}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Codex {competition.codex}</span>
+                  <Badge
+                    className={`text-xs px-2 py-1 ${
+                      colorBadgePerDiscipline[competition.eventCode] || ""
+                    }`}
+                  >
+                    {competition.eventCode}
+                  </Badge>
+                  <Badge
+                    className={`text-xs px-2 py-1 ${
+                      colorBadgePerGender[competition.genderCode] || ""
+                    } text-white`}
+                  >
+                    {competition.genderCode}
+                  </Badge>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tabs desktop */}
       <Tabs
-        className="mt-8"
+        className="mt-8 hidden md:block"
         onValueChange={(value) => setActiveCodex(Number(value))}
         value={currentOrDefaultActiveCodex?.toString()} // Controlled component using a potentially immediately available default
       >
@@ -184,6 +230,22 @@ export function CodexTabs({inscriptionId, genderFilter}: CodexTabsProps) {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Contenu mobile - affiché seulement pour le codex sélectionné */}
+      <div className="md:hidden">
+        {currentOrDefaultActiveCodex && (
+          <Competitors
+            inscriptionId={inscriptionId}
+            codexNumber={currentOrDefaultActiveCodex}
+            discipline={
+              filteredAndSortedCompetitions.find(
+                (c) => c.codex === currentOrDefaultActiveCodex
+              )?.eventCode || ""
+            }
+            genderFilter={genderFilter}
+          />
+        )}
+      </div>
       {currentOrDefaultActiveCodex &&
         filteredAndSortedCompetitions.length > 0 && (
           <TotalInscriptionsInfo
