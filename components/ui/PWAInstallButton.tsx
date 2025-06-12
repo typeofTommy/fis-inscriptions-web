@@ -55,7 +55,7 @@ export function PWAInstallButton() {
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <h3 className="font-semibold text-sm text-gray-900">
-            Installer l'application
+            Installer l&apos;application
           </h3>
           <p className="text-xs text-gray-600 mt-1">
             Accédez plus rapidement à FIS Inscriptions

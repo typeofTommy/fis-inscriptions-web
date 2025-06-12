@@ -1,7 +1,7 @@
 "use client";
 
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { Wifi, WifiOff } from "lucide-react";
+import { WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function NetworkStatus() {

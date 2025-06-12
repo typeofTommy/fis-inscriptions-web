@@ -8,10 +8,7 @@ import {
 import * as React from "react";
 import {Toaster} from "@/components/ui/toaster";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
-import {
-  persistQueryClient,
-  removeOldestQuery,
-} from "@tanstack/query-sync-storage-persister";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import {get, set, del} from "idb-keyval";
 
 function makeQueryClient() {
@@ -38,26 +35,44 @@ function getQueryClient() {
       
       // Configure persistence
       if (typeof window !== "undefined") {
-        persistQueryClient({
-          queryClient: browserQueryClient,
-          persister: {
-            persistClient: async (client) => {
-              await set("react-query-cache", client);
-            },
-            restoreClient: async () => {
-              return await get("react-query-cache");
-            },
-            removeClient: async () => {
-              await del("react-query-cache");
-            },
-          },
-          maxAge: 1000 * 60 * 60 * 24, // 24 hours
-          dehydrateOptions: {
-            shouldDehydrateQuery: (query) => {
-              return query.state.status === "success";
-            },
+        const persister = createSyncStoragePersister({
+          storage: {
+            getItem: (key) => get(key),
+            setItem: (key, value) => set(key, value),
+            removeItem: (key) => del(key),
           },
         });
+
+        // Simple persistence without external library
+        const restoreFromStorage = async () => {
+          try {
+            const persistedData = await get("react-query-cache");
+            if (persistedData) {
+              browserQueryClient.setQueryData(["persisted"], persistedData);
+            }
+          } catch (error) {
+            console.warn("Failed to restore query cache:", error);
+          }
+        };
+
+        restoreFromStorage();
+        
+        // Save cache periodically
+        setInterval(() => {
+          try {
+            const cache = browserQueryClient.getQueryCache().getAll();
+            const successfulQueries = cache.filter(query => query.state.status === "success");
+            if (successfulQueries.length > 0) {
+              set("react-query-cache", successfulQueries.map(q => ({
+                queryKey: q.queryKey,
+                queryHash: q.queryHash,
+                state: q.state
+              })));
+            }
+          } catch (error) {
+            console.warn("Failed to persist query cache:", error);
+          }
+        }, 30000); // Save every 30 seconds
       }
     }
     return browserQueryClient;
