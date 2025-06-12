@@ -8,8 +8,7 @@ import {
 import * as React from "react";
 import {Toaster} from "@/components/ui/toaster";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import {get, set, del} from "idb-keyval";
+import {get, set} from "idb-keyval";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -32,23 +31,14 @@ function getQueryClient() {
   } else {
     if (!browserQueryClient) {
       browserQueryClient = makeQueryClient();
-      
-      // Configure persistence
-      if (typeof window !== "undefined") {
-        const persister = createSyncStoragePersister({
-          storage: {
-            getItem: (key) => get(key),
-            setItem: (key, value) => set(key, value),
-            removeItem: (key) => del(key),
-          },
-        });
 
-        // Simple persistence without external library
+      // Configure simple persistence
+      if (typeof window !== "undefined") {
         const restoreFromStorage = async () => {
           try {
             const persistedData = await get("react-query-cache");
             if (persistedData) {
-              browserQueryClient.setQueryData(["persisted"], persistedData);
+              browserQueryClient!.setQueryData(["persisted"], persistedData);
             }
           } catch (error) {
             console.warn("Failed to restore query cache:", error);
@@ -56,18 +46,23 @@ function getQueryClient() {
         };
 
         restoreFromStorage();
-        
+
         // Save cache periodically
         setInterval(() => {
           try {
-            const cache = browserQueryClient.getQueryCache().getAll();
-            const successfulQueries = cache.filter(query => query.state.status === "success");
+            const cache = browserQueryClient!.getQueryCache().getAll();
+            const successfulQueries = cache.filter(
+              (query) => query.state.status === "success"
+            );
             if (successfulQueries.length > 0) {
-              set("react-query-cache", successfulQueries.map(q => ({
-                queryKey: q.queryKey,
-                queryHash: q.queryHash,
-                state: q.state
-              })));
+              set(
+                "react-query-cache",
+                successfulQueries.map((q) => ({
+                  queryKey: q.queryKey,
+                  queryHash: q.queryHash || "",
+                  state: q.state,
+                }))
+              );
             }
           } catch (error) {
             console.warn("Failed to persist query cache:", error);
