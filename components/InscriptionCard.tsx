@@ -1,20 +1,20 @@
 "use client";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {Badge} from "@/components/ui/badge";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent} from "@/components/ui/card";
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
-import { Inscription } from "@/app/types";
-import type { CompetitionItem } from "@/app/types";
+import {format, parseISO} from "date-fns";
+import {Inscription} from "@/app/types";
+import type {CompetitionItem} from "@/app/types";
 import Image from "next/image";
-import { useCountryInfo } from "@/hooks/useCountryInfo";
+import {useCountryInfo} from "@/hooks/useCountryInfo";
 import {
   colorBadgePerDiscipline,
   colorBadgePerRaceLevel,
   colorBadgePerGender,
 } from "@/app/lib/colorMappers";
-import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import {Loader2} from "lucide-react";
+import {useQuery} from "@tanstack/react-query";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -22,8 +22,8 @@ const statusColors: Record<string, string> = {
   email_sent: "bg-orange-100 text-orange-800 border-orange-200",
 };
 
-const CompetitorCountCell = ({ inscriptionId }: { inscriptionId: number }) => {
-  const { data, isLoading, isError } = useQuery({
+const CompetitorCountCell = ({inscriptionId}: {inscriptionId: number}) => {
+  const {data, isLoading, isError} = useQuery({
     queryKey: ["inscription-competitors-all", inscriptionId],
     queryFn: async () => {
       const res = await fetch(
@@ -40,8 +40,8 @@ const CompetitorCountCell = ({ inscriptionId }: { inscriptionId: number }) => {
   return <span>{Array.isArray(data) ? data.length : "-"}</span>;
 };
 
-const CountryDisplay = ({ country }: { country: string }) => {
-  const { flagUrl, countryLabel } = useCountryInfo(country);
+const CountryDisplay = ({country}: {country: string}) => {
+  const {flagUrl, countryLabel} = useCountryInfo(country);
   return (
     <span className="flex items-center gap-1">
       {flagUrl && (
@@ -90,16 +90,14 @@ const BadgeList = ({
   );
 };
 
-export function InscriptionCard({ inscription }: { inscription: Inscription }) {
+export function InscriptionCard({inscription}: {inscription: Inscription}) {
   const country =
     inscription.eventData.placeNationCode ||
     inscription.eventData.organiserNationCode ||
     "Non renseigné";
 
   const disciplines = Array.from(
-    new Set(
-      (inscription.eventData.competitions ?? []).map((c) => c.eventCode)
-    )
+    new Set((inscription.eventData.competitions ?? []).map((c) => c.eventCode))
   ).filter(Boolean);
 
   const raceLevels = Array.from(
@@ -132,7 +130,10 @@ export function InscriptionCard({ inscription }: { inscription: Inscription }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-semibold text-sm">
-                {format(parseISO(inscription.eventData.startDate), "dd/MM/yyyy")}
+                {format(
+                  parseISO(inscription.eventData.startDate),
+                  "dd/MM/yyyy"
+                )}
               </span>
               <Badge
                 className={
@@ -209,7 +210,11 @@ export function InscriptionCard({ inscription }: { inscription: Inscription }) {
               <span className="text-gray-600">Codex:</span>
               <div className="flex gap-1 flex-wrap">
                 {codexes.slice(0, 2).map((codex, i) => (
-                  <Badge key={`${codex}-${i}`} variant="outline" className="text-xs px-1 py-0">
+                  <Badge
+                    key={`${codex}-${i}`}
+                    variant="outline"
+                    className="text-xs px-1 py-0"
+                  >
                     {codex}
                   </Badge>
                 ))}
