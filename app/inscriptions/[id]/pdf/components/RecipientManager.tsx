@@ -2,6 +2,7 @@
 
 import React, {useState, useEffect, useMemo} from "react";
 import {toast} from "@/components/ui/use-toast";
+import {useQueryClient} from "@tanstack/react-query";
 
 export type Recipient = {
   email: string;
@@ -97,6 +98,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   inscriptionId, // Use new prop
   competitionName, // Use new prop
 }) => {
+  const queryClient = useQueryClient();
   const [selectedRecipients, setSelectedRecipients] = useState<
     Record<string, boolean>
   >({});
@@ -368,6 +370,15 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
           "PDF envoyé avec succès ! Email ID: " + (result.emailId || "N/A"),
         type: "success",
       });
+      
+      // Invalide les caches React Query pour mettre à jour l'interface
+      await queryClient.invalidateQueries({
+        queryKey: ["inscriptions"]
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["inscription-competitors-all", Number(inscriptionId)]
+      });
+      
       // Met à jour le toast en succès
       if (toastInstance && toastInstance.update) {
         toastInstance.update({

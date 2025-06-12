@@ -35,6 +35,8 @@ import {Inscription} from "@/app/types";
 import type {CompetitionItem} from "@/app/types";
 import Image from "next/image";
 import {useCountryInfo} from "@/hooks/useCountryInfo";
+import {InscriptionCard} from "@/components/InscriptionCard";
+import {ChevronDown, ChevronUp} from "lucide-react";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -110,6 +112,7 @@ export function InscriptionsTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
     {id: "status", value: "open"},
   ]);
+  const [showFilters, setShowFilters] = useState(false);
 
   const {data, isLoading} = useQuery<Inscription[]>({
     queryKey: ["inscriptions"],
@@ -482,9 +485,24 @@ export function InscriptionsTable() {
 
   return (
     <>
-      {/* Barre de filtres au-dessus du tableau */}
-      <div className="mb-6 p-4 bg-white/80 rounded-lg shadow flex flex-wrap gap-6 justify-start items-center border">
-        <div className="flex flex-col gap-1 w-[140px]">
+      {/* Bouton toggle pour les filtres sur mobile */}
+      <div className="md:hidden mb-4">
+        <Button
+          onClick={() => setShowFilters(!showFilters)}
+          variant="outline"
+          className="w-full flex items-center justify-between"
+        >
+          <span>Filtres</span>
+          {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {/* Barre de filtres */}
+      <div className={`mb-6 p-4 bg-white/80 rounded-lg shadow border ${
+        showFilters || 'md:block'
+      } ${showFilters ? 'block' : 'hidden md:block'}`}>
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-3 md:gap-6 md:justify-start md:items-center">
+        <div className="flex flex-col gap-1 w-full md:w-[140px]">
           <label htmlFor="filter-date" className="font-semibold text-sm">
             Date
           </label>
@@ -498,10 +516,10 @@ export function InscriptionsTable() {
               }
             }}
             placeholder="Date de la 1ère course"
-            className="w-[140px]"
+            className="w-full md:w-[140px]"
           />
         </div>
-        <div className="flex flex-col gap-1 w-[140px]">
+        <div className="flex flex-col gap-1 w-full md:w-[140px]">
           <label htmlFor="filter-station" className="font-semibold text-sm">
             Station
           </label>
@@ -517,7 +535,7 @@ export function InscriptionsTable() {
           >
             <SelectTrigger
               id="filter-station"
-              className="w-[140px] cursor-pointer"
+              className="w-full md:w-[140px] cursor-pointer"
             >
               <SelectValue placeholder="Station" />
             </SelectTrigger>
@@ -531,7 +549,7 @@ export function InscriptionsTable() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col gap-1 w-[140px]">
+        <div className="flex flex-col gap-1 w-full md:w-[140px]">
           <label htmlFor="filter-country" className="font-semibold text-sm">
             Pays
           </label>
@@ -547,7 +565,7 @@ export function InscriptionsTable() {
           >
             <SelectTrigger
               id="filter-country"
-              className="w-[140px] cursor-pointer"
+              className="w-full md:w-[140px] cursor-pointer"
             >
               <SelectValue placeholder="Pays" />
             </SelectTrigger>
@@ -562,7 +580,7 @@ export function InscriptionsTable() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col gap-1 w-[140px]">
+        <div className="flex flex-col gap-1 w-full md:w-[140px]">
           <label htmlFor="filter-codex" className="font-semibold text-sm">
             Codex
           </label>
@@ -576,7 +594,7 @@ export function InscriptionsTable() {
           >
             <SelectTrigger
               id="filter-codex"
-              className="w-[140px] cursor-pointer"
+              className="w-full md:w-[140px] cursor-pointer"
             >
               <SelectValue placeholder="Codex" />
             </SelectTrigger>
@@ -590,7 +608,7 @@ export function InscriptionsTable() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col gap-1 w-[140px]">
+        <div className="flex flex-col gap-1 w-full md:w-[140px]">
           <label htmlFor="filter-discipline" className="font-semibold text-sm">
             Discipline
           </label>
@@ -606,7 +624,7 @@ export function InscriptionsTable() {
           >
             <SelectTrigger
               id="filter-discipline"
-              className="w-[140px] cursor-pointer"
+              className="w-full md:w-[140px] cursor-pointer"
             >
               <SelectValue placeholder="Discipline" />
             </SelectTrigger>
@@ -620,7 +638,7 @@ export function InscriptionsTable() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col gap-1 w-[140px]">
+        <div className="flex flex-col gap-1 w-full md:w-[140px]">
           <label htmlFor="filter-racelevel" className="font-semibold text-sm">
             Race Level
           </label>
@@ -636,7 +654,7 @@ export function InscriptionsTable() {
           >
             <SelectTrigger
               id="filter-racelevel"
-              className="w-[140px] cursor-pointer"
+              className="w-full md:w-[140px] cursor-pointer"
             >
               <SelectValue placeholder="Race Level" />
             </SelectTrigger>
@@ -650,7 +668,7 @@ export function InscriptionsTable() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col gap-1 w-[140px]">
+        <div className="flex flex-col gap-1 w-full md:w-[140px]">
           <label htmlFor="filter-status" className="font-semibold text-sm">
             Statut
           </label>
@@ -668,7 +686,7 @@ export function InscriptionsTable() {
           >
             <SelectTrigger
               id="filter-status"
-              className="w-[140px] cursor-pointer"
+              className="w-full md:w-[140px] cursor-pointer"
             >
               <SelectValue placeholder="Statut" />
             </SelectTrigger>
@@ -680,7 +698,7 @@ export function InscriptionsTable() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col gap-1 w-[140px]">
+        <div className="flex flex-col gap-1 w-full md:w-[140px]">
           <label htmlFor="filter-sex" className="font-semibold text-sm">
             Sexe
           </label>
@@ -692,7 +710,7 @@ export function InscriptionsTable() {
                 ?.setFilterValue(value === "all" ? undefined : value)
             }
           >
-            <SelectTrigger id="filter-sex" className="w-[140px] cursor-pointer">
+            <SelectTrigger id="filter-sex" className="w-full md:w-[140px] cursor-pointer">
               <SelectValue placeholder="Sexe" />
             </SelectTrigger>
             <SelectContent>
@@ -705,8 +723,10 @@ export function InscriptionsTable() {
             </SelectContent>
           </Select>
         </div>
+        </div>
       </div>
-      <div className="rounded-md border bg-white px-4">
+      {/* Vue desktop - tableau */}
+      <div className="hidden md:block rounded-md border bg-white px-4">
         <Table className="w-full">
           <TableHeader className="w-full">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -772,6 +792,19 @@ export function InscriptionsTable() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Vue mobile - cartes */}
+      <div className="md:hidden space-y-4">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <InscriptionCard key={row.id} inscription={row.original} />
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            Pas de résultats.
+          </div>
+        )}
       </div>
     </>
   );
