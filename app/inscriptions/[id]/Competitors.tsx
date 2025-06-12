@@ -348,7 +348,7 @@ export const Competitors = ({
               setSelectedCodex={setSelectedCodex}
               allEventCodexes={inscription?.eventData?.competitions || []}
               genderFilterOfCompetitor={
-                competitors?.find(c => c.competitorid === openDialog)?.gender
+                competitors?.find(c => c.competitorid === openDialog)?.gender || undefined
               }
             />
             <DialogFooter>
