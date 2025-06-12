@@ -1,0 +1,1 @@
+ALTER TYPE "inscriptionsDB"."status" ADD VALUE 'email_sent';

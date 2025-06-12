@@ -15,6 +15,13 @@
       "when": 1749642288274,
       "tag": "0001_overrated_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749762040061,
+      "tag": "0002_silly_masque",
+      "breakpoints": true
     }
   ]
 }

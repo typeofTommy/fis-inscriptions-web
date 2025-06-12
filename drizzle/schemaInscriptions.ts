@@ -13,6 +13,7 @@ export const inscriptionsSchema = pgSchema("inscriptionsDB");
 export const inscriptionStatus = inscriptionsSchema.enum("status", [
   "open",
   "validated",
+  "email_sent",
 ]);
 
 export const inscriptions = inscriptionsSchema.table("inscriptions", {

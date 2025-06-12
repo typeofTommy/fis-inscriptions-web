@@ -39,6 +39,7 @@ import {useCountryInfo} from "@/hooks/useCountryInfo";
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
   validated: "bg-blue-100 text-blue-800 border-blue-200",
+  email_sent: "bg-orange-100 text-orange-800 border-orange-200",
 };
 
 // Composant pour afficher le nombre de compétiteurs pour une inscription
@@ -397,7 +398,9 @@ export function InscriptionsTable() {
             ? "Ouverte"
             : row.original.status === "validated"
               ? "Validée"
-              : row.original.status}
+              : row.original.status === "email_sent"
+                ? "Email envoyé"
+                : row.original.status}
         </Badge>
       ),
       filterFn: (row, id, value) => {
@@ -673,6 +676,7 @@ export function InscriptionsTable() {
               <SelectItem value="all">Tous</SelectItem>
               <SelectItem value="open">Ouverte</SelectItem>
               <SelectItem value="validated">Clôturée</SelectItem>
+              <SelectItem value="email_sent">Email envoyé</SelectItem>
             </SelectContent>
           </Select>
         </div>
