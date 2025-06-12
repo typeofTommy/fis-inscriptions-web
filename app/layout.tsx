@@ -4,6 +4,8 @@ import {Providers} from "./providers";
 import {Snowflake} from "lucide-react";
 import {Header} from "@/components/ui/Header";
 import {ClerkProvider} from "@clerk/nextjs";
+import {NetworkStatus} from "@/components/ui/NetworkStatus";
+import {PWAInstallButton} from "@/components/ui/PWAInstallButton";
 import "./globals.css";
 import {frFR} from "@clerk/localizations";
 
@@ -104,6 +106,8 @@ export default function RootLayout({
               </div>
             </div>
           </div>
+          <NetworkStatus />
+          <PWAInstallButton />
         </ClerkProvider>
       </body>
     </html>

@@ -59,6 +59,12 @@ dependencies:
   '@react-pdf/renderer':
     specifier: ^4.3.0
     version: 4.3.0(react@19.1.0)
+  '@tanstack/query-async-storage-persister':
+    specifier: ^5.80.7
+    version: 5.80.7
+  '@tanstack/query-sync-storage-persister':
+    specifier: ^5.80.7
+    version: 5.80.7
   '@tanstack/react-query':
     specifier: ^5.74.4
     version: 5.74.4(react@19.1.0)
@@ -95,6 +101,12 @@ dependencies:
   html2canvas-pro:
     specifier: ^1.5.11
     version: 1.5.11
+  idb:
+    specifier: ^8.0.3
+    version: 8.0.3
+  idb-keyval:
+    specifier: ^6.2.2
+    version: 6.2.2
   jspdf:
     specifier: ^3.0.1
     version: 3.0.1
@@ -3733,12 +3745,35 @@ packages:
       tailwindcss: 4.1.4
     dev: true
 
+  /@tanstack/query-async-storage-persister@5.80.7:
+    resolution: {integrity: sha512-Ou+z8WGRRKL4lgQ4l1KsNH94zgR+girDzBzqLPBoTgjEvVYB7huJ+rc08Dl6MZ8xb1rLlhC2+21yayt8B2YvLQ==}
+    dependencies:
+      '@tanstack/query-persist-client-core': 5.80.7
+    dev: false
+
   /@tanstack/query-core@5.74.4:
     resolution: {integrity: sha512-YuG0A0+3i9b2Gfo9fkmNnkUWh5+5cFhWBN0pJAHkHilTx6A0nv8kepkk4T4GRt4e5ahbtFj2eTtkiPcVU1xO4A==}
     dev: false
 
+  /@tanstack/query-core@5.80.7:
+    resolution: {integrity: sha512-s09l5zeUKC8q7DCCCIkVSns8zZrK4ZDT6ryEjxNBFi68G4z2EBobBS7rdOY3r6W1WbUDpc1fe5oY+YO/+2UVUg==}
+    dev: false
+
   /@tanstack/query-devtools@5.74.7:
     resolution: {integrity: sha512-nSNlfuGdnHf4yB0S+BoNYOE1o3oAH093weAYZolIHfS2stulyA/gWfSk/9H4ZFk5mAAHb5vNqAeJOmbdcGPEQw==}
+    dev: false
+
+  /@tanstack/query-persist-client-core@5.80.7:
+    resolution: {integrity: sha512-/V+zw5cGseMzzI9SfI5eem+826gMhnouMi0X7Da41dVC96xNvdyed+FHtIKaSXyCm4YpcPUtyA5eHG4Ng7yU8g==}
+    dependencies:
+      '@tanstack/query-core': 5.80.7
+    dev: false
+
+  /@tanstack/query-sync-storage-persister@5.80.7:
+    resolution: {integrity: sha512-lIoEkYQsasWmj/ftuH4ntBlEwsetAf1AQ/8kMCVvBH9ERIL9sM5gaopV5ja0KzVUISzqnUVlUnK9VqSL73uzYw==}
+    dependencies:
+      '@tanstack/query-core': 5.80.7
+      '@tanstack/query-persist-client-core': 5.80.7
     dev: false
 
   /@tanstack/react-query-devtools@5.74.11(@tanstack/react-query@5.74.4)(react@19.1.0):
@@ -6370,8 +6405,16 @@ packages:
       safer-buffer: 2.1.2
     dev: false
 
+  /idb-keyval@6.2.2:
+    resolution: {integrity: sha512-yjD9nARJ/jb1g+CvD0tlhUHOrJ9Sy0P8T9MF3YaLlHnSRpwPfpTX0XIvpmw3gAJUmEu3FiICLBDPXVwyEvrleg==}
+    dev: false
+
   /idb@7.1.1:
     resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
+    dev: false
+
+  /idb@8.0.3:
+    resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
     dev: false
 
   /ignore@5.3.2:

@@ -8,6 +8,11 @@ import {
 import * as React from "react";
 import {Toaster} from "@/components/ui/toaster";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import {
+  persistQueryClient,
+  removeOldestQuery,
+} from "@tanstack/query-sync-storage-persister";
+import {get, set, del} from "idb-keyval";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -16,6 +21,7 @@ function makeQueryClient() {
         staleTime: 60 * 1000,
         retry: 2,
         refetchOnWindowFocus: true,
+        gcTime: 1000 * 60 * 60 * 24, // 24 hours
       },
     },
   });
@@ -27,7 +33,33 @@ function getQueryClient() {
   if (isServer) {
     return makeQueryClient();
   } else {
-    if (!browserQueryClient) browserQueryClient = makeQueryClient();
+    if (!browserQueryClient) {
+      browserQueryClient = makeQueryClient();
+      
+      // Configure persistence
+      if (typeof window !== "undefined") {
+        persistQueryClient({
+          queryClient: browserQueryClient,
+          persister: {
+            persistClient: async (client) => {
+              await set("react-query-cache", client);
+            },
+            restoreClient: async () => {
+              return await get("react-query-cache");
+            },
+            removeClient: async () => {
+              await del("react-query-cache");
+            },
+          },
+          maxAge: 1000 * 60 * 60 * 24, // 24 hours
+          dehydrateOptions: {
+            shouldDehydrateQuery: (query) => {
+              return query.state.status === "success";
+            },
+          },
+        });
+      }
+    }
     return browserQueryClient;
   }
 }
