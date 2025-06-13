@@ -7,18 +7,18 @@ export const parseLocalDate = (dateString: string) => {
 
 // Calcule la saison d'une date donnée
 // Une saison commence le 1er juillet et se termine le 30 avril de l'année suivante
-// Par exemple: 8 novembre 2025 -> saison 2025
+// Par exemple: 8 novembre 2024 -> saison 2025, 15 février 2025 -> saison 2025
 export const getSeasonFromDate = (date: Date): number => {
   const year = date.getFullYear();
   const month = date.getMonth() + 1; // getMonth() retourne 0-11, on veut 1-12
   
-  // Si on est entre juillet (7) et décembre (12), c'est la saison de l'année courante
+  // Si on est entre juillet (7) et décembre (12), c'est la saison de l'année suivante
   if (month >= 7) {
-    return year;
+    return year + 1;
   }
-  // Si on est entre janvier (1) et avril (4), c'est la saison de l'année précédente
+  // Si on est entre janvier (1) et avril (4), c'est la saison de l'année courante
   else if (month <= 4) {
-    return year - 1;
+    return year;
   }
   // Mai et juin ne font pas partie d'une saison officielle, on retourne l'année courante
   else {
