@@ -81,3 +81,22 @@ export const competitors = inscriptionsSchema.table("competitors", {
   acpos: text("acpos"),
   acsta: text("acsta"),
 });
+
+export const inscriptionCoaches = inscriptionsSchema.table(
+  "inscription_coaches",
+  {
+    id: serial("id").primaryKey(),
+    inscriptionId: integer("inscription_id")
+      .notNull()
+      .references(() => inscriptions.id, {
+        onDelete: "cascade",
+      }),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    team: text("team"),
+    startDate: text("start_date").notNull(),
+    endDate: text("end_date").notNull(),
+    addedBy: text("added_by").default("Unknown"),
+    createdAt: timestamp("created_at").defaultNow(),
+  }
+);

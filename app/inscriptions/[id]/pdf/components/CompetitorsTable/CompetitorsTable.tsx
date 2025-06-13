@@ -177,7 +177,7 @@ export const CompetitorsTable = ({
           ))}
         </tbody>
         <tfoot>
-          <tr className="border-t border-black">
+          <tr className="border-t border-b border-black">
             <td
               colSpan={3} // Spans FIS Code, Name, YB columns
               className="p-1 pr-2 border-r border-black text-right font-bold text-md"

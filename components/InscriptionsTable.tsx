@@ -37,6 +37,11 @@ import Image from "next/image";
 import {useCountryInfo} from "@/hooks/useCountryInfo";
 import {InscriptionCard} from "@/components/InscriptionCard";
 import {ChevronDown, ChevronUp} from "lucide-react";
+import {
+  getSeasonFromDate,
+  getCurrentSeason,
+  getSeasonsFromInscriptions,
+} from "@/app/lib/dates";
 
 const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
@@ -111,6 +116,7 @@ export function InscriptionsTable() {
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
     {id: "status", value: "open"},
+    {id: "season", value: getCurrentSeason()},
   ]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -190,6 +196,10 @@ export function InscriptionsTable() {
     ).sort((a, b) => String(a).localeCompare(String(b)));
   }, [stableData]);
 
+  const seasonOptions = useMemo(() => {
+    return getSeasonsFromInscriptions(stableData);
+  }, [stableData]);
+
   const columns: ColumnDef<Inscription>[] = [
     {
       id: "actions",
@@ -253,13 +263,13 @@ export function InscriptionsTable() {
           stationName = "Non renseigné";
         }
         return (
-          <span>{stationName[0].toUpperCase() + stationName.slice(1)}</span>
+          <span>{stationName ? stationName[0].toUpperCase() + stationName.slice(1) : "Non renseigné"}</span>
         );
       },
       filterFn: (row, id, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
         const locationId = row.original.eventData.place;
-        return locationId.toLowerCase().includes(filterValue.toLowerCase());
+        return locationId ? locationId.toLowerCase().includes(filterValue.toLowerCase()) : false;
       },
     },
     {
@@ -460,6 +470,25 @@ export function InscriptionsTable() {
       header: "Nb compétiteurs",
       cell: ({row}) => <CompetitorCountCell inscriptionId={row.original.id} />,
     },
+    {
+      id: "season",
+      header: "Saison",
+      enableColumnFilter: true,
+      accessorFn: (row) => getSeasonFromDate(new Date(row.eventData.startDate)),
+      cell: ({row}) => {
+        const season = getSeasonFromDate(
+          new Date(row.original.eventData.startDate)
+        );
+        return <span>{season}</span>;
+      },
+      filterFn: (row, id, filterValue) => {
+        if (!filterValue) return true;
+        const rowSeason = getSeasonFromDate(
+          new Date(row.original.eventData.startDate)
+        );
+        return rowSeason === filterValue;
+      },
+    },
   ];
 
   // Table instance (props stables)
@@ -500,236 +529,358 @@ export function InscriptionsTable() {
           className="w-full flex items-center justify-between"
         >
           <span>Filtres</span>
-          {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          {showFilters ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
       {/* Barre de filtres */}
-      <div className={`mb-6 p-4 bg-white/80 rounded-lg shadow border ${
-        showFilters || 'md:block'
-      } ${showFilters ? 'block' : 'hidden md:block'}`}>
+      <div
+        className={`mb-6 p-4 bg-white/80 rounded-lg shadow border ${
+          showFilters || "md:block"
+        } ${showFilters ? "block" : "hidden md:block"}`}
+      >
         <div className="grid grid-cols-2 md:flex md:flex-wrap gap-3 md:gap-6 md:justify-start md:items-center">
-        <div className="flex flex-col gap-1 w-full md:w-[140px]">
-          <label htmlFor="filter-date" className="font-semibold text-sm">
-            Date
-          </label>
-          <DebouncedInput
-            id="filter-date"
-            type="date"
-            value={dateValue}
-            onChange={(value) => {
-              if (value !== dateValue) {
-                table.getColumn("startDate")?.setFilterValue(value);
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-season"
+              className="font-semibold text-sm flex items-center gap-2"
+            >
+              Saison
+              {!!table.getColumn("season")?.getFilterValue() && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <Select
+              value={String(
+                table.getColumn("season")?.getFilterValue() ?? "all"
+              )}
+              onValueChange={(value) =>
+                table
+                  .getColumn("season")
+                  ?.setFilterValue(value === "all" ? undefined : Number(value))
               }
-            }}
-            placeholder="Date de la 1ère course"
-            className="w-full md:w-[140px]"
-          />
-        </div>
-        <div className="flex flex-col gap-1 w-full md:w-[140px]">
-          <label htmlFor="filter-station" className="font-semibold text-sm">
-            Station
-          </label>
-          <Select
-            value={String(
-              table.getColumn("location")?.getFilterValue() ?? "all"
-            )}
-            onValueChange={(value) =>
-              table
-                .getColumn("location")
-                ?.setFilterValue(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger
-              id="filter-station"
-              className="w-full md:w-[140px] cursor-pointer"
             >
-              <SelectValue placeholder="Station" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              {locationOptions.map((loc) => (
-                <SelectItem key={loc.value} value={loc.value}>
-                  {loc.label[0].toUpperCase() + loc.label.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1 w-full md:w-[140px]">
-          <label htmlFor="filter-country" className="font-semibold text-sm">
-            Pays
-          </label>
-          <Select
-            value={String(
-              table.getColumn("country")?.getFilterValue() ?? "all"
-            )}
-            onValueChange={(value) =>
-              table
-                .getColumn("country")
-                ?.setFilterValue(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger
-              id="filter-country"
-              className="w-full md:w-[140px] cursor-pointer"
+              <SelectTrigger
+                id="filter-season"
+                className="w-full md:w-[140px] cursor-pointer"
+              >
+                <SelectValue placeholder="Saison" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                {seasonOptions.map((season) => (
+                  <SelectItem key={season} value={String(season)}>
+                    {season}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-date"
+              className="font-semibold text-sm flex items-center gap-2"
             >
-              <SelectValue placeholder="Pays" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {countryOptions.map((countryCode) => (
-                <CountrySelectItem
-                  key={countryCode}
-                  countryCode={countryCode}
-                />
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1 w-full md:w-[140px]">
-          <label htmlFor="filter-codex" className="font-semibold text-sm">
-            Codex
-          </label>
-          <Select
-            value={String(table.getColumn("codex")?.getFilterValue() ?? "all")}
-            onValueChange={(value) =>
-              table
-                .getColumn("codex")
-                ?.setFilterValue(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger
-              id="filter-codex"
-              className="w-full md:w-[140px] cursor-pointer"
+              Date
+              {dateValue && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <DebouncedInput
+              id="filter-date"
+              type="date"
+              value={dateValue}
+              onChange={(value) => {
+                if (value !== dateValue) {
+                  table.getColumn("startDate")?.setFilterValue(value);
+                }
+              }}
+              placeholder="Date de la 1ère course"
+              className="w-full md:w-[140px]"
+            />
+          </div>
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-station"
+              className="font-semibold text-sm flex items-center gap-2"
             >
-              <SelectValue placeholder="Codex" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {codexOptions.map((codex) => (
-                <SelectItem key={String(codex)} value={String(codex)}>
-                  {codex}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1 w-full md:w-[140px]">
-          <label htmlFor="filter-discipline" className="font-semibold text-sm">
-            Discipline
-          </label>
-          <Select
-            value={String(
-              table.getColumn("discipline")?.getFilterValue() ?? "all"
-            )}
-            onValueChange={(value) =>
-              table
-                .getColumn("discipline")
-                ?.setFilterValue(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger
-              id="filter-discipline"
-              className="w-full md:w-[140px] cursor-pointer"
+              Station
+              {!!table.getColumn("location")?.getFilterValue() && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <Select
+              value={String(
+                table.getColumn("location")?.getFilterValue() ?? "all"
+              )}
+              onValueChange={(value) =>
+                table
+                  .getColumn("location")
+                  ?.setFilterValue(value === "all" ? undefined : value)
+              }
             >
-              <SelectValue placeholder="Discipline" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              {disciplineOptions.map((discipline) => (
-                <SelectItem key={discipline} value={discipline}>
-                  {discipline}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1 w-full md:w-[140px]">
-          <label htmlFor="filter-racelevel" className="font-semibold text-sm">
-            Race Level
-          </label>
-          <Select
-            value={String(
-              table.getColumn("raceLevel")?.getFilterValue() ?? "all"
-            )}
-            onValueChange={(value) =>
-              table
-                .getColumn("raceLevel")
-                ?.setFilterValue(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger
-              id="filter-racelevel"
-              className="w-full md:w-[140px] cursor-pointer"
+              <SelectTrigger
+                id="filter-station"
+                className="w-full md:w-[140px] cursor-pointer"
+              >
+                <SelectValue placeholder="Station" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                {locationOptions.map((loc) => (
+                  <SelectItem key={loc.value} value={loc.value}>
+                    {loc.label[0].toUpperCase() + loc.label.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-country"
+              className="font-semibold text-sm flex items-center gap-2"
             >
-              <SelectValue placeholder="Race Level" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {raceLevelOptions.map((raceLevel) => (
-                <SelectItem key={raceLevel} value={raceLevel}>
-                  {raceLevel}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1 w-full md:w-[140px]">
-          <label htmlFor="filter-status" className="font-semibold text-sm">
-            Statut
-          </label>
-          <Select
-            value={
-              table.getColumn("status")?.getFilterValue() === undefined
-                ? "all"
-                : String(table.getColumn("status")?.getFilterValue())
-            }
-            onValueChange={(value) =>
-              table
-                .getColumn("status")
-                ?.setFilterValue(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger
-              id="filter-status"
-              className="w-full md:w-[140px] cursor-pointer"
+              Pays
+              {!!table.getColumn("country")?.getFilterValue() && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <Select
+              value={String(
+                table.getColumn("country")?.getFilterValue() ?? "all"
+              )}
+              onValueChange={(value) =>
+                table
+                  .getColumn("country")
+                  ?.setFilterValue(value === "all" ? undefined : value)
+              }
             >
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="open">Ouverte</SelectItem>
-              <SelectItem value="validated">Clôturée</SelectItem>
-              <SelectItem value="email_sent">Email envoyé</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1 w-full md:w-[140px]">
-          <label htmlFor="filter-sex" className="font-semibold text-sm">
-            Sexe
-          </label>
-          <Select
-            value={String(table.getColumn("sex")?.getFilterValue() ?? "all")}
-            onValueChange={(value) =>
-              table
-                .getColumn("sex")
-                ?.setFilterValue(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger id="filter-sex" className="w-full md:w-[140px] cursor-pointer">
-              <SelectValue placeholder="Sexe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {sexOptions.map((sex) => (
-                <SelectItem key={sex} value={sex}>
-                  {sex === "M" ? "Homme" : "Femme"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+              <SelectTrigger
+                id="filter-country"
+                className="w-full md:w-[140px] cursor-pointer"
+              >
+                <SelectValue placeholder="Pays" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {countryOptions.map((countryCode) => (
+                  <CountrySelectItem
+                    key={countryCode}
+                    countryCode={countryCode}
+                  />
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-codex"
+              className="font-semibold text-sm flex items-center gap-2"
+            >
+              Codex
+              {!!table.getColumn("codex")?.getFilterValue() && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <Select
+              value={String(
+                table.getColumn("codex")?.getFilterValue() ?? "all"
+              )}
+              onValueChange={(value) =>
+                table
+                  .getColumn("codex")
+                  ?.setFilterValue(value === "all" ? undefined : value)
+              }
+            >
+              <SelectTrigger
+                id="filter-codex"
+                className="w-full md:w-[140px] cursor-pointer"
+              >
+                <SelectValue placeholder="Codex" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {codexOptions.map((codex) => (
+                  <SelectItem key={String(codex)} value={String(codex)}>
+                    {codex}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-discipline"
+              className="font-semibold text-sm flex items-center gap-2"
+            >
+              Discipline
+              {!!table.getColumn("discipline")?.getFilterValue() && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <Select
+              value={String(
+                table.getColumn("discipline")?.getFilterValue() ?? "all"
+              )}
+              onValueChange={(value) =>
+                table
+                  .getColumn("discipline")
+                  ?.setFilterValue(value === "all" ? undefined : value)
+              }
+            >
+              <SelectTrigger
+                id="filter-discipline"
+                className="w-full md:w-[140px] cursor-pointer"
+              >
+                <SelectValue placeholder="Discipline" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                {disciplineOptions.map((discipline) => (
+                  <SelectItem key={discipline} value={discipline}>
+                    {discipline}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-racelevel"
+              className="font-semibold text-sm flex items-center gap-2"
+            >
+              Race Level
+              {!!table.getColumn("raceLevel")?.getFilterValue() && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <Select
+              value={String(
+                table.getColumn("raceLevel")?.getFilterValue() ?? "all"
+              )}
+              onValueChange={(value) =>
+                table
+                  .getColumn("raceLevel")
+                  ?.setFilterValue(value === "all" ? undefined : value)
+              }
+            >
+              <SelectTrigger
+                id="filter-racelevel"
+                className="w-full md:w-[140px] cursor-pointer"
+              >
+                <SelectValue placeholder="Race Level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {raceLevelOptions.map((raceLevel) => (
+                  <SelectItem key={raceLevel} value={raceLevel}>
+                    {raceLevel}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-status"
+              className="font-semibold text-sm flex items-center gap-2"
+            >
+              Statut
+              {!!table.getColumn("status")?.getFilterValue() && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <Select
+              value={
+                table.getColumn("status")?.getFilterValue() === undefined
+                  ? "all"
+                  : String(table.getColumn("status")?.getFilterValue())
+              }
+              onValueChange={(value) =>
+                table
+                  .getColumn("status")
+                  ?.setFilterValue(value === "all" ? undefined : value)
+              }
+            >
+              <SelectTrigger
+                id="filter-status"
+                className="w-full md:w-[140px] cursor-pointer"
+              >
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="open">Ouverte</SelectItem>
+                <SelectItem value="validated">Clôturée</SelectItem>
+                <SelectItem value="email_sent">Email envoyé</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1 w-full md:w-[140px]">
+            <label
+              htmlFor="filter-sex"
+              className="font-semibold text-sm flex items-center gap-2"
+            >
+              Sexe
+              {!!table.getColumn("sex")?.getFilterValue() && (
+                <span
+                  className="inline-block w-2 h-2 bg-blue-500 rounded-full"
+                  title="Filtre actif"
+                ></span>
+              )}
+            </label>
+            <Select
+              value={String(table.getColumn("sex")?.getFilterValue() ?? "all")}
+              onValueChange={(value) =>
+                table
+                  .getColumn("sex")
+                  ?.setFilterValue(value === "all" ? undefined : value)
+              }
+            >
+              <SelectTrigger
+                id="filter-sex"
+                className="w-full md:w-[140px] cursor-pointer"
+              >
+                <SelectValue placeholder="Sexe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {sexOptions.map((sex) => (
+                  <SelectItem key={sex} value={sex}>
+                    {sex === "M" ? "Homme" : "Femme"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
       {/* Vue desktop - tableau */}
@@ -804,9 +955,11 @@ export function InscriptionsTable() {
       {/* Vue mobile - cartes */}
       <div className="md:hidden space-y-4">
         {table.getRowModel().rows?.length ? (
-          table.getRowModel().rows.map((row) => (
-            <InscriptionCard key={row.id} inscription={row.original} />
-          ))
+          table
+            .getRowModel()
+            .rows.map((row) => (
+              <InscriptionCard key={row.id} inscription={row.original} />
+            ))
         ) : (
           <div className="text-center py-8 text-gray-500">
             Pas de résultats.

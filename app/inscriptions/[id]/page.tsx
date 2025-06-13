@@ -5,6 +5,8 @@ import {InscriptionDetails} from "./InscriptionDetails";
 import {CodexTabs} from "./CodexTabs";
 import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/components/ui/tabs";
 import {RecapEvent} from "./RecapEvent";
+import {Coaches} from "./Coaches";
+import AddCoachModal from "./AddCoachModal";
 import {useInscription} from "@/app/inscriptions/form/api";
 import {Loader2} from "lucide-react";
 
@@ -79,12 +81,43 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
               <span className="md:hidden">Codex</span>
               <span className="hidden md:inline">Par codex</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="coaches"
+              className="px-4 md:px-7 py-2 text-sm md:text-base font-bold transition-colors duration-150 border-none rounded-r-md data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
+            >
+              <span className="md:hidden">Coachs/Staff</span>
+              <span className="hidden md:inline">Coachs/Staff</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="recap">
             <RecapEvent inscriptionId={params.id} genderFilter={genderFilter} />
           </TabsContent>
           <TabsContent value="details_competitors">
             <CodexTabs inscriptionId={params.id} genderFilter={genderFilter} />
+          </TabsContent>
+          <TabsContent value="coaches">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Coachs/Staff
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Liste des entraîneurs accompagnant la délégation
+                  </p>
+                </div>
+                {inscription?.status === "open" && (
+                  <AddCoachModal
+                    inscriptionId={params.id}
+                    triggerText="Ajouter un entraîneur"
+                    triggerTextMobile="+ Coach"
+                    eventStartDate={inscription?.eventData?.startDate}
+                    eventEndDate={inscription?.eventData?.endDate}
+                  />
+                )}
+              </div>
+              <Coaches inscriptionId={params.id} />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -1,6 +1,7 @@
 import {
   competitors,
   inscriptionCompetitors,
+  inscriptionCoaches,
   inscriptions,
   inscriptionStatus,
 } from "@/drizzle/schemaInscriptions";
@@ -14,6 +15,10 @@ export type InscriptionCompetitor =
     points: number;
     addedByEmail?: string;
   } & Competitor;
+
+export type InscriptionCoach = typeof inscriptionCoaches.$inferSelect & {
+  addedByEmail?: string;
+};
 
 export type Status = typeof inscriptionStatus.$inferSelect;
 

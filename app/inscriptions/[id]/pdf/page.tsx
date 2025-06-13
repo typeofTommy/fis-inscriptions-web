@@ -8,11 +8,13 @@ import {GenderRow} from "./components/GenderRow";
 import {TableFooter} from "./components/CompetitorsTable/TableFooter";
 import {Footer} from "./components/Footer";
 import {CompetitorsTable} from "./components/CompetitorsTable/CompetitorsTable";
+import {CoachesBlock} from "./components/CoachesBlock";
 import {format} from "date-fns";
 import {
   inscriptionCompetitors,
   inscriptions,
   competitors as competitorsTable,
+  inscriptionCoaches,
 } from "@/drizzle/schemaInscriptions";
 import {db} from "@/app/db/inscriptionsDB";
 import {eq} from "drizzle-orm";
@@ -51,6 +53,19 @@ export default async function PdfPage({
   // Assuming inscription.eventData is an object that might contain eventName
   const eventData = inscription.eventData as any; // Keep as any to avoid restructuring user's existing code
   const competitionNameForEmail = eventData.eventName || "Inscription";
+
+  // Fetch coaches for this inscription
+  const coaches = await db
+    .select({
+      id: inscriptionCoaches.id,
+      firstName: inscriptionCoaches.firstName,
+      lastName: inscriptionCoaches.lastName,
+      team: inscriptionCoaches.team,
+      startDate: inscriptionCoaches.startDate,
+      endDate: inscriptionCoaches.endDate,
+    })
+    .from(inscriptionCoaches)
+    .where(eq(inscriptionCoaches.inscriptionId, Number(id)));
 
   // Typage explicite du résultat de l'innerJoin
   type RawCompetitorRow = {
@@ -385,6 +400,7 @@ export default async function PdfPage({
             competitors={filteredCompetitors}
             codexData={filteredCodexData}
           />
+          <CoachesBlock coaches={coaches} />
           <TableFooter gender={raceGender} />
         </div>
         <Footer />
