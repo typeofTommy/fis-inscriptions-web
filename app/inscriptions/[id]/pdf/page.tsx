@@ -400,7 +400,7 @@ export default async function PdfPage({
             competitors={filteredCompetitors}
             codexData={filteredCodexData}
           />
-          <CoachesBlock coaches={coaches} />
+          {coaches.length > 0 && <CoachesBlock coaches={coaches} />}
           <TableFooter gender={raceGender} />
         </div>
         <Footer />

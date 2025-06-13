@@ -142,11 +142,11 @@ export async function POST(request: Request) {
             We kindly ask you to <b><a style="color: #1976d2; text-decoration: underline;" href="mailto:${to.join(",")}?subject=Re:%20${encodeURIComponent(subjectLine)}">reply to all</a></b> to confirm receipt, or if you need to provide us with any information or the program.
           </p>
           <p style="font-size: 16px; margin-bottom: 18px;">
-            We wish you great races, and please feel free to contact me at <a href="mailto:pmartin@ffs.fr" style="color: #1976d2; text-decoration: underline;">pmartin@ffs.fr</a> if you have any questions.
+            We wish you great races, and please feel free to contact me at <a href="mailto:${isWomen ? "jmagnellet@orange.fr" : "pmartin@ffs.fr"}" style="color: #1976d2; text-decoration: underline;">${isWomen ? "jmagnellet@orange.fr" : "pmartin@ffs.fr"}</a> if you have any questions.
           </p>
           <p style="font-size: 16px;">Best regards.</p>
           <div style="text-align: center; margin-top: 32px;">
-            <img src="https://i.imgur.com/tSwmL0f.png" alt="French Team Email Signature" style="max-width: 320px; width: 100%; height: auto; display: inline-block;" />
+            <img src="${isWomen ? "https://i.imgur.com/jlKN5Y2.png" : "https://i.imgur.com/tSwmL0f.png"}" alt="French Team Email Signature" style="max-width: 100px; width: 100%; height: auto; display: inline-block;" />
           </div>
         </div>
       `,
@@ -170,14 +170,14 @@ export async function POST(request: Request) {
     }
 
     console.log("Email sent successfully:", data?.id);
-    
+
     // Update inscription status to "email_sent" and set email sent timestamp
     try {
       await db
         .update(inscriptions)
         .set({
           status: "email_sent",
-          emailSentAt: new Date()
+          emailSentAt: new Date(),
         })
         .where(eq(inscriptions.id, Number(inscriptionId)));
       console.log("Inscription status updated to 'email_sent' with timestamp");
@@ -185,7 +185,7 @@ export async function POST(request: Request) {
       console.error("Failed to update inscription status:", statusError);
       // Don't fail the request if status update fails, email was sent successfully
     }
-    
+
     return NextResponse.json({
       message: "Email sent successfully!",
       emailId: data?.id,
