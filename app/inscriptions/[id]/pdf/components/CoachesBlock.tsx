@@ -32,18 +32,16 @@ export const CoachesBlock = ({coaches}: CoachesBlockProps) => {
                     ({coach.team})
                   </span>
                 )}
+                {(coach.startDate || coach.endDate) && (
+                  <span className="text-xs text-gray-600 ml-2">
+                    - First day : {coach.startDate
+                      ? new Date(coach.startDate).toLocaleDateString("fr-FR")
+                      : "TBD"} | Last day : {coach.endDate
+                      ? new Date(coach.endDate).toLocaleDateString("fr-FR")
+                      : "TBD"}
+                  </span>
+                )}
               </span>
-              {(coach.startDate || coach.endDate) && (
-                <span className="text-xs text-gray-600">
-                  {coach.startDate
-                    ? new Date(coach.startDate).toLocaleDateString("fr-FR")
-                    : "?"}{" "}
-                  -{" "}
-                  {coach.endDate
-                    ? new Date(coach.endDate).toLocaleDateString("fr-FR")
-                    : "?"}
-                </span>
-              )}
             </div>
           ))}
         </div>
