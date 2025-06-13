@@ -15,11 +15,11 @@ export function PWAInstallButton() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
-    const isPermanentlyDismissed = localStorage.getItem("pwa-install-dismissed") === "true";
-    
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      
+      const isPermanentlyDismissed = localStorage.getItem("pwa-install-dismissed") === "true";
       if (!isPermanentlyDismissed) {
         setShowInstallBanner(true);
       }
