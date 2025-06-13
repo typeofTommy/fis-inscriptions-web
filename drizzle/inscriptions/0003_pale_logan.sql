@@ -1,0 +1,1 @@
+ALTER TABLE "inscriptionsDB"."inscriptions" ADD COLUMN "email_sent_at" timestamp;

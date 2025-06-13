@@ -23,6 +23,7 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
   status: inscriptionStatus("status").default("open"),
   createdBy: text("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  emailSentAt: timestamp("email_sent_at"),
 });
 
 export const inscriptionCompetitors = inscriptionsSchema.table(

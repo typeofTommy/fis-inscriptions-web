@@ -15,10 +15,14 @@ export function PWAInstallButton() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
+    const isPermanentlyDismissed = localStorage.getItem("pwa-install-dismissed") === "true";
+    
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowInstallBanner(true);
+      if (!isPermanentlyDismissed) {
+        setShowInstallBanner(true);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -44,6 +48,11 @@ export function PWAInstallButton() {
     setShowInstallBanner(false);
   };
 
+  const handlePermanentDismiss = () => {
+    localStorage.setItem("pwa-install-dismissed", "true");
+    setShowInstallBanner(false);
+  };
+
   if (!showInstallBanner) return null;
 
   return (
@@ -65,27 +74,37 @@ export function PWAInstallButton() {
           variant="ghost"
           size="sm"
           onClick={handleDismiss}
-          className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+          className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 cursor-pointer"
         >
           <X className="h-4 w-4" />
         </Button>
       </div>
-      <div className="flex gap-2 mt-3">
+      <div className="flex flex-col gap-2 mt-3">
+        <div className="flex gap-2">
+          <Button
+            onClick={handleInstallClick}
+            size="sm"
+            className="flex-1 h-8 text-xs cursor-pointer"
+          >
+            <Download className="h-3 w-3 mr-1" />
+            Installer
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleDismiss}
+            size="sm"
+            className="h-8 text-xs cursor-pointer"
+          >
+            Plus tard
+          </Button>
+        </div>
         <Button
-          onClick={handleInstallClick}
+          variant="ghost"
+          onClick={handlePermanentDismiss}
           size="sm"
-          className="flex-1 h-8 text-xs"
+          className="h-6 text-xs text-gray-500 hover:text-gray-700 cursor-pointer"
         >
-          <Download className="h-3 w-3 mr-1" />
-          Installer
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handleDismiss}
-          size="sm"
-          className="h-8 text-xs"
-        >
-          Plus tard
+          Ne plus afficher
         </Button>
       </div>
     </div>

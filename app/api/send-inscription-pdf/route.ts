@@ -171,13 +171,16 @@ export async function POST(request: Request) {
 
     console.log("Email sent successfully:", data?.id);
     
-    // Update inscription status to "email_sent"
+    // Update inscription status to "email_sent" and set email sent timestamp
     try {
       await db
         .update(inscriptions)
-        .set({status: "email_sent"})
+        .set({
+          status: "email_sent",
+          emailSentAt: new Date()
+        })
         .where(eq(inscriptions.id, Number(inscriptionId)));
-      console.log("Inscription status updated to 'email_sent'");
+      console.log("Inscription status updated to 'email_sent' with timestamp");
     } catch (statusError) {
       console.error("Failed to update inscription status:", statusError);
       // Don't fail the request if status update fails, email was sent successfully

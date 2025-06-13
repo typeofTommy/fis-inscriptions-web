@@ -396,15 +396,22 @@ export function InscriptionsTable() {
         </Button>
       ),
       cell: ({row}) => (
-        <Badge className={statusColors[row.original.status] || "bg-gray-200"}>
-          {row.original.status === "open"
-            ? "Ouverte"
-            : row.original.status === "validated"
-              ? "Validée"
-              : row.original.status === "email_sent"
-                ? "Email envoyé"
-                : row.original.status}
-        </Badge>
+        <div className="flex flex-col gap-1">
+          <Badge className={statusColors[row.original.status] || "bg-gray-200"}>
+            {row.original.status === "open"
+              ? "Ouverte"
+              : row.original.status === "validated"
+                ? "Validée"
+                : row.original.status === "email_sent"
+                  ? "Email envoyé"
+                  : row.original.status}
+          </Badge>
+          {row.original.status === "email_sent" && row.original.emailSentAt && (
+            <span className="text-xs text-gray-500">
+              {format(new Date(row.original.emailSentAt), "dd/MM/yyyy HH:mm")}
+            </span>
+          )}
+        </div>
       ),
       filterFn: (row, id, value) => {
         if (!value) return true;

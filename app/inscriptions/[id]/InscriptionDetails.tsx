@@ -96,17 +96,27 @@ export const InscriptionDetails = ({
               >
                 <span className="md:hidden">Détail inscription</span>
                 <span className="hidden md:inline">Détails de l&apos;inscription</span>
-                <span
-                  className={
-                    `px-2 md:px-3 py-0.5 rounded-full text-xs font-semibold flex items-center` +
-                    (inscription.status === "open"
-                      ? " bg-sky-100 text-sky-700 border border-sky-300"
-                      : " bg-emerald-100 text-emerald-700 border border-emerald-300")
-                  }
-                  style={{minHeight: "1.5rem", width: "fit-content"}}
-                >
-                  {inscription.status === "open" ? "Ouverte" : "Clôturée"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={
+                      `px-2 md:px-3 py-0.5 rounded-full text-xs font-semibold flex items-center` +
+                      (inscription.status === "open"
+                        ? " bg-sky-100 text-sky-700 border border-sky-300"
+                        : " bg-emerald-100 text-emerald-700 border border-emerald-300")
+                    }
+                    style={{minHeight: "1.5rem", width: "fit-content"}}
+                  >
+                    {inscription.status === "open" ? "Ouverte" : "Clôturée"}
+                  </span>
+                  {inscription.status === "email_sent" && (
+                    <span
+                      className="px-2 md:px-3 py-0.5 rounded-full text-xs font-semibold flex items-center bg-orange-100 text-orange-800 border border-orange-200"
+                      style={{minHeight: "1.5rem", width: "fit-content"}}
+                    >
+                      Email envoyé
+                    </span>
+                  )}
+                </div>
               </h1>
             </div>
             <div className="flex flex-row items-center gap-2 w-full md:w-auto">

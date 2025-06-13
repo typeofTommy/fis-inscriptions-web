@@ -10,34 +10,34 @@ export const CompetitorsTable = ({
   competitors: (Competitor & {codexNumbers: string[]})[];
   codexData: CompetitionItem[];
 }) => {
-  // Calculate entries per codex (only those with points > 0 for that specific event)
+  // Calculate entries per codex (including competitors registered but without points - displayed as 999)
   const entriesPerCodex = codexData.map((codexItem) => {
     const count = competitors.filter((c) => {
       const isAssociated = c.codexNumbers.includes(String(codexItem.codex));
       if (!isAssociated) return false;
 
-      let hasPointsEntry = false;
-      // Check if competitor has a points entry (including 0) for the specific event type
+      let hasEntry = false;
+      // Check if competitor has a points entry OR is registered for this event (including those that would show 999)
       switch (codexItem.eventCode) {
         case "SL":
-          // Check for non-null value. parseFloat helps ensure "0" or "0.00" is treated as non-null.
-          hasPointsEntry = c.slpoints != null && !isNaN(parseFloat(c.slpoints));
+          // Count if has valid points OR is registered (will show 999)
+          hasEntry = (c.slpoints != null && !isNaN(parseFloat(c.slpoints))) || isAssociated;
           break;
         case "GS":
-          hasPointsEntry = c.gspoints != null && !isNaN(parseFloat(c.gspoints));
+          hasEntry = (c.gspoints != null && !isNaN(parseFloat(c.gspoints))) || isAssociated;
           break;
         case "SG":
-          hasPointsEntry = c.sgpoints != null && !isNaN(parseFloat(c.sgpoints));
+          hasEntry = (c.sgpoints != null && !isNaN(parseFloat(c.sgpoints))) || isAssociated;
           break;
         case "DH":
-          hasPointsEntry = c.dhpoints != null && !isNaN(parseFloat(c.dhpoints));
+          hasEntry = (c.dhpoints != null && !isNaN(parseFloat(c.dhpoints))) || isAssociated;
           break;
         case "AC":
-          hasPointsEntry = c.acpoints != null && !isNaN(parseFloat(c.acpoints));
+          hasEntry = (c.acpoints != null && !isNaN(parseFloat(c.acpoints))) || isAssociated;
           break;
         // Add other event codes if necessary
       }
-      return hasPointsEntry; // Count if associated AND has a non-null points value (0 counts)
+      return hasEntry; // Count if associated (includes both those with points and those showing 999)
     }).length;
     return {codex: String(codexItem.codex), count};
   });

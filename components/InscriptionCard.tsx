@@ -135,19 +135,26 @@ export function InscriptionCard({inscription}: {inscription: Inscription}) {
                   "dd/MM/yyyy"
                 )}
               </span>
-              <Badge
-                className={
-                  statusColors[inscription.status] || "bg-gray-200 text-xs"
-                }
-              >
-                {inscription.status === "open"
-                  ? "Ouverte"
-                  : inscription.status === "validated"
-                    ? "Validée"
-                    : inscription.status === "email_sent"
-                      ? "Email envoyé"
-                      : inscription.status}
-              </Badge>
+              <div className="flex flex-col gap-1">
+                <Badge
+                  className={
+                    statusColors[inscription.status] || "bg-gray-200 text-xs"
+                  }
+                >
+                  {inscription.status === "open"
+                    ? "Ouverte"
+                    : inscription.status === "validated"
+                      ? "Validée"
+                      : inscription.status === "email_sent"
+                        ? "Email envoyé"
+                        : inscription.status}
+                </Badge>
+                {inscription.status === "email_sent" && inscription.emailSentAt && (
+                  <span className="text-xs text-gray-500">
+                    {format(new Date(inscription.emailSentAt), "dd/MM/yyyy HH:mm")}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-600">
               <span className="font-medium truncate">
