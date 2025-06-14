@@ -24,6 +24,7 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
   createdBy: text("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   emailSentAt: timestamp("email_sent_at"),
+  deletedAt: timestamp("deleted_at"),
 });
 
 export const inscriptionCompetitors = inscriptionsSchema.table(
@@ -43,6 +44,7 @@ export const inscriptionCompetitors = inscriptionsSchema.table(
     codexNumber: text("codex_number").notNull(),
     addedBy: text("added_by").default("Unknown"),
     createdAt: timestamp("created_at").defaultNow(),
+    deletedAt: timestamp("deleted_at"),
   }
 );
 
@@ -98,5 +100,6 @@ export const inscriptionCoaches = inscriptionsSchema.table(
     endDate: text("end_date").notNull(),
     addedBy: text("added_by").default("Unknown"),
     createdAt: timestamp("created_at").defaultNow(),
+    deletedAt: timestamp("deleted_at"),
   }
 );

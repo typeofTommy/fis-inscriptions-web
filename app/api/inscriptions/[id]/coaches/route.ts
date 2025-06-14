@@ -7,6 +7,7 @@ import {
 } from "@/drizzle/schemaInscriptions";
 import {clerkClient} from "@clerk/clerk-sdk-node";
 import {getAuth} from "@clerk/nextjs/server";
+import {selectNotDeleted, softDelete} from "@/lib/soft-delete";
 
 export async function GET(
   req: NextRequest,
@@ -20,7 +21,7 @@ export async function GET(
       return NextResponse.json({error: "Missing inscriptionId"}, {status: 400});
     }
 
-    // Get all coaches for this inscription
+    // Get all coaches for this inscription (excluding deleted ones)
     const coaches = await db
       .select({
         id: inscriptionCoaches.id,
@@ -34,7 +35,7 @@ export async function GET(
         createdAt: inscriptionCoaches.createdAt,
       })
       .from(inscriptionCoaches)
-      .where(eq(inscriptionCoaches.inscriptionId, inscriptionId));
+      .where(selectNotDeleted(inscriptionCoaches, eq(inscriptionCoaches.inscriptionId, inscriptionId)));
 
     // Get unique user IDs for email lookup
     const uniqueUserIds = Array.from(
@@ -222,16 +223,14 @@ export async function DELETE(
       return NextResponse.json({error: "Coach ID is required"}, {status: 400});
     }
 
-    // Delete the coach
-    const deleted = await db
-      .delete(inscriptionCoaches)
-      .where(
-        and(
-          eq(inscriptionCoaches.inscriptionId, inscriptionId),
-          eq(inscriptionCoaches.id, coachId)
-        )
+    // Soft delete the coach
+    const deleted = await softDelete(
+      inscriptionCoaches,
+      and(
+        eq(inscriptionCoaches.inscriptionId, inscriptionId),
+        eq(inscriptionCoaches.id, coachId)
       )
-      .returning();
+    );
 
     if (!deleted.length) {
       return NextResponse.json({error: "Coach not found"}, {status: 404});

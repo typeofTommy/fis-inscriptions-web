@@ -34,7 +34,31 @@ const main = async () => {
     JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
     WHERE ic.created_at >= CURRENT_DATE
       AND ic.created_at < CURRENT_DATE + INTERVAL '1 day'
+      AND ic.deleted_at IS NULL
     ORDER BY ic.created_at ASC;
+  `);
+
+  // Récupère les suppressions de compétiteurs du jour
+  const {rows: deletedCompetitors} = await client.query(`
+    SELECT
+      'competitor_deleted' AS action_type,
+      ic.id,
+      ic.inscription_id,
+      i.event_id,
+      i.event_data->>'place' AS event_location,
+      i.event_data->>'startDate' AS event_start_date,
+      i.event_data->>'endDate' AS event_end_date,
+      ic.deleted_at,
+      c.firstname,
+      c.lastname,
+      ic.codex_number,
+      ic.added_by
+    FROM "inscriptionsDB".inscription_competitors ic
+    JOIN "inscriptionsDB".competitors c ON ic.competitor_id = c.competitorid
+    JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
+    WHERE ic.deleted_at >= CURRENT_DATE
+      AND ic.deleted_at < CURRENT_DATE + INTERVAL '1 day'
+    ORDER BY ic.deleted_at ASC;
   `);
 
   // Récupère les créations d'événements du jour
@@ -51,13 +75,80 @@ const main = async () => {
     FROM "inscriptionsDB".inscriptions
     WHERE created_at >= CURRENT_DATE
       AND created_at < CURRENT_DATE + INTERVAL '1 day'
+      AND deleted_at IS NULL
     ORDER BY created_at ASC;
+  `);
+
+  // Récupère les suppressions d'événements du jour
+  const {rows: deletedEvents} = await client.query(`
+    SELECT
+      'event_deleted' AS action_type,
+      id,
+      event_id,
+      event_data->>'place' AS event_location,
+      event_data->>'startDate' AS event_start_date,
+      event_data->>'endDate' AS event_end_date,
+      deleted_at,
+      created_by
+    FROM "inscriptionsDB".inscriptions
+    WHERE deleted_at >= CURRENT_DATE
+      AND deleted_at < CURRENT_DATE + INTERVAL '1 day'
+    ORDER BY deleted_at ASC;
+  `);
+
+  // Récupère les ajouts de coachs/staff du jour
+  const {rows: coaches} = await client.query(`
+    SELECT
+      'coach_added' AS action_type,
+      ic.id,
+      ic.inscription_id,
+      i.event_id,
+      i.event_data->>'place' AS event_location,
+      i.event_data->>'startDate' AS event_start_date,
+      i.event_data->>'endDate' AS event_end_date,
+      ic.created_at,
+      ic.first_name,
+      ic.last_name,
+      ic.team,
+      ic.start_date,
+      ic.end_date,
+      ic.added_by
+    FROM "inscriptionsDB".inscription_coaches ic
+    JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
+    WHERE ic.created_at >= CURRENT_DATE
+      AND ic.created_at < CURRENT_DATE + INTERVAL '1 day'
+      AND ic.deleted_at IS NULL
+    ORDER BY ic.created_at ASC;
+  `);
+
+  // Récupère les suppressions de coachs/staff du jour
+  const {rows: deletedCoaches} = await client.query(`
+    SELECT
+      'coach_deleted' AS action_type,
+      ic.id,
+      ic.inscription_id,
+      i.event_id,
+      i.event_data->>'place' AS event_location,
+      i.event_data->>'startDate' AS event_start_date,
+      i.event_data->>'endDate' AS event_end_date,
+      ic.deleted_at,
+      ic.first_name,
+      ic.last_name,
+      ic.team,
+      ic.start_date,
+      ic.end_date,
+      ic.added_by
+    FROM "inscriptionsDB".inscription_coaches ic
+    JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
+    WHERE ic.deleted_at >= CURRENT_DATE
+      AND ic.deleted_at < CURRENT_DATE + INTERVAL '1 day'
+    ORDER BY ic.deleted_at ASC;
   `);
 
   await client.end();
 
-  // Si aucun événement ni ajout de compétiteur, on n'envoie pas d'email
-  if (events.length === 0 && competitors.length === 0) {
+  // Si aucun changement, on n'envoie pas d'email
+  if (events.length === 0 && competitors.length === 0 && deletedEvents.length === 0 && deletedCompetitors.length === 0 && coaches.length === 0 && deletedCoaches.length === 0) {
     console.log("Aucun changement aujourd'hui, aucun email envoyé.");
     return;
   }
@@ -77,12 +168,20 @@ const main = async () => {
   // Group by type, then by event, then by codex
   const eventsById = groupBy(events, "event_id");
   const competitorsByEvent = groupBy(competitors, "event_id");
+  const deletedEventsById = groupBy(deletedEvents, "event_id");
+  const deletedCompetitorsByEvent = groupBy(deletedCompetitors, "event_id");
+  const coachesByEvent = groupBy(coaches, "event_id");
+  const deletedCoachesByEvent = groupBy(deletedCoaches, "event_id");
 
   // Récupère tous les userId Clerk uniques pour fetch les emails (added_by + created_by)
   const userIds = Array.from(
     new Set([
       ...competitors.map((c) => c.added_by).filter(Boolean),
+      ...deletedCompetitors.map((c) => c.added_by).filter(Boolean),
       ...events.map((e) => e.created_by).filter(Boolean),
+      ...deletedEvents.map((e) => e.created_by).filter(Boolean),
+      ...coaches.map((c) => c.added_by).filter(Boolean),
+      ...deletedCoaches.map((c) => c.added_by).filter(Boolean),
     ])
   );
   const userIdToEmail: Record<string, string> = {};
@@ -127,7 +226,29 @@ const main = async () => {
               .join("")
       }
     </div>
-    <div>
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#dc2626;">Événements supprimés</h3>
+      ${
+        Object.keys(deletedEventsById).length === 0
+          ? `<i style='color:#6b7280;'>Aucun événement supprimé aujourd'hui.</i>`
+          : Object.values(deletedEventsById)
+              .map((evts) => {
+                const evt = evts[0];
+                const formattedDate = format(
+                  new Date(evt.deleted_at),
+                  "dd MMMM yyyy 'à' HH:mm",
+                  {locale: fr}
+                );
+                const email = userIdToEmail[evt.created_by] || evt.created_by;
+                return `<div style='margin-bottom:16px;'>
+              <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</span><br>
+              <span style='color:#6b7280;'>Supprimé le : ${formattedDate} par ${email}</span>
+            </div>`;
+              })
+              .join("")
+      }
+    </div>
+    <div style="margin-bottom:32px;">
       <h3 style="color:#111827;">Ajouts de coureurs</h3>
       ${
         Object.keys(competitorsByEvent).length === 0
@@ -156,6 +277,113 @@ const main = async () => {
                               {locale: fr}
                             );
                             return `<li style='color:#374151;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(ajouté le ${formattedDate} par ${email})</span></li>`;
+                          })
+                          .join("")}
+                      </ul>
+                    </li>
+                  `
+                    )
+                    .join("");
+                })()}
+              </ul>
+            </div>`;
+              })
+              .join("")
+      }
+    </div>
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#111827;">Ajouts de coachs/staff</h3>
+      ${
+        Object.keys(coachesByEvent).length === 0
+          ? `<i style='color:#6b7280;'>Aucun ajout de coach/staff aujourd'hui.</i>`
+          : Object.values(coachesByEvent)
+              .map((coachList) => {
+                const evt = coachList[0];
+                return `<div style='margin-bottom:24px;'>
+              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a>
+              <ul style='margin:8px 0 0 16px;padding:0;'>
+                ${coachList
+                  .map((coach) => {
+                    const email = userIdToEmail[coach.added_by] || coach.added_by;
+                    const formattedDate = format(
+                      new Date(coach.created_at),
+                      "dd MMMM yyyy 'à' HH:mm",
+                      {locale: fr}
+                    );
+                    const teamInfo = coach.team ? ` (${coach.team})` : "";
+                    const period = coach.start_date === coach.end_date 
+                      ? coach.start_date 
+                      : `${coach.start_date} → ${coach.end_date}`;
+                    return `<li style='color:#374151;margin-bottom:4px;'>${coach.first_name} ${coach.last_name}${teamInfo} <span style='color:#16a34a;'>[${period}]</span> <span style='color:#6b7280;'>(ajouté le ${formattedDate} par ${email})</span></li>`;
+                  })
+                  .join("")}
+              </ul>
+            </div>`;
+              })
+              .join("")
+      }
+    </div>
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#dc2626;">Suppressions de coachs/staff</h3>
+      ${
+        Object.keys(deletedCoachesByEvent).length === 0
+          ? `<i style='color:#6b7280;'>Aucune suppression de coach/staff aujourd'hui.</i>`
+          : Object.values(deletedCoachesByEvent)
+              .map((coachList) => {
+                const evt = coachList[0];
+                return `<div style='margin-bottom:24px;'>
+              <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</span>
+              <ul style='margin:8px 0 0 16px;padding:0;'>
+                ${coachList
+                  .map((coach) => {
+                    const email = userIdToEmail[coach.added_by] || coach.added_by;
+                    const formattedDate = format(
+                      new Date(coach.deleted_at),
+                      "dd MMMM yyyy 'à' HH:mm",
+                      {locale: fr}
+                    );
+                    const teamInfo = coach.team ? ` (${coach.team})` : "";
+                    const period = coach.start_date === coach.end_date 
+                      ? coach.start_date 
+                      : `${coach.start_date} → ${coach.end_date}`;
+                    return `<li style='color:#dc2626;margin-bottom:4px;'>${coach.first_name} ${coach.last_name}${teamInfo} <span style='color:#16a34a;'>[${period}]</span> <span style='color:#6b7280;'>(supprimé le ${formattedDate} par ${email})</span></li>`;
+                  })
+                  .join("")}
+              </ul>
+            </div>`;
+              })
+              .join("")
+      }
+    </div>
+    <div>
+      <h3 style="color:#dc2626;">Suppressions de coureurs</h3>
+      ${
+        Object.keys(deletedCompetitorsByEvent).length === 0
+          ? `<i style='color:#6b7280;'>Aucune suppression de coureur aujourd'hui.</i>`
+          : Object.values(deletedCompetitorsByEvent)
+              .map((comps) => {
+                const evt = comps[0];
+                return `<div style='margin-bottom:24px;'>
+              <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</span>
+              <ul style='margin:8px 0 0 16px;padding:0;'>
+                ${(() => {
+                  const byCodex = groupBy(comps, "codex_number");
+                  return Object.entries(byCodex)
+                    .map(
+                      ([codex, runners]) => `
+                    <li style='margin-bottom:8px;'>
+                      <span style='color:#dc2626;font-weight:500;'>Codex ${codex}</span>
+                      <ul style='margin:4px 0 0 16px;padding:0;'>
+                        ${runners
+                          .map((runner) => {
+                            const email =
+                              userIdToEmail[runner.added_by] || runner.added_by;
+                            const formattedDate = format(
+                              new Date(runner.deleted_at),
+                              "dd MMMM yyyy 'à' HH:mm",
+                              {locale: fr}
+                            );
+                            return `<li style='color:#dc2626;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(supprimé le ${formattedDate} par ${email})</span></li>`;
                           })
                           .join("")}
                       </ul>

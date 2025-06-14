@@ -8,6 +8,7 @@ import {
 } from "@/drizzle/schemaInscriptions";
 import {clerkClient} from "@clerk/clerk-sdk-node";
 import {getAuth} from "@clerk/nextjs/server";
+import {selectNotDeleted, softDelete} from "@/lib/soft-delete";
 
 export async function GET(
   req: NextRequest,
@@ -21,14 +22,17 @@ export async function GET(
   const discipline = searchParams.get("discipline");
   // Si competitorId est fourni, on retourne la liste des codex où il est inscrit pour cette inscription
   if (competitorId) {
-    // On récupère les codexNumbers pour ce competitorId et cette inscription
+    // On récupère les codexNumbers pour ce competitorId et cette inscription (non supprimés)
     const links = await db
       .select({codexNumber: inscriptionCompetitors.codexNumber})
       .from(inscriptionCompetitors)
       .where(
-        and(
-          eq(inscriptionCompetitors.inscriptionId, inscriptionId),
-          eq(inscriptionCompetitors.competitorId, Number(competitorId))
+        selectNotDeleted(
+          inscriptionCompetitors,
+          and(
+            eq(inscriptionCompetitors.inscriptionId, inscriptionId),
+            eq(inscriptionCompetitors.competitorId, Number(competitorId))
+          )
         )
       );
     const codexNumbers = links.map((l) => l.codexNumber);
@@ -60,14 +64,17 @@ export async function GET(
     // Pour chaque codex, on récupère les competitorIds et leurs infos
     const result = await Promise.all(
       codexData.map(async (codex) => {
-        // 1. Récupérer les competitorIds liés à cette inscription et ce codex
+        // 1. Récupérer les competitorIds liés à cette inscription et ce codex (non supprimés)
         const links = await db
           .select({competitorId: inscriptionCompetitors.competitorId})
           .from(inscriptionCompetitors)
           .where(
-            and(
-              eq(inscriptionCompetitors.inscriptionId, inscriptionId),
-              eq(inscriptionCompetitors.codexNumber, String(codex.codex))
+            selectNotDeleted(
+              inscriptionCompetitors,
+              and(
+                eq(inscriptionCompetitors.inscriptionId, inscriptionId),
+                eq(inscriptionCompetitors.codexNumber, String(codex.codex))
+              )
             )
           );
         const competitorIds = links.map((l) => l.competitorId);
@@ -95,7 +102,7 @@ export async function GET(
     return NextResponse.json(result);
   }
 
-  // 1. Récupérer les competitorIds liés à cette inscription et ce codex
+  // 1. Récupérer les competitorIds liés à cette inscription et ce codex (non supprimés)
   const links = await db
     .select({
       competitorId: inscriptionCompetitors.competitorId,
@@ -103,9 +110,12 @@ export async function GET(
     })
     .from(inscriptionCompetitors)
     .where(
-      and(
-        eq(inscriptionCompetitors.inscriptionId, inscriptionId),
-        eq(inscriptionCompetitors.codexNumber, codexNumber)
+      selectNotDeleted(
+        inscriptionCompetitors,
+        and(
+          eq(inscriptionCompetitors.inscriptionId, inscriptionId),
+          eq(inscriptionCompetitors.codexNumber, codexNumber)
+        )
       )
     );
   const competitorIds = links.map((l) => l.competitorId);
@@ -233,15 +243,14 @@ export async function PUT(
     }
 
     // Since neon-http driver doesn't support transactions, perform operations sequentially
-    // 1. Delete all existing registrations for this competitor in this inscription
-    await db
-      .delete(inscriptionCompetitors)
-      .where(
-        and(
-          eq(inscriptionCompetitors.inscriptionId, inscriptionId),
-          eq(inscriptionCompetitors.competitorId, competitorId)
-        )
-      );
+    // 1. Soft delete all existing registrations for this competitor in this inscription
+    await softDelete(
+      inscriptionCompetitors,
+      and(
+        eq(inscriptionCompetitors.inscriptionId, inscriptionId),
+        eq(inscriptionCompetitors.competitorId, competitorId)
+      )
+    );
 
     // 2. Create new registrations for each selected codex
     if (codexNumbersAsStrings.length > 0) {
@@ -304,10 +313,10 @@ export async function DELETE(
     );
   }
 
-  const deleted = await db
-    .delete(inscriptionCompetitors)
-    .where(whereClause)
-    .returning();
+  const deleted = await softDelete(
+    inscriptionCompetitors,
+    whereClause
+  );
 
   return NextResponse.json({deleted});
 }

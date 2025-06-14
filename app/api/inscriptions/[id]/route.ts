@@ -5,6 +5,7 @@ import {
   inscriptions,
   inscriptionCompetitors,
 } from "@/drizzle/schemaInscriptions";
+import {selectNotDeleted, softDelete} from "@/lib/soft-delete";
 
 export async function GET(
   req: NextRequest,
@@ -19,7 +20,7 @@ export async function GET(
     const inscription = await db
       .select()
       .from(inscriptions)
-      .where(eq(inscriptions.id, idNum))
+      .where(selectNotDeleted(inscriptions, eq(inscriptions.id, idNum)))
       .limit(1);
 
     // Check if inscription exists and has data
@@ -54,17 +55,18 @@ export async function DELETE(
       );
     }
 
-    // Since neon-http driver doesn't support transactions, delete sequentially.
-    // 1. Delete related competitors first
-    await db
-      .delete(inscriptionCompetitors)
-      .where(eq(inscriptionCompetitors.inscriptionId, inscriptionId));
+    // Since neon-http driver doesn't support transactions, soft delete sequentially.
+    // 1. Soft delete related competitors first
+    await softDelete(
+      inscriptionCompetitors,
+      eq(inscriptionCompetitors.inscriptionId, inscriptionId)
+    );
 
-    // 2. Delete the inscription itself
-    const deletedInscription = await db
-      .delete(inscriptions)
-      .where(eq(inscriptions.id, inscriptionId))
-      .returning({deletedId: inscriptions.id});
+    // 2. Soft delete the inscription itself
+    const deletedInscription = await softDelete(
+      inscriptions,
+      eq(inscriptions.id, inscriptionId)
+    );
 
     // Check if the inscription was actually deleted
     if (!deletedInscription || deletedInscription.length === 0) {
