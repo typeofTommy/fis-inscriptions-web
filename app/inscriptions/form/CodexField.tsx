@@ -32,7 +32,7 @@ export const CodexField = ({
 }: {
   index: number;
   form: {
-    control: Control<any>;
+    control: Control<Record<string, unknown>>;
     watch: (name: string) => unknown;
   };
   onDuplicateChange: (index: number, isDuplicate: boolean) => void;
