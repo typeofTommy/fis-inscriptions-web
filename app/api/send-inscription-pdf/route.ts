@@ -9,8 +9,6 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
-    console.log("Starting PDF email send process...");
-
     // On attend un formData (multipart)
     const formData = await request.formData();
     const pdfFile = formData.get("pdf");
@@ -19,16 +17,7 @@ export async function POST(request: Request) {
     const subject = formData.get("subject") as string | null;
     const gender = formData.get("gender") as string | null;
 
-    console.log("Received form data:", {
-      hasPdfFile: !!pdfFile,
-      toRaw,
-      inscriptionId,
-      subject,
-      gender,
-    });
-
     if (!pdfFile || !toRaw || !inscriptionId || !subject) {
-      console.log("Missing required fields");
       return NextResponse.json(
         {error: "Missing required fields: pdf, to, inscriptionId, subject"},
         {status: 400}
@@ -39,9 +28,7 @@ export async function POST(request: Request) {
     let to: string[] = [];
     try {
       to = JSON.parse(toRaw as string);
-      console.log("Parsed recipients:", to);
-    } catch (error) {
-      console.error("Error parsing recipients:", error);
+    } catch {
       return NextResponse.json(
         {error: "Invalid 'to' field: must be a JSON array of emails."},
         {status: 400}
@@ -56,7 +43,6 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (!inscription.length) {
-      console.log("Inscription not found:", inscriptionId);
       return NextResponse.json({error: "Inscription not found"}, {status: 404});
     }
 
@@ -69,9 +55,6 @@ export async function POST(request: Request) {
     const fromAddress =
       process.env.RESEND_FROM_EMAIL ||
       "Inscriptions FIS Etranger <noreply@inscriptions-fis-etranger.fr>";
-
-    console.log("Sending email to:", to);
-    console.log("From address:", fromAddress);
 
     // Construction du sujet au format demandé
     // Ex: French 🇫🇷 MEN entries for 11-12 Apr 25 ➞ Prali (ITA)-FIS
@@ -120,8 +103,6 @@ export async function POST(request: Request) {
         .replace(" ()", "")
         .trim();
 
-    console.log("Subject:", subjectLine);
-
     const {data, error: emailError} = await resend.emails.send({
       from: fromAddress,
       to: to,
@@ -162,14 +143,11 @@ export async function POST(request: Request) {
     });
 
     if (emailError) {
-      console.error("Email sending error:", emailError);
       return NextResponse.json(
         {error: "Failed to send email", details: emailError},
         {status: 500}
       );
     }
-
-    console.log("Email sent successfully:", data?.id);
 
     // Update inscription status to "email_sent" and set email sent timestamp
     try {
@@ -180,9 +158,7 @@ export async function POST(request: Request) {
           emailSentAt: new Date(),
         })
         .where(eq(inscriptions.id, Number(inscriptionId)));
-      console.log("Inscription status updated to 'email_sent' with timestamp");
-    } catch (statusError) {
-      console.error("Failed to update inscription status:", statusError);
+    } catch {
       // Don't fail the request if status update fails, email was sent successfully
     }
 
@@ -191,7 +167,6 @@ export async function POST(request: Request) {
       emailId: data?.id,
     });
   } catch (error: unknown) {
-    console.error("Unexpected error:", error);
     return NextResponse.json(
       {error: "Failed to process request", details: (error as Error).message},
       {status: 500}

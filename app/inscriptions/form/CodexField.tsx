@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/form";
 import {useEffect} from "react";
 import {FormField} from "@/components/ui/form";
+import type {Control} from "react-hook-form";
 import {Input} from "@/components/ui/input";
 import {CheckCircle2, Loader2, MinusCircleIcon, XCircle} from "lucide-react";
 import {
@@ -30,13 +31,16 @@ export const CodexField = ({
   inscriptionId,
 }: {
   index: number;
-  form: any;
+  form: {
+    control: Control<any>;
+    watch: (name: string) => unknown;
+  };
   onDuplicateChange: (index: number, isDuplicate: boolean) => void;
   remove: (index: number) => void;
   fieldsLength: number;
   inscriptionId?: string;
 }) => {
-  const codex = form.watch(`codexNumbers.${index}.number`);
+  const codex = form.watch(`codexNumbers.${index}.number`) as string;
   const {
     data: codexCheck,
     isLoading: codexChecking,

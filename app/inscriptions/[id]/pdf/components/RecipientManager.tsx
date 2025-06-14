@@ -390,9 +390,9 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
           variant: "default",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setSendStatus({
-        message: error.message || "Une erreur est survenue lors de l'envoi.",
+        message: error instanceof Error ? error.message : "Une erreur est survenue lors de l'envoi.",
         type: "error",
       });
       // Met à jour le toast en erreur
@@ -401,7 +401,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
           id: toastId,
           title: "Erreur lors de l'envoi",
           description:
-            error.message || "Une erreur est survenue lors de l'envoi.",
+            error instanceof Error ? error.message : "Une erreur est survenue lors de l'envoi.",
           open: true,
           duration: 1000000,
           variant: "destructive",

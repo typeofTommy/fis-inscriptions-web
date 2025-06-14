@@ -632,14 +632,13 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
     onSortingChange: setUserDrivenSorting,
   });
 
-  // Découpe en groupes par sexe
-  const groups = [
-    {label: "Femmes", value: "W"},
-    {label: "Hommes", value: "M"},
-  ];
-
   // Filter groups based on genderFilter
   const displayedGroups = useMemo(() => {
+    const groups = [
+      {label: "Femmes", value: "W"},
+      {label: "Hommes", value: "M"},
+    ];
+    
     if (genderFilter === "M") {
       return groups.filter((g) => g.value === "M");
     }

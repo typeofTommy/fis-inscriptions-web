@@ -1,6 +1,10 @@
 import { and, isNull, not, SQL } from "drizzle-orm";
-import { PgTable } from "drizzle-orm/pg-core";
+import { PgTable, PgColumn } from "drizzle-orm/pg-core";
 import { db } from "@/app/db/inscriptionsDB";
+
+type TableWithSoftDelete = PgTable & {
+  deletedAt: PgColumn;
+};
 
 export const softDelete = async <T extends PgTable>(
   table: T,
@@ -20,7 +24,7 @@ export const softDelete = async <T extends PgTable>(
     throw new Error("Where clause is required for soft delete");
   }
   
-  const whereClause = and(where, isNull((table as any).deletedAt));
+  const whereClause = and(where, isNull((table as unknown as TableWithSoftDelete).deletedAt));
   if (!whereClause) {
     throw new Error("Invalid where clause for soft delete");
   }
@@ -36,7 +40,7 @@ export const selectNotDeleted = <T extends PgTable>(
   table: T,
   whereClause?: SQL
 ) => {
-  const notDeletedClause = isNull((table as any).deletedAt);
+  const notDeletedClause = isNull((table as unknown as TableWithSoftDelete).deletedAt);
   
   return whereClause 
     ? and(whereClause, notDeletedClause) || notDeletedClause
@@ -47,7 +51,7 @@ export const selectOnlyDeleted = <T extends PgTable>(
   table: T,
   whereClause?: SQL
 ) => {
-  const deletedClause = not(isNull((table as any).deletedAt));
+  const deletedClause = not(isNull((table as unknown as TableWithSoftDelete).deletedAt));
   
   return whereClause 
     ? and(whereClause, deletedClause) || deletedClause

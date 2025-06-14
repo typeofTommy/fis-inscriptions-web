@@ -21,10 +21,11 @@ import {eq} from "drizzle-orm";
 import {RecipientManager, Recipient} from "./components/RecipientManager";
 import {clerkClient, auth} from "@clerk/nextjs/server";
 import type {User} from "@clerk/nextjs/server";
+import type {Competition} from "@/app/types";
 
 // Define more specific types based on common Clerk structures
 // You should ideally import these or more accurate types from Clerk packages
-type AuthObject = {userId: string | null; [key: string]: any}; // Basic Auth object type
+type AuthObject = {userId: string | null; [key: string]: unknown}; // Basic Auth object type
 // type ClerkEmailAddress = {id: string; emailAddress: string; [key: string]: any}; // Removed unused type
 
 export default async function PdfPage({
@@ -50,9 +51,8 @@ export default async function PdfPage({
   if (!inscription.eventData) {
     return <p>Données d&apos;événement non trouvées pour cette inscription.</p>;
   }
-  // Assuming inscription.eventData is an object that might contain eventName
-  const eventData = inscription.eventData as any; // Keep as any to avoid restructuring user's existing code
-  const competitionNameForEmail = eventData.eventName || "Inscription";
+  const eventData = inscription.eventData as Competition;
+  const competitionNameForEmail = eventData.name || "Inscription";
 
   // Fetch coaches for this inscription
   const coaches = await db
@@ -120,7 +120,7 @@ export default async function PdfPage({
   // Filter codexData based on raceGender
   // Assuming CompetitionItem has a genderCode property ('M' or 'W')
   const filteredCodexData = inscription.eventData.competitions.filter(
-    (codexItem: any) => {
+    (codexItem) => {
       // If genderCode is not present, or if it matches raceGender, include it.
       // This handles cases where a competition might be for both genders or gender is not specified.
       // Adjust this logic if CompetitionItem structure is different or strict filtering is needed.

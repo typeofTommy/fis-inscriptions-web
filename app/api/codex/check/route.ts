@@ -3,6 +3,8 @@ import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import type {Competition} from "@/app/types";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
   const {searchParams} = new URL(req.url);
   const number = searchParams.get("number");
