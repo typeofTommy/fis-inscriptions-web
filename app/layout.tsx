@@ -11,7 +11,7 @@ import {frFR} from "@clerk/localizations";
 
 // Component to always provide ClerkProvider with fallback key for build
 function ConditionalClerkProvider({ children }: { children: React.ReactNode }) {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_dummy_key_for_build';
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_Y29uY2lzZS1xdWFpbC0zNC5jbGVyay5hY2NvdW50cy5kZXYk';
   
   return (
     <ClerkProvider localization={frFR} publishableKey={publishableKey}>
