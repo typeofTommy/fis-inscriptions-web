@@ -9,6 +9,17 @@ import {PWAInstallButton} from "@/components/ui/PWAInstallButton";
 import "./globals.css";
 import {frFR} from "@clerk/localizations";
 
+// Component to always provide ClerkProvider with fallback key for build
+function ConditionalClerkProvider({ children }: { children: React.ReactNode }) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_dummy_key_for_build';
+  
+  return (
+    <ClerkProvider localization={frFR} publishableKey={publishableKey}>
+      {children}
+    </ClerkProvider>
+  );
+}
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -60,7 +71,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ClerkProvider localization={frFR}>
+        <ConditionalClerkProvider>
           <div className="min-h-screen bg-gradient-to-b from-[#e0f0ff] to-white pb-10">
             {/* Header avec effet de neige */}
             <div className="relative bg-[#3d7cf2] text-white">
@@ -108,7 +119,7 @@ export default function RootLayout({
           </div>
           <NetworkStatus />
           <PWAInstallButton />
-        </ClerkProvider>
+        </ConditionalClerkProvider>
       </body>
     </html>
   );

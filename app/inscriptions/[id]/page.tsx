@@ -8,6 +8,8 @@ import {RecapEvent} from "./RecapEvent";
 import {Coaches} from "./Coaches";
 import AddCoachModal from "./AddCoachModal";
 import {useInscription} from "@/app/inscriptions/form/api";
+
+export const dynamic = 'force-dynamic';
 import {Loader2} from "lucide-react";
 
 interface PageProps {

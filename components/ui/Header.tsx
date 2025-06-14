@@ -7,6 +7,7 @@ import {SignedIn, UserButton, useUser} from "@clerk/nextjs";
 import {Button} from "./button";
 import {usePathname} from "next/navigation";
 
+
 export const Header = () => {
   const pathname = usePathname();
   const isHome = pathname === "/";
