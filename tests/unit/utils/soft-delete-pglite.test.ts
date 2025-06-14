@@ -1,21 +1,49 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, not, SQL } from 'drizzle-orm'
+import { PgTable } from 'drizzle-orm/pg-core'
 import { setupTestDb } from '../../setup-pglite'
-import { selectNotDeleted } from '@/lib/soft-delete'
 
-// Helper function for testing soft delete with custom db
-const testSoftDelete = async (db: any, table: any, where: any) => {
-  const whereClause = and(where, isNull(table.deletedAt))
+// Test-specific soft delete utilities that accept db parameter
+const testSoftDelete = async <T extends PgTable>(
+  db: any,
+  table: T,
+  where: SQL | undefined,
+  deletedBy?: string
+) => {
+  const updateData: Record<string, unknown> = {
+    deletedAt: new Date(),
+  };
+  
+  if (deletedBy && 'deletedBy' in table) {
+    updateData.deletedBy = deletedBy;
+  }
+
+  if (!where) {
+    throw new Error("Where clause is required for soft delete");
+  }
+  
+  const whereClause = and(where, isNull((table as any).deletedAt));
   if (!whereClause) {
-    throw new Error("Invalid where clause for soft delete")
+    throw new Error("Invalid where clause for soft delete");
   }
 
   return await db
     .update(table)
-    .set({ deletedAt: new Date() })
+    .set(updateData)
     .where(whereClause)
-    .returning()
-}
+    .returning();
+};
+
+const testSelectNotDeleted = <T extends PgTable>(
+  table: T,
+  whereClause?: SQL
+) => {
+  const notDeletedClause = isNull((table as any).deletedAt);
+  
+  return whereClause 
+    ? and(whereClause, notDeletedClause) || notDeletedClause
+    : notDeletedClause;
+};
 
 describe('Soft Delete Utilities - PGLite Tests', () => {
   let testDb: any
@@ -77,11 +105,11 @@ describe('Soft Delete Utilities - PGLite Tests', () => {
         addedBy: 'user_123'
       })
 
-      // Query using selectNotDeleted
+      // Query using testSelectNotDeleted
       const nonDeletedRecords = await testDb
         .select()
         .from(schemas.inscriptionCompetitors)
-        .where(selectNotDeleted(schemas.inscriptionCompetitors))
+        .where(testSelectNotDeleted(schemas.inscriptionCompetitors))
 
       expect(nonDeletedRecords).toHaveLength(1)
       expect(nonDeletedRecords[0].id).toBe(2)
@@ -119,7 +147,7 @@ describe('Soft Delete Utilities - PGLite Tests', () => {
         .select()
         .from(schemas.inscriptionCompetitors)
         .where(
-          selectNotDeleted(
+          testSelectNotDeleted(
             schemas.inscriptionCompetitors,
             eq(schemas.inscriptionCompetitors.addedBy, 'user_123')
           )
