@@ -5,7 +5,15 @@ import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {eq} from "drizzle-orm";
 import {format} from "date-fns";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const dynamic = 'force-dynamic';
+
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY environment variable is required");
+  }
+  return new Resend(apiKey);
+}
 
 export async function POST(request: Request) {
   try {
@@ -103,6 +111,7 @@ export async function POST(request: Request) {
         .replace(" ()", "")
         .trim();
 
+    const resend = getResendClient();
     const {data, error: emailError} = await resend.emails.send({
       from: fromAddress,
       to: to,
