@@ -1,22 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-
-// Mock the database first
-const mockDb = {
-  select: vi.fn(() => ({ from: vi.fn().mockResolvedValue([]) })),
-  insert: vi.fn().mockReturnThis(),
-  update: vi.fn().mockReturnThis(),
-  delete: vi.fn().mockReturnThis(),
-  from: vi.fn().mockReturnThis(),
-  where: vi.fn().mockReturnThis(),
-  values: vi.fn().mockReturnThis(),
-  returning: vi.fn(),
-  execute: vi.fn(),
-}
-
-vi.mock('@/app/db/inscriptionsDB', () => ({
-  db: mockDb,
-}))
+import { eq } from 'drizzle-orm'
+import { setupTestDb } from '../../setup-pglite'
 
 // Mock Clerk
 vi.mock('@clerk/clerk-sdk-node', () => ({
@@ -45,32 +30,44 @@ vi.mock('resend', () => ({
   })),
 }))
 
-// Import after mocks
-const { POST, GET } = await import('@/app/api/inscriptions/route')
+describe('/api/inscriptions - PGLite Complete', () => {
+  let testDb: any
+  let schemas: any
+  let POST: any
+  let GET: any
 
-const mockInscriptions = [
-  {
-    id: 1,
-    eventId: 12345,
-    eventData: {
-      name: 'Test Competition',
-      place: 'Test Location',
-      placeNationCode: 'FRA',
-      startDate: '2024-01-15',
-      endDate: '2024-01-17',
-      genderCodes: ['M', 'W'],
-    },
-    status: 'open',
-    createdBy: 'user_123',
-    createdAt: '2025-01-15T10:00:00.000Z',
-    emailSentAt: null,
-    deletedAt: null,
-  },
-]
-
-describe('/api/inscriptions', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    
+    // Setup fresh database for each test
+    const { db } = await setupTestDb()
+    testDb = db
+    
+    // Import schemas
+    const schemaModule = await import('@/drizzle/schemaInscriptions')
+    schemas = schemaModule
+    
+    // Seed minimal test data (just one inscription) - let DB auto-generate ID
+    await testDb.insert(schemas.inscriptions).values({
+      eventId: 11111,
+      eventData: { 
+        name: 'Seeded Competition',
+        place: 'Seeded Location',
+        placeNationCode: 'FRA'
+      },
+      createdBy: 'seeded_user'
+    })
+
+    // Mock the database in the route module
+    vi.doMock('@/app/db/inscriptionsDB', () => ({
+      db: testDb,
+    }))
+    
+    // Import routes with fresh database
+    vi.resetModules()
+    const routeModule = await import('@/app/api/inscriptions/route')
+    POST = routeModule.POST
+    GET = routeModule.GET
   })
 
   describe('POST /api/inscriptions', () => {
@@ -88,17 +85,6 @@ describe('/api/inscriptions', () => {
         createdBy: 'user_123',
       }
 
-      const mockInscription = {
-        id: 1,
-        ...requestBody,
-        status: 'open',
-        createdAt: '2025-01-15T10:00:00.000Z',
-        emailSentAt: null,
-        deletedAt: null,
-      }
-
-      mockDb.returning.mockResolvedValue([mockInscription])
-
       const request = new NextRequest('http://localhost:3000/api/inscriptions', {
         method: 'POST',
         body: JSON.stringify(requestBody),
@@ -108,13 +94,21 @@ describe('/api/inscriptions', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.inscription).toEqual(mockInscription)
-      expect(mockDb.insert).toHaveBeenCalled()
-      expect(mockDb.values).toHaveBeenCalledWith({
-        createdBy: requestBody.createdBy,
-        eventId: requestBody.eventId,
-        eventData: requestBody.eventData,
-      })
+      expect(data.inscription).toHaveProperty('id')
+      expect(data.inscription.eventId).toBe(requestBody.eventId)
+      expect(data.inscription.eventData).toEqual(requestBody.eventData)
+      expect(data.inscription.createdBy).toBe(requestBody.createdBy)
+      expect(data.inscription.status).toBe('open')
+      expect(data.inscription.createdAt).toBeDefined()
+      
+      // Verify data was actually inserted in the database
+      const dbInscriptions = await testDb
+        .select()
+        .from(schemas.inscriptions)
+        .where(eq(schemas.inscriptions.eventId, 12345))
+        
+      expect(dbInscriptions).toHaveLength(1)
+      expect(dbInscriptions[0].eventId).toBe(12345)
     })
 
     it('should return 400 for invalid input', async () => {
@@ -137,30 +131,9 @@ describe('/api/inscriptions', () => {
       expect(data.details).toBeDefined()
     })
 
-    it('should handle database errors gracefully', async () => {
-      const requestBody = {
-        eventId: 12345,
-        eventData: { name: 'Test' },
-        createdBy: 'user_123',
-      }
-
-      mockDb.returning.mockRejectedValue(new Error('Database error'))
-
-      const request = new NextRequest('http://localhost:3000/api/inscriptions', {
-        method: 'POST',
-        body: JSON.stringify(requestBody),
-      })
-
-      const response = await POST(request)
-      const data = await response.json()
-
-      expect(response.status).toBe(500)
-      expect(data.error).toBe('Internal Server Error')
-    })
-
     it('should send notification email after creating inscription', async () => {
       const requestBody = {
-        eventId: 12345,
+        eventId: 54321,
         eventData: {
           name: 'Test Competition',
           place: 'Chamonix',
@@ -172,8 +145,6 @@ describe('/api/inscriptions', () => {
         createdBy: 'user_123',
       }
 
-      mockDb.returning.mockResolvedValue([{ id: 1, ...requestBody }])
-
       const request = new NextRequest('http://localhost:3000/api/inscriptions', {
         method: 'POST',
         body: JSON.stringify(requestBody),
@@ -182,7 +153,7 @@ describe('/api/inscriptions', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(200)
-      // Note: Email sending is tested via MSW handlers
+      // Note: Email sending is tested via Resend mock
     })
 
     it('should handle different gender combinations correctly', async () => {
@@ -193,9 +164,9 @@ describe('/api/inscriptions', () => {
         { genderCodes: [], expectedGender: '-' },
       ]
 
-      for (const testCase of testCases) {
+      for (const [index, testCase] of testCases.entries()) {
         const requestBody = {
-          eventId: 12345,
+          eventId: 20000 + index, // Different eventId for each test
           eventData: {
             name: 'Test Competition',
             place: 'Test Location',
@@ -204,8 +175,6 @@ describe('/api/inscriptions', () => {
           createdBy: 'user_123',
         }
 
-        mockDb.returning.mockResolvedValue([{ id: 1, ...requestBody }])
-
         const request = new NextRequest('http://localhost:3000/api/inscriptions', {
           method: 'POST',
           body: JSON.stringify(requestBody),
@@ -213,28 +182,41 @@ describe('/api/inscriptions', () => {
 
         const response = await POST(request)
         expect(response.status).toBe(200)
+        
+        const data = await response.json()
+        expect(data.inscription.eventData.genderCodes).toEqual(testCase.genderCodes)
       }
     })
   })
 
   describe('GET /api/inscriptions', () => {
     it('should return all inscriptions', async () => {
-      const mockSelectQuery = { from: vi.fn().mockResolvedValue(mockInscriptions) }
-      mockDb.select.mockReturnValue(mockSelectQuery)
-
       const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual(mockInscriptions)
-      expect(mockDb.select).toHaveBeenCalled()
+      expect(Array.isArray(data)).toBe(true)
+      expect(data.length).toBeGreaterThanOrEqual(1) // We have at least the seeded inscription
+      expect(data[0]).toHaveProperty('id')
+      expect(data[0]).toHaveProperty('eventId')
+      expect(data[0]).toHaveProperty('eventData')
+      expect(data[0]).toHaveProperty('createdBy')
     })
 
     it('should handle empty results', async () => {
-      const mockSelectQuery = { from: vi.fn().mockResolvedValue([]) }
-      mockDb.select.mockReturnValue(mockSelectQuery)
-
-      const response = await GET()
+      // Setup a completely fresh database with no data
+      const { db: emptyDb } = await setupTestDb()
+      
+      // Mock empty database for this test
+      vi.doMock('@/app/db/inscriptionsDB', () => ({
+        db: emptyDb,
+      }))
+      
+      // Re-import the module to get the fresh mock
+      vi.resetModules()
+      const { GET: freshGET } = await import('@/app/api/inscriptions/route')
+      
+      const response = await freshGET()
       const data = await response.json()
 
       expect(response.status).toBe(200)

@@ -1,34 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import { eq } from 'drizzle-orm'
+import { setupTestDb, seedTestData } from '../../setup-pglite'
 
-// Create a flexible mock db function
-const createMockQuery = (resolvedValue: any) => ({
-  from: vi.fn(() => ({
-    where: vi.fn(() => ({
-      limit: vi.fn().mockResolvedValue(resolvedValue),
-    })),
-  })),
-  where: vi.fn().mockResolvedValue(resolvedValue),
-})
-
-// Mock the database first
-const mockDb = {
-  select: vi.fn(() => createMockQuery([])),
-  insert: vi.fn().mockReturnThis(),
-  update: vi.fn().mockReturnThis(),
-  delete: vi.fn().mockReturnThis(),
-  from: vi.fn().mockReturnThis(),
-  where: vi.fn().mockReturnThis(),
-  values: vi.fn().mockReturnThis(),
-  returning: vi.fn(),
-  execute: vi.fn(),
-}
-
-vi.mock('@/app/db/inscriptionsDB', () => ({
-  db: mockDb,
-}))
-
-// Mock Clerk
+// Mock Clerk authentication
 vi.mock('@clerk/clerk-sdk-node', () => ({
   clerkClient: {
     users: {
@@ -51,78 +26,70 @@ vi.mock('@/lib/soft-delete', () => ({
   softDelete: vi.fn().mockResolvedValue({ deleted: 1 }),
 }))
 
-// Import after mocks
-const { GET, PUT, DELETE } = await import('@/app/api/inscriptions/[id]/competitors/route')
+// Extended test data seeding function
+async function seedExtendedTestData(db: any) {
+  const schemas = await seedTestData(db)
+  
+  // Add more competitors for comprehensive testing
+  await db.insert(schemas.competitors).values([
+    {
+      competitorid: 2,
+      fiscode: 'FRA67890', 
+      lastname: 'DUBOIS',
+      firstname: 'Marie',
+      nationcode: 'FRA',
+      gender: 'W',
+      birthdate: '1998-07-22',
+      skiclub: 'Ski Club Alpin',
+      acpoints: '18.75'
+    }
+  ])
 
-const mockCompetitors = [
-  {
-    competitorid: 1,
-    fiscode: 'FRA12345',
-    lastname: 'MARTIN',
-    firstname: 'Pierre',
-    nationcode: 'FRA',
-    gender: 'M',
-    birthdate: '1995-03-15',
-    skiclub: 'Club des Neiges',
-    points: '25.50',
-  },
-  {
-    competitorid: 2,
-    fiscode: 'FRA67890',
-    lastname: 'DUBOIS',
-    firstname: 'Marie',
-    nationcode: 'FRA',
-    gender: 'W',
-    birthdate: '1998-07-22',
-    skiclub: 'Ski Club Alpin',
-    points: '18.75',
-  },
-]
+  // Add inscription-competitor links
+  await db.insert(schemas.inscriptionCompetitors).values([
+    {
+      inscriptionId: 1,
+      competitorId: 1,
+      codexNumber: '12345',
+      addedBy: 'user_123'
+    },
+    {
+      inscriptionId: 1,
+      competitorId: 2,
+      codexNumber: '12345', 
+      addedBy: 'user_456'
+    }
+  ])
 
-const mockInscriptionCompetitors = [
-  {
-    competitorId: 1,
-    codexNumber: '12345',
-    addedBy: 'user_123',
-  },
-  {
-    competitorId: 2,
-    codexNumber: '12345',
-    addedBy: 'user_456',
-  },
-]
-
-const mockInscription = {
-  eventData: {
-    competitions: [
-      { codex: 12345, name: 'Slalom Test' },
-      { codex: 12346, name: 'Giant Slalom Test' },
-    ],
-  },
+  return schemas
 }
 
-describe('/api/inscriptions/[id]/competitors', () => {
-  beforeEach(() => {
+describe('/api/inscriptions/[id]/competitors - PGLite Complete', () => {
+  let testDb: any
+  let schemas: any
+
+  beforeEach(async () => {
     vi.clearAllMocks()
+    
+    // Setup fresh database for each test
+    const { db } = await setupTestDb()
+    testDb = db
+    
+    // Seed extended test data
+    schemas = await seedExtendedTestData(db)
+
+    // Mock the database in routes
+    vi.doMock('@/app/db/inscriptionsDB', () => ({
+      db: testDb,
+    }))
   })
 
   describe('GET /api/inscriptions/[id]/competitors', () => {
     it('should return competitors for a specific codex', async () => {
-      const mockSelectQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue(mockInscriptionCompetitors),
-      }
-      const mockCompetitorsQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue(mockCompetitors),
-      }
-
-      mockDb.select
-        .mockReturnValueOnce(mockSelectQuery) // For inscription_competitors
-        .mockReturnValueOnce(mockCompetitorsQuery) // For competitors
+      const { GET } = await import('@/app/api/inscriptions/[id]/competitors/route')
 
       const request = new NextRequest(
-        'http://localhost:3000/api/inscriptions/1/competitors?codexNumber=12345&discipline=SL'
+        'http://localhost:3000/api/inscriptions/1/competitors?codexNumber=12345'
       )
 
       const response = await GET(request, { params: Promise.resolve({ id: '1' }) })
@@ -130,19 +97,17 @@ describe('/api/inscriptions/[id]/competitors', () => {
 
       expect(response.status).toBe(200)
       expect(Array.isArray(data)).toBe(true)
-      expect(mockDb.select).toHaveBeenCalledTimes(2)
+      expect(data.length).toBe(2) // We have 2 competitors for codex 12345
+      expect(data[0]).toHaveProperty('competitorid')
+      expect(data[0]).toHaveProperty('fiscode')
+      expect(data[0]).toHaveProperty('addedByEmail')
     })
 
     it('should return empty array when no competitors found for codex', async () => {
-      const mockSelectQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue([]), // No competitors found
-      }
-
-      mockDb.select.mockReturnValue(mockSelectQuery)
+      const { GET } = await import('@/app/api/inscriptions/[id]/competitors/route')
 
       const request = new NextRequest(
-        'http://localhost:3000/api/inscriptions/1/competitors?codexNumber=12345'
+        'http://localhost:3000/api/inscriptions/1/competitors?codexNumber=99999'
       )
 
       const response = await GET(request, { params: Promise.resolve({ id: '1' }) })
@@ -153,46 +118,24 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should return all codex competitors when no codexNumber specified', async () => {
-      const mockInscriptionQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue([mockInscription]),
-      }
-      const mockCompetitorsLinkQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue(mockInscriptionCompetitors),
-      }
-      const mockCompetitorsQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue(mockCompetitors),
-      }
+      const { GET } = await import('@/app/api/inscriptions/[id]/competitors/route')
 
-      mockDb.select
-        .mockReturnValueOnce(mockInscriptionQuery) // For inscription eventData
-        .mockReturnValue(mockCompetitorsLinkQuery) // For inscription_competitors
-        .mockReturnValue(mockCompetitorsQuery) // For competitors
-
-      const request = new NextRequest('http://localhost:3000/api/inscriptions/1/competitors')
+      const request = new NextRequest(
+        'http://localhost:3000/api/inscriptions/1/competitors'
+      )
 
       const response = await GET(request, { params: Promise.resolve({ id: '1' }) })
       const data = await response.json()
 
       expect(response.status).toBe(200)
       expect(Array.isArray(data)).toBe(true)
+      // Should return structure with codexNumber and competitors array
+      expect(data[0]).toHaveProperty('codexNumber')
+      expect(data[0]).toHaveProperty('competitors')
     })
 
     it('should return competitor codex list when competitorId specified', async () => {
-      const mockSelectQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue([{ codexNumber: '12345' }]),
-      }
-      const mockInscriptionQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue([mockInscription]),
-      }
-
-      mockDb.select
-        .mockReturnValueOnce(mockSelectQuery) // For competitor codex numbers
-        .mockReturnValueOnce(mockInscriptionQuery) // For inscription eventData
+      const { GET } = await import('@/app/api/inscriptions/[id]/competitors/route')
 
       const request = new NextRequest(
         'http://localhost:3000/api/inscriptions/1/competitors?competitorId=1'
@@ -203,9 +146,12 @@ describe('/api/inscriptions/[id]/competitors', () => {
 
       expect(response.status).toBe(200)
       expect(Array.isArray(data)).toBe(true)
+      // Should return the codex entries where this competitor is registered
     })
 
     it('should return 400 for missing inscription id', async () => {
+      const { GET } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const request = new NextRequest('http://localhost:3000/api/inscriptions//competitors')
 
       const response = await GET(request, { params: Promise.resolve({ id: '' }) })
@@ -216,27 +162,10 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should filter points by discipline correctly', async () => {
-      const mockSelectQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue(mockInscriptionCompetitors),
-      }
-      const mockCompetitorsQuery = {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue(mockCompetitors),
-      }
+      const { GET } = await import('@/app/api/inscriptions/[id]/competitors/route')
 
-      mockDb.select
-        .mockReturnValueOnce(mockSelectQuery)
-        .mockReturnValueOnce(mockCompetitorsQuery)
-
-      const disciplines = ['SL', 'GS', 'SG', 'DH']
-      
-      for (const discipline of disciplines) {
-        vi.clearAllMocks()
-        mockDb.select
-          .mockReturnValueOnce(mockSelectQuery)
-          .mockReturnValueOnce(mockCompetitorsQuery)
-
+      // Test different disciplines
+      for (const discipline of ['SL', 'GS', 'SG', 'DH']) {
         const request = new NextRequest(
           `http://localhost:3000/api/inscriptions/1/competitors?codexNumber=12345&discipline=${discipline}`
         )
@@ -249,13 +178,7 @@ describe('/api/inscriptions/[id]/competitors', () => {
 
   describe('PUT /api/inscriptions/[id]/competitors', () => {
     it('should update competitor registrations successfully', async () => {
-      // Mock both inscription and competitor to exist
-      mockDb.select
-        .mockReturnValueOnce(createMockQuery([{ id: 1 }])) // Inscription exists
-        .mockReturnValueOnce(createMockQuery([{ competitorid: 1 }])) // Competitor exists
-      
-      mockDb.insert.mockReturnThis()
-      mockDb.values.mockResolvedValue([])
+      const { PUT } = await import('@/app/api/inscriptions/[id]/competitors/route')
 
       const requestBody = {
         competitorId: 1,
@@ -265,6 +188,9 @@ describe('/api/inscriptions/[id]/competitors', () => {
       const request = new NextRequest('http://localhost:3000/api/inscriptions/1/competitors', {
         method: 'PUT',
         body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
 
       const response = await PUT(request, { params: Promise.resolve({ id: '1' }) })
@@ -272,10 +198,19 @@ describe('/api/inscriptions/[id]/competitors', () => {
 
       expect(response.status).toBe(200)
       expect(data.message).toBe('Competitor registrations updated successfully')
-      expect(mockDb.insert).toHaveBeenCalled()
+
+      // Verify data was actually inserted in the database
+      const registrations = await testDb
+        .select()
+        .from(schemas.inscriptionCompetitors)
+        .where(eq(schemas.inscriptionCompetitors.competitorId, 1))
+
+      expect(registrations.length).toBeGreaterThan(0)
     })
 
     it('should return 400 for invalid JSON body', async () => {
+      const { PUT } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const request = new NextRequest('http://localhost:3000/api/inscriptions/1/competitors', {
         method: 'PUT',
         body: 'invalid json',
@@ -289,6 +224,8 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should return 400 for missing required fields', async () => {
+      const { PUT } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const requestBody = {
         competitorId: 1,
         // Missing codexNumbers
@@ -307,6 +244,8 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should return 400 for invalid codexNumbers format', async () => {
+      const { PUT } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const requestBody = {
         competitorId: 1,
         codexNumbers: ['invalid', 'format'], // Should be numbers
@@ -325,8 +264,7 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should return 404 for non-existent inscription', async () => {
-      // Mock inscription not found
-      mockDb.select.mockReturnValue(createMockQuery([]))
+      const { PUT } = await import('@/app/api/inscriptions/[id]/competitors/route')
 
       const requestBody = {
         competitorId: 1,
@@ -336,6 +274,9 @@ describe('/api/inscriptions/[id]/competitors', () => {
       const request = new NextRequest('http://localhost:3000/api/inscriptions/999/competitors', {
         method: 'PUT',
         body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
 
       const response = await PUT(request, { params: Promise.resolve({ id: '999' }) })
@@ -346,19 +287,19 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should return 404 for non-existent competitor', async () => {
-      // Mock inscription exists but competitor doesn't
-      mockDb.select
-        .mockReturnValueOnce(createMockQuery([{ id: 1 }])) // Inscription exists
-        .mockReturnValueOnce(createMockQuery([])) // Competitor not found
+      const { PUT } = await import('@/app/api/inscriptions/[id]/competitors/route')
 
       const requestBody = {
-        competitorId: 999,
+        competitorId: 999, // Non-existent competitor
         codexNumbers: [12345],
       }
 
       const request = new NextRequest('http://localhost:3000/api/inscriptions/1/competitors', {
         method: 'PUT',
         body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
 
       const response = await PUT(request, { params: Promise.resolve({ id: '1' }) })
@@ -371,6 +312,8 @@ describe('/api/inscriptions/[id]/competitors', () => {
 
   describe('DELETE /api/inscriptions/[id]/competitors', () => {
     it('should delete competitor from specific codex', async () => {
+      const { DELETE } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const requestBody = {
         competitorId: 1,
         codexNumbers: ['12345'],
@@ -389,9 +332,10 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should delete competitor from all codex when codexNumbers not provided', async () => {
+      const { DELETE } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const requestBody = {
         competitorId: 1,
-        // No codexNumbers - should delete from all
       }
 
       const request = new NextRequest('http://localhost:3000/api/inscriptions/1/competitors', {
@@ -407,6 +351,8 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should return 400 for missing competitorId', async () => {
+      const { DELETE } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const requestBody = {
         // Missing competitorId
         codexNumbers: ['12345'],
@@ -425,6 +371,8 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should return 400 for invalid JSON body', async () => {
+      const { DELETE } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const request = new NextRequest('http://localhost:3000/api/inscriptions/1/competitors', {
         method: 'DELETE',
         body: 'invalid json',
@@ -438,8 +386,11 @@ describe('/api/inscriptions/[id]/competitors', () => {
     })
 
     it('should return 400 for missing inscription id', async () => {
+      const { DELETE } = await import('@/app/api/inscriptions/[id]/competitors/route')
+
       const requestBody = {
         competitorId: 1,
+        codexNumbers: ['12345'],
       }
 
       const request = new NextRequest('http://localhost:3000/api/inscriptions//competitors', {

@@ -97,7 +97,7 @@ dependencies:
     version: 16.5.0
   drizzle-orm:
     specifier: ^0.42.0
-    version: 0.42.0(@neondatabase/serverless@1.0.0)(@types/pg@8.11.14)(mysql2@3.14.0)(pg@8.15.6)
+    version: 0.42.0(@electric-sql/pglite@0.3.3)(@neondatabase/serverless@1.0.0)(@types/pg@8.11.14)(mysql2@3.14.0)(pg@8.15.6)
   html2canvas-pro:
     specifier: ^1.5.11
     version: 1.5.11
@@ -163,6 +163,9 @@ dependencies:
     version: 3.24.3
 
 devDependencies:
+  '@electric-sql/pglite':
+    specifier: ^0.3.3
+    version: 0.3.3
   '@eslint/eslintrc':
     specifier: ^3
     version: 3.3.1
@@ -1431,6 +1434,9 @@ packages:
   /@drizzle-team/brocli@0.10.2:
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
     dev: true
+
+  /@electric-sql/pglite@0.3.3:
+    resolution: {integrity: sha512-JrvHOx9q0yvKEby0bK8qzGTVw6K+yEg8enxDWb2IwNKr5XZxRrBb+GNIqoAIP7yXyhRg5jcENWmdHmtnAT87vA==}
 
   /@emnapi/core@1.4.3:
     resolution: {integrity: sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g==}
@@ -5887,7 +5893,7 @@ packages:
       - supports-color
     dev: true
 
-  /drizzle-orm@0.42.0(@neondatabase/serverless@1.0.0)(@types/pg@8.11.14)(mysql2@3.14.0)(pg@8.15.6):
+  /drizzle-orm@0.42.0(@electric-sql/pglite@0.3.3)(@neondatabase/serverless@1.0.0)(@types/pg@8.11.14)(mysql2@3.14.0)(pg@8.15.6):
     resolution: {integrity: sha512-pS8nNJm2kBNZwrOjTHJfdKkaU+KuUQmV/vk5D57NojDq4FG+0uAYGMulXtYT///HfgsMF0hnFFvu1ezI3OwOkg==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
@@ -5976,6 +5982,7 @@ packages:
       sqlite3:
         optional: true
     dependencies:
+      '@electric-sql/pglite': 0.3.3
       '@neondatabase/serverless': 1.0.0
       '@types/pg': 8.11.14
       mysql2: 3.14.0
