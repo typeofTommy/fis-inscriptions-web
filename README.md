@@ -1,36 +1,192 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FIS Inscriptions Web Application
 
-## Getting Started
+A comprehensive digital platform for managing French alpine ski team registrations for international FIS competitions. This application streamlines the complex process of submitting official team entries to competition organizers worldwide while ensuring full compliance with FIS regulations.
 
-First, run the development server:
+## 🎯 Business Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### What It Does
+
+The FIS Inscriptions Web Application automates and manages the registration process for French ski teams competing in international FIS (International Ski Federation) alpine skiing competitions abroad. It serves as the official digital gateway between the French Ski Federation (FFS) and international competition organizers.
+
+### Key Business Value
+
+- **Operational Efficiency**: Reduces manual paperwork and eliminates data entry errors through automation
+- **Professional Representation**: Generates official, branded documentation for international correspondence
+- **Real-time Data**: Integrates with live FIS APIs for current competition data and competitor rankings
+
+### Target Users
+
+- **French Ski Federation Staff**: Team managers and competition coordinators
+- **Competition Administrators**: Handle final submissions and communications
+- **Support Personnel**: Coaches and staff included in team delegations
+
+## 🏗️ Technical Architecture
+
+### Modern Full-Stack Implementation
+
+Built with cutting-edge technologies to ensure reliability, performance, and maintainability:
+
+**Frontend**
+
+- **Next.js 15** with App Router for modern React architecture
+- **React 19** with server components for optimal performance
+- **TypeScript** for type safety and developer experience
+- **Tailwind CSS** + **Radix UI** for professional, accessible design
+- **Progressive Web App (PWA)** with offline capabilities
+
+**Backend & APIs**
+
+- **Next.js API Routes** for serverless backend functionality
+- **FIS Official API Integration** for real-time competition data
+- **Drizzle ORM** with **PostgreSQL** for robust data management
+- **Zod** for runtime type validation and data parsing
+
+**Key Features Implementation**
+
+- **Authentication**: Clerk integration for secure user management
+- **PDF Generation**: Server-side document creation with official branding
+- **Email Automation**: Resend integration for professional correspondence
+- **Real-time Search**: Optimized competitor lookup with debounced queries
+- **Offline Support**: PWA capabilities for reliable mobile usage
+
+### Advanced Technical Features
+
+#### Database Design
+
+- **Soft Delete Implementation**: Maintains data integrity while allowing logical deletion
+- **Relational Data Model**: Complex relationships between competitions, competitors, and coaches
+- **Migration System**: Drizzle-based schema versioning for reliable deployments
+- **Query Optimization**: Efficient data retrieval for large competitor datasets
+
+#### API Architecture
+
+- **RESTful Design**: Clean, predictable API endpoints
+- **External Integrations**: Seamless FIS API communication with error handling
+- **Data Validation**: Multi-layer validation (client-side, API-level, database constraints)
+- **Error Handling**: Comprehensive error management with user-friendly messages
+
+#### Advanced UI/UX
+
+- **Server Components**: Optimal performance with minimal client-side JavaScript
+- **Responsive Design**: Mobile-first approach with desktop optimization
+- **Accessibility**: WCAG compliant with screen reader support
+- **Real-time Updates**: Live data synchronization without page refreshes
+
+## 🚀 Key Technical Implementations
+
+### Complex Data Management
+
+```typescript
+// Sophisticated competitor search with FIS points integration
+const competitors = await db.query.competitors.findMany({
+  where: and(
+    eq(competitors.nationality, "FRA"),
+    or(
+      ilike(competitors.firstname, `%${search}%`),
+      ilike(competitors.lastname, `%${search}%`)
+    )
+  ),
+  with: {
+    fisPoints: true, // Current rankings across all disciplines
+  },
+});
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Professional Document Generation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **PDF Generation**: Server-side rendering of official FIS entry forms
+- **Email Templates**: Automated professional correspondence in English/French
+- **Digital Signatures**: Integration of official federation signatures and seals
+- **Multi-format Export**: Support for various document formats as required
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Performance Optimizations
 
-## Learn More
+- **React Query**: Advanced caching and synchronization
+- **Server-Side Rendering**: Optimal SEO and initial load performance
+- **Code Splitting**: Lazy loading for improved bundle size
+- **Database Indexing**: Optimized queries for large datasets
 
-To learn more about Next.js, take a look at the following resources:
+## 🧪 Quality Assurance
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Comprehensive Testing Strategy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Unit Tests**: Critical business logic validation
+- **Integration Tests**: API endpoint functionality verification
+- **Component Testing**: UI component reliability
+- **Database Testing**: Data integrity and migration testing
 
-## Deploy on Vercel
+### Development Standards
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **TypeScript Strict Mode**: Maximum type safety
+- **ESLint Configuration**: Code quality enforcement
+- **Pre-commit Hooks**: Automated testing and linting
+- **CI/CD Pipeline**: Automated testing and deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📊 Technical Metrics
+
+- **Type Coverage**: 100% TypeScript implementation
+- **Test Coverage**: Comprehensive test suite across all layers
+- **Performance**: Optimized for sub-second page loads
+- **Accessibility**: WCAG 2.1 AA compliance
+- **Browser Support**: Modern browsers with progressive enhancement
+
+## 🛠️ Development & Deployment
+
+### Quick Start
+
+```bash
+# Install dependencies
+pnpm install
+
+# Setup environment
+cp .env.example .env.local
+
+# Run development server
+pnpm dev
+
+# Run tests
+pnpm test
+
+# Build for production
+pnpm build
+```
+
+### Key Dependencies
+
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Clerk
+- **Styling**: Tailwind CSS + Radix UI
+- **Forms**: React Hook Form + Zod validation
+- **State Management**: TanStack Query
+- **Testing**: Vitest + Testing Library
+
+## 🔗 External Integrations
+
+### FIS Official API
+
+- Real-time competition data synchronization
+- Competitor ranking and points retrieval
+- Competition validation and eligibility checking
+
+### Email & Communication
+
+- Professional email templates for international correspondence
+- Automated submission confirmations
+- Deadline reminder notifications
+
+## 📈 Business Impact
+
+This application demonstrates expertise in:
+
+- **Complex Domain Modeling**: Sports federation regulations and workflows
+- **API Integration**: Real-time data synchronization with external systems
+- **Document Generation**: Professional PDF creation with official branding
+- **User Experience**: Intuitive interfaces for complex administrative tasks
+- **Performance Optimization**: Fast, reliable operation under varying loads
+- **Quality Assurance**: Comprehensive testing for mission-critical functionality
+
+---
+
+**Technologies**: Next.js 15, React 19, TypeScript, PostgreSQL, Drizzle ORM, Tailwind CSS, Clerk Auth, FIS API Integration
+
+**Architecture**: Full-stack web application with PWA capabilities, serverless backend, and real-time data synchronization
