@@ -6,6 +6,7 @@ import {Competition} from "@/app/types";
 import {sendNotificationEmail} from "@/app/lib/sendNotificationEmail";
 import {getAuth} from "@clerk/nextjs/server";
 import type {NextRequest} from "next/server";
+import {selectNotDeleted} from "@/lib/soft-delete";
 
 export const PUT = async (
   request: Request,
@@ -25,19 +26,19 @@ export const PUT = async (
       );
     }
 
-    // Mise à jour des données de l'événement
+    // Mise à jour des données de l'événement (seulement si non supprimée)
     await db
       .update(inscriptions)
       .set({
         eventData,
       })
-      .where(eq(inscriptions.id, idNumber));
+      .where(selectNotDeleted(inscriptions, eq(inscriptions.id, idNumber)));
 
-    // Récupérer l'inscription mise à jour
+    // Récupérer l'inscription mise à jour (seulement si non supprimée)
     const updatedInscription = await db
       .select()
       .from(inscriptions)
-      .where(eq(inscriptions.id, idNumber))
+      .where(selectNotDeleted(inscriptions, eq(inscriptions.id, idNumber)))
       .then((res) => res[0]);
 
     if (!updatedInscription) {

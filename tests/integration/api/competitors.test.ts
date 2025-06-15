@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { setupTestDb, seedTestData } from '../../setup-pglite'
 
 // Mock Clerk authentication
@@ -404,5 +404,220 @@ describe('/api/inscriptions/[id]/competitors - PGLite Complete', () => {
       expect(response.status).toBe(400)
       expect(data.error).toBe('Missing inscriptionId')
     })
+  })
+})
+
+describe('/api/competitors/with-inscriptions - Soft Delete Tests', () => {
+  let testDb: any
+  let schemas: any
+
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    
+    // Setup fresh database for each test
+    const { db } = await setupTestDb()
+    testDb = db
+    
+    // Seed extended test data
+    schemas = await seedExtendedTestData(db)
+
+    // Mock the database in routes
+    vi.doMock('@/app/db/inscriptionsDB', () => ({
+      db: testDb,
+    }))
+  })
+
+  it('should not include competitors with all deleted inscription links', async () => {
+    const { GET } = await import('@/app/api/competitors/with-inscriptions/route')
+
+    // First, verify the competitor appears in the list
+    const request1 = new NextRequest('http://localhost:3000/api/competitors/with-inscriptions?gender=M')
+    const response1 = await GET(request1)
+    const data1 = await response1.json()
+
+    expect(response1.status).toBe(200)
+    expect(data1.some((c: any) => c.competitorid === 1)).toBe(true)
+
+    // Soft delete all inscription links for competitor 1
+    await testDb
+      .update(schemas.inscriptionCompetitors)
+      .set({ deletedAt: new Date() })
+      .where(eq(schemas.inscriptionCompetitors.competitorId, 1))
+
+    // Now verify the competitor no longer appears in the list
+    const request2 = new NextRequest('http://localhost:3000/api/competitors/with-inscriptions?gender=M')
+    const response2 = await GET(request2)
+    const data2 = await response2.json()
+
+    expect(response2.status).toBe(200)
+    expect(data2.some((c: any) => c.competitorid === 1)).toBe(false)
+    
+    // But competitor 2 (female) should still appear in the female list
+    const request3 = new NextRequest('http://localhost:3000/api/competitors/with-inscriptions?gender=W')
+    const response3 = await GET(request3)
+    const data3 = await response3.json()
+
+    expect(response3.status).toBe(200)
+    expect(data3.some((c: any) => c.competitorid === 2)).toBe(true)
+  })
+
+  it('should handle partial deletion of inscription links correctly', async () => {
+    const { GET } = await import('@/app/api/competitors/with-inscriptions/route')
+
+    // Add another inscription link for competitor 1
+    await testDb.insert(schemas.inscriptionCompetitors).values({
+      inscriptionId: 1,
+      competitorId: 1,
+      codexNumber: '12347',
+      addedBy: 'user_123'
+    })
+
+    // Verify competitor appears initially
+    const request1 = new NextRequest('http://localhost:3000/api/competitors/with-inscriptions?gender=M')
+    const response1 = await GET(request1)
+    const data1 = await response1.json()
+
+    expect(response1.status).toBe(200)
+    expect(data1.some((c: any) => c.competitorid === 1)).toBe(true)
+
+    // Soft delete only one inscription link
+    await testDb
+      .update(schemas.inscriptionCompetitors)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(schemas.inscriptionCompetitors.competitorId, 1),
+          eq(schemas.inscriptionCompetitors.codexNumber, '12345')
+        )
+      )
+
+    // Competitor should still appear (has remaining non-deleted links)
+    const request2 = new NextRequest('http://localhost:3000/api/competitors/with-inscriptions?gender=M')
+    const response2 = await GET(request2)
+    const data2 = await response2.json()
+
+    expect(response2.status).toBe(200)
+    expect(data2.some((c: any) => c.competitorid === 1)).toBe(true)
+  })
+})
+
+describe('/api/competitors/[id]/inscriptions - Soft Delete Tests', () => {
+  let testDb: any
+  let schemas: any
+
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    
+    // Setup fresh database for each test
+    const { db } = await setupTestDb()
+    testDb = db
+    
+    // Seed extended test data
+    schemas = await seedExtendedTestData(db)
+
+    // Mock the database in routes
+    vi.doMock('@/app/db/inscriptionsDB', () => ({
+      db: testDb,
+    }))
+  })
+
+  it('should not return deleted inscription links', async () => {
+    const { GET } = await import('@/app/api/competitors/[id]/inscriptions/route')
+
+    // First, verify the competitor has inscriptions
+    const response1 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+    const data1 = await response1.json()
+
+    expect(response1.status).toBe(200)
+    expect(Array.isArray(data1)).toBe(true)
+    expect(data1.length).toBeGreaterThan(0)
+
+    // Soft delete the inscription competitor link
+    await testDb
+      .update(schemas.inscriptionCompetitors)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(schemas.inscriptionCompetitors.competitorId, 1),
+          eq(schemas.inscriptionCompetitors.inscriptionId, 1)
+        )
+      )
+
+    // Now verify the inscriptions are no longer returned
+    const response2 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+    const data2 = await response2.json()
+
+    expect(response2.status).toBe(200)
+    expect(data2).toEqual([])
+  })
+
+  it('should not return inscriptions that are themselves deleted', async () => {
+    const { GET } = await import('@/app/api/competitors/[id]/inscriptions/route')
+
+    // First, verify the competitor has inscriptions
+    const response1 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+    const data1 = await response1.json()
+
+    expect(response1.status).toBe(200)
+    expect(data1.length).toBeGreaterThan(0)
+
+    // Soft delete the inscription itself (not just the link)
+    await testDb
+      .update(schemas.inscriptions)
+      .set({ deletedAt: new Date() })
+      .where(eq(schemas.inscriptions.id, 1))
+
+    // Now verify the inscriptions are no longer returned
+    const response2 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+    const data2 = await response2.json()
+
+    expect(response2.status).toBe(200)
+    expect(data2).toEqual([])
+  })
+
+  it('should handle mixed deleted and non-deleted states correctly', async () => {
+    const { GET } = await import('@/app/api/competitors/[id]/inscriptions/route')
+
+    // Add another inscription for the same competitor
+    await testDb.insert(schemas.inscriptions).values({
+      id: 2,
+      eventId: 67890,
+      eventData: { 
+        name: 'Second Competition',
+        place: 'Another Location',
+        startDate: '2024-02-01',
+        endDate: '2024-02-03',
+        competitions: [{ codex: 54321, name: 'Second GS' }]
+      },
+      createdBy: 'user_456'
+    })
+
+    await testDb.insert(schemas.inscriptionCompetitors).values({
+      inscriptionId: 2,
+      competitorId: 1,
+      codexNumber: '54321',
+      addedBy: 'user_456'
+    })
+
+    // Verify competitor has 2 inscriptions
+    const response1 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+    const data1 = await response1.json()
+
+    expect(response1.status).toBe(200)
+    expect(data1.length).toBe(2)
+
+    // Soft delete only the first inscription
+    await testDb
+      .update(schemas.inscriptions)
+      .set({ deletedAt: new Date() })
+      .where(eq(schemas.inscriptions.id, 1))
+
+    // Now verify only the second inscription is returned
+    const response2 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+    const data2 = await response2.json()
+
+    expect(response2.status).toBe(200)
+    expect(data2.length).toBe(1)
+    expect(data2[0].inscriptionId).toBe(2)
   })
 })

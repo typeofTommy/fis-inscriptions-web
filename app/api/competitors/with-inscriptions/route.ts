@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {eq, and} from "drizzle-orm";
+import {eq, and, isNull} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {
   competitors,
@@ -14,9 +14,12 @@ export async function GET(request: Request) {
       return new NextResponse("Genre invalide", {status: 400});
     }
 
-    const where = and(eq(competitors.gender, gender));
+    const where = and(
+      eq(competitors.gender, gender),
+      isNull(inscriptionCompetitors.deletedAt)
+    );
 
-    // On récupère les compétiteurs du genre demandé qui ont au moins une inscription dans inscriptionCompetitors
+    // On récupère les compétiteurs du genre demandé qui ont au moins une inscription dans inscriptionCompetitors (non supprimées)
     const c = await db
       .selectDistinctOn([competitors.competitorid])
       .from(competitors)

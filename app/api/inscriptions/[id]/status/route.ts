@@ -3,6 +3,7 @@ import {Status} from "@/app/types";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {eq} from "drizzle-orm";
 import {NextRequest, NextResponse} from "next/server";
+import {selectNotDeleted} from "@/lib/soft-delete";
 
 export async function PATCH(
   req: NextRequest,
@@ -29,7 +30,7 @@ export async function PATCH(
     await db
       .update(inscriptions)
       .set({status})
-      .where(eq(inscriptions.id, inscriptionId));
+      .where(selectNotDeleted(inscriptions, eq(inscriptions.id, inscriptionId)));
     return NextResponse.json({message: "Inscription mise à jour avec succès"});
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'inscription:", error);
