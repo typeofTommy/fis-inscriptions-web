@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { eq, and } from 'drizzle-orm'
 import { setupTestDb, seedTestData } from '../../setup-pglite'
+import { setTestDatabase } from '@/app/db/inscriptionsDB'
 
 // Mock Clerk authentication
 vi.mock('@clerk/clerk-sdk-node', () => ({
@@ -20,11 +21,13 @@ vi.mock('@clerk/nextjs/server', () => ({
   getAuth: vi.fn().mockReturnValue({ userId: 'user_123' }),
 }))
 
-// Mock soft delete functions
-vi.mock('@/lib/soft-delete', () => ({
-  selectNotDeleted: vi.fn((table, condition) => condition),
-  softDelete: vi.fn().mockResolvedValue({ deleted: 1 }),
-}))
+// Mock soft delete functions - use actual implementation
+vi.mock('@/lib/soft-delete', async () => {
+  const actual = await vi.importActual('@/lib/soft-delete')
+  return actual
+})
+
+// No database mocking - using PGLite integration tests
 
 // Extended test data seeding function
 async function seedExtendedTestData(db: any) {
@@ -75,13 +78,11 @@ describe('/api/inscriptions/[id]/competitors - PGLite Complete', () => {
     const { db } = await setupTestDb()
     testDb = db
     
+    // Set the test database for API routes to use
+    setTestDatabase(db)
+    
     // Seed extended test data
     schemas = await seedExtendedTestData(db)
-
-    // Mock the database in routes
-    vi.doMock('@/app/db/inscriptionsDB', () => ({
-      db: testDb,
-    }))
   })
 
   describe('GET /api/inscriptions/[id]/competitors', () => {
@@ -418,13 +419,11 @@ describe('/api/competitors/with-inscriptions - Soft Delete Tests', () => {
     const { db } = await setupTestDb()
     testDb = db
     
+    // Set the test database for API routes to use
+    setTestDatabase(db)
+    
     // Seed extended test data
     schemas = await seedExtendedTestData(db)
-
-    // Mock the database in routes
-    vi.doMock('@/app/db/inscriptionsDB', () => ({
-      db: testDb,
-    }))
   })
 
   it('should not include competitors with all deleted inscription links', async () => {
@@ -512,13 +511,11 @@ describe('/api/competitors/[id]/inscriptions - Soft Delete Tests', () => {
     const { db } = await setupTestDb()
     testDb = db
     
+    // Set the test database for API routes to use
+    setTestDatabase(db)
+    
     // Seed extended test data
     schemas = await seedExtendedTestData(db)
-
-    // Mock the database in routes
-    vi.doMock('@/app/db/inscriptionsDB', () => ({
-      db: testDb,
-    }))
   })
 
   it('should not return deleted inscription links', async () => {

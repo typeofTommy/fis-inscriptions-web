@@ -7,6 +7,7 @@ import {sendNotificationEmail} from "@/app/lib/sendNotificationEmail";
 import {getAuth} from "@clerk/nextjs/server";
 import type {NextRequest} from "next/server";
 import {selectNotDeleted} from "@/lib/soft-delete";
+import type {Inscription} from "@/app/types";
 
 export const PUT = async (
   request: Request,
@@ -39,7 +40,7 @@ export const PUT = async (
       .select()
       .from(inscriptions)
       .where(selectNotDeleted(inscriptions, eq(inscriptions.id, idNumber)))
-      .then((res) => res[0]);
+      .then((res: Inscription[]) => res[0]);
 
     if (!updatedInscription) {
       return NextResponse.json(

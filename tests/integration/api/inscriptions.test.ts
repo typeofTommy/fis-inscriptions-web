@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { setupTestDb } from '../../setup-pglite'
+import { setTestDatabase } from '@/app/db/inscriptionsDB'
 
 // Mock Clerk
 vi.mock('@clerk/clerk-sdk-node', () => ({
@@ -33,8 +34,6 @@ vi.mock('resend', () => ({
 describe('/api/inscriptions - PGLite Complete', () => {
   let testDb: any
   let schemas: any
-  let POST: any
-  let GET: any
 
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -42,6 +41,9 @@ describe('/api/inscriptions - PGLite Complete', () => {
     // Setup fresh database for each test
     const { db } = await setupTestDb()
     testDb = db
+    
+    // Set the test database for API routes to use
+    setTestDatabase(db)
     
     // Import schemas
     const schemaModule = await import('@/drizzle/schemaInscriptions')
@@ -57,17 +59,6 @@ describe('/api/inscriptions - PGLite Complete', () => {
       },
       createdBy: 'seeded_user'
     })
-
-    // Mock the database in the route module
-    vi.doMock('@/app/db/inscriptionsDB', () => ({
-      db: testDb,
-    }))
-    
-    // Import routes with fresh database
-    vi.resetModules()
-    const routeModule = await import('@/app/api/inscriptions/route')
-    POST = routeModule.POST
-    GET = routeModule.GET
   })
 
   describe('POST /api/inscriptions', () => {
@@ -90,6 +81,7 @@ describe('/api/inscriptions - PGLite Complete', () => {
         body: JSON.stringify(requestBody),
       })
 
+      const { POST } = await import('@/app/api/inscriptions/route')
       const response = await POST(request)
       const data = await response.json()
 
@@ -123,6 +115,7 @@ describe('/api/inscriptions - PGLite Complete', () => {
         body: JSON.stringify(invalidRequestBody),
       })
 
+      const { POST } = await import('@/app/api/inscriptions/route')
       const response = await POST(request)
       const data = await response.json()
 
@@ -150,6 +143,7 @@ describe('/api/inscriptions - PGLite Complete', () => {
         body: JSON.stringify(requestBody),
       })
 
+      const { POST } = await import('@/app/api/inscriptions/route')
       const response = await POST(request)
 
       expect(response.status).toBe(200)
@@ -180,6 +174,7 @@ describe('/api/inscriptions - PGLite Complete', () => {
           body: JSON.stringify(requestBody),
         })
 
+        const { POST } = await import('@/app/api/inscriptions/route')
         const response = await POST(request)
         expect(response.status).toBe(200)
         
@@ -191,6 +186,7 @@ describe('/api/inscriptions - PGLite Complete', () => {
 
   describe('GET /api/inscriptions', () => {
     it('should return all inscriptions', async () => {
+      const { GET } = await import('@/app/api/inscriptions/route')
       const response = await GET()
       const data = await response.json()
 
@@ -207,16 +203,11 @@ describe('/api/inscriptions - PGLite Complete', () => {
       // Setup a completely fresh database with no data
       const { db: emptyDb } = await setupTestDb()
       
-      // Mock empty database for this test
-      vi.doMock('@/app/db/inscriptionsDB', () => ({
-        db: emptyDb,
-      }))
+      // Set the empty database for this test
+      setTestDatabase(emptyDb)
       
-      // Re-import the module to get the fresh mock
-      vi.resetModules()
-      const { GET: freshGET } = await import('@/app/api/inscriptions/route')
-      
-      const response = await freshGET()
+      const { GET } = await import('@/app/api/inscriptions/route')
+      const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)

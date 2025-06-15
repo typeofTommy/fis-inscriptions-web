@@ -21,7 +21,7 @@ import {eq} from "drizzle-orm";
 import {RecipientManager, Recipient} from "./components/RecipientManager";
 import {clerkClient, auth} from "@clerk/nextjs/server";
 import type {User} from "@clerk/nextjs/server";
-import type {Competition} from "@/app/types";
+import type {Competition, CompetitionItem} from "@/app/types";
 
 // Define more specific types based on common Clerk structures
 // You should ideally import these or more accurate types from Clerk packages
@@ -120,7 +120,7 @@ export default async function PdfPage({
   // Filter codexData based on raceGender
   // Assuming CompetitionItem has a genderCode property ('M' or 'W')
   const filteredCodexData = inscription.eventData.competitions.filter(
-    (codexItem) => {
+    (codexItem: CompetitionItem) => {
       // If genderCode is not present, or if it matches raceGender, include it.
       // This handles cases where a competition might be for both genders or gender is not specified.
       // Adjust this logic if CompetitionItem structure is different or strict filtering is needed.

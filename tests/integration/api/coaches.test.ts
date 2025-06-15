@@ -2,22 +2,27 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { setupTestDb, seedTestData } from '../../setup-pglite'
+import { setTestDatabase } from '@/app/db/inscriptionsDB'
 
 // Mock Clerk authentication
+const mockGetUser = vi.fn().mockResolvedValue({
+  id: 'user_123',
+  username: 'testuser',
+  emailAddresses: [{ emailAddress: 'test@example.com' }],
+});
+
 vi.mock('@clerk/clerk-sdk-node', () => ({
   clerkClient: {
     users: {
-      getUser: vi.fn().mockResolvedValue({
-        id: 'user_123',
-        username: 'testuser',
-        emailAddresses: [{ emailAddress: 'test@example.com' }],
-      }),
+      getUser: mockGetUser,
     },
   },
 }))
 
+const mockGetAuth = vi.fn().mockReturnValue({ userId: 'user_123' });
+
 vi.mock('@clerk/nextjs/server', () => ({
-  getAuth: vi.fn().mockReturnValue({ userId: 'user_123' }),
+  getAuth: mockGetAuth,
 }))
 
 // Import real soft delete functions (no mocking for integration tests)
@@ -82,13 +87,11 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
     const { db } = await setupTestDb()
     testDb = db
     
+    // Set the test database for API routes to use
+    setTestDatabase(db)
+    
     // Seed extended test data
     schemas = await seedExtendedTestData(db)
-
-    // Mock the database in routes
-    vi.doMock('@/app/db/inscriptionsDB', () => ({
-      db: testDb,
-    }))
   })
 
   describe('GET /api/inscriptions/[id]/coaches', () => {
@@ -142,8 +145,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
 
     it('should handle clerk user lookup failures gracefully', async () => {
       // Mock clerk to throw error for one user
-      const mockClerk = vi.mocked(await import('@clerk/clerk-sdk-node'))
-      mockClerk.clerkClient.users.getUser.mockRejectedValueOnce(new Error('User not found'))
+      mockGetUser.mockRejectedValueOnce(new Error('User not found'))
 
       const { GET } = await import('@/app/api/inscriptions/[id]/coaches/route')
 
@@ -191,8 +193,21 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
 
     it('should return 401 when user is not authenticated', async () => {
       // Mock unauthenticated user
-      const mockAuth = vi.mocked(await import('@clerk/nextjs/server'))
-      mockAuth.getAuth.mockReturnValueOnce({ userId: null })
+      mockGetAuth.mockReturnValueOnce({ 
+        userId: null,
+        sessionId: null,
+        sessionClaims: null,
+        sessionStatus: 'signed-out',
+        orgId: null,
+        orgRole: null,
+        orgSlug: null,
+        actor: null,
+        sign: null,
+        protect: null,
+        redirectToSignIn: null,
+        redirectToSignUp: null,
+        has: null,
+      } as any)
 
       const { POST } = await import('@/app/api/inscriptions/[id]/coaches/route')
 

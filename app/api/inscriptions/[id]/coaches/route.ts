@@ -1,10 +1,7 @@
 import {NextRequest, NextResponse} from "next/server";
 import {eq, and} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
-import {
-  inscriptionCoaches,
-  inscriptions,
-} from "@/drizzle/schemaInscriptions";
+import {inscriptionCoaches, inscriptions} from "@/drizzle/schemaInscriptions";
 import {clerkClient} from "@clerk/clerk-sdk-node";
 import {getAuth} from "@clerk/nextjs/server";
 import {selectNotDeleted, softDelete} from "@/lib/soft-delete";
@@ -22,7 +19,7 @@ export async function GET(
     }
 
     // Get all coaches for this inscription (excluding deleted ones)
-    const coaches = await db
+    const coaches: (typeof inscriptionCoaches.$inferSelect)[] = await db
       .select({
         id: inscriptionCoaches.id,
         inscriptionId: inscriptionCoaches.inscriptionId,
@@ -33,9 +30,15 @@ export async function GET(
         endDate: inscriptionCoaches.endDate,
         addedBy: inscriptionCoaches.addedBy,
         createdAt: inscriptionCoaches.createdAt,
+        deletedAt: inscriptionCoaches.deletedAt,
       })
       .from(inscriptionCoaches)
-      .where(selectNotDeleted(inscriptionCoaches, eq(inscriptionCoaches.inscriptionId, inscriptionId)));
+      .where(
+        selectNotDeleted(
+          inscriptionCoaches,
+          eq(inscriptionCoaches.inscriptionId, inscriptionId)
+        )
+      );
 
     // Get unique user IDs for email lookup
     const uniqueUserIds = Array.from(
@@ -69,10 +72,7 @@ export async function GET(
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching coaches:", error);
-    return NextResponse.json(
-      {error: "Failed to fetch coaches"},
-      {status: 500}
-    );
+    return NextResponse.json({error: "Failed to fetch coaches"}, {status: 500});
   }
 }
 
@@ -141,33 +141,30 @@ export async function POST(
     // Validation des dates
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
-    
+
     if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
-      return NextResponse.json(
-        {error: "Invalid date format"},
-        {status: 400}
-      );
+      return NextResponse.json({error: "Invalid date format"}, {status: 400});
     }
-    
+
     if (startDateObj > endDateObj) {
       return NextResponse.json(
         {error: "Start date must be before end date"},
         {status: 400}
       );
     }
-    
+
     // Vérifier les dates par rapport à l'événement
     const inscription = inscriptionExists[0];
     const eventStartDate = new Date(inscription.eventData.startDate);
     const eventEndDate = new Date(inscription.eventData.endDate);
-    
+
     if (startDateObj < eventStartDate) {
       return NextResponse.json(
         {error: "Start date cannot be before event start date"},
         {status: 400}
       );
     }
-    
+
     if (endDateObj > eventEndDate) {
       return NextResponse.json(
         {error: "End date cannot be after event end date"},
@@ -192,10 +189,7 @@ export async function POST(
     return NextResponse.json(newCoach[0]);
   } catch (error) {
     console.error("Error adding coach:", error);
-    return NextResponse.json(
-      {error: "Failed to add coach"},
-      {status: 500}
-    );
+    return NextResponse.json({error: "Failed to add coach"}, {status: 500});
   }
 }
 
@@ -239,9 +233,6 @@ export async function DELETE(
     return NextResponse.json({deleted: deleted[0]});
   } catch (error) {
     console.error("Error deleting coach:", error);
-    return NextResponse.json(
-      {error: "Failed to delete coach"},
-      {status: 500}
-    );
+    return NextResponse.json({error: "Failed to delete coach"}, {status: 500});
   }
 }

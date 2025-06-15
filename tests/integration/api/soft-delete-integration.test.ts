@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { eq, and } from 'drizzle-orm'
 import { setupTestDb } from '../../setup-pglite'
+import { setTestDatabase } from '@/app/db/inscriptionsDB'
 
 // Mock Clerk authentication
 vi.mock('@clerk/clerk-sdk-node', () => ({
@@ -30,6 +31,8 @@ vi.mock('resend', () => ({
   })),
 }))
 
+// No database mocking - using PGLite integration tests
+
 describe('Soft Delete Integration Tests', () => {
   let testDb: any
   let schemas: any
@@ -41,9 +44,13 @@ describe('Soft Delete Integration Tests', () => {
     const { db } = await setupTestDb()
     testDb = db
     
+    // Set the test database for API routes to use
+    setTestDatabase(db)
+    
     // Import schemas
     const schemaModule = await import('@/drizzle/schemaInscriptions')
     schemas = schemaModule
+
 
     // Create comprehensive test data
     await testDb.insert(schemas.inscriptions).values([
@@ -126,10 +133,6 @@ describe('Soft Delete Integration Tests', () => {
       }
     ])
 
-    // Mock the database in routes
-    vi.doMock('@/app/db/inscriptionsDB', () => ({
-      db: testDb,
-    }))
   })
 
   describe('GET /api/inscriptions - Home Page Inscriptions', () => {
@@ -195,7 +198,7 @@ describe('Soft Delete Integration Tests', () => {
       const { GET } = await import('@/app/api/competitors/[id]/inscriptions/route')
 
       // First, verify the competitor has inscriptions
-      const response1 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+      const response1 = await GET({} as NextRequest, { params: Promise.resolve({ id: '1' }) })
       const data1 = await response1.json()
 
       expect(response1.status).toBe(200)
@@ -209,7 +212,7 @@ describe('Soft Delete Integration Tests', () => {
         .where(eq(schemas.inscriptionCompetitors.competitorId, 1))
 
       // Now verify the inscriptions are no longer returned
-      const response2 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+      const response2 = await GET({} as NextRequest, { params: Promise.resolve({ id: '1' }) })
       const data2 = await response2.json()
 
       expect(response2.status).toBe(200)
@@ -220,7 +223,7 @@ describe('Soft Delete Integration Tests', () => {
       const { GET } = await import('@/app/api/competitors/[id]/inscriptions/route')
 
       // First, verify the competitor has inscriptions
-      const response1 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+      const response1 = await GET({} as NextRequest, { params: Promise.resolve({ id: '1' }) })
       const data1 = await response1.json()
 
       expect(response1.status).toBe(200)
@@ -233,7 +236,7 @@ describe('Soft Delete Integration Tests', () => {
         .where(eq(schemas.inscriptions.id, 1))
 
       // Now verify the inscriptions are no longer returned
-      const response2 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+      const response2 = await GET({} as NextRequest, { params: Promise.resolve({ id: '1' }) })
       const data2 = await response2.json()
 
       expect(response2.status).toBe(200)
@@ -246,7 +249,7 @@ describe('Soft Delete Integration Tests', () => {
       const { GET } = await import('@/app/api/inscriptions/[id]/competitors/all/route')
 
       // First, verify the inscription has competitors
-      const response1 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+      const response1 = await GET({} as NextRequest, { params: Promise.resolve({ id: '1' }) })
       const data1 = await response1.json()
 
       expect(response1.status).toBe(200)
@@ -264,12 +267,17 @@ describe('Soft Delete Integration Tests', () => {
           )
         )
 
-      // Now verify fewer competitors are returned
-      const response2 = await GET({} as Request, { params: Promise.resolve({ id: '1' }) })
+      // Now verify the competitor still appears but with fewer codex numbers
+      const response2 = await GET({} as NextRequest, { params: Promise.resolve({ id: '1' }) })
       const data2 = await response2.json()
 
       expect(response2.status).toBe(200)
-      expect(data2.length).toBeLessThan(data1.length)
+      // The competitor should still be there but with fewer codex numbers
+      expect(data2.length).toBe(data1.length)
+      // But the competitor should have fewer codex numbers
+      const competitor1Before = data1.find((c: any) => c.competitorid === 1)
+      const competitor1After = data2.find((c: any) => c.competitorid === 1)
+      expect(competitor1After.codexNumbers.length).toBeLessThan(competitor1Before.codexNumbers.length)
     })
   })
 

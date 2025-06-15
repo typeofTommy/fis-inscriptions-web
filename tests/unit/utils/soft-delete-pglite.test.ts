@@ -217,8 +217,9 @@ describe('Soft Delete Utilities - PGLite Tests', () => {
         .select()
         .from(schemas.inscriptionCompetitors)
 
-      const deletedRecords = allRecords.filter(r => r.deletedAt !== null)
-      const activeRecords = allRecords.filter(r => r.deletedAt === null)
+      type CompetitorRecord = typeof schemas.inscriptionCompetitors.$inferSelect;
+      const deletedRecords = allRecords.filter((r: CompetitorRecord) => r.deletedAt !== null)
+      const activeRecords = allRecords.filter((r: CompetitorRecord) => r.deletedAt === null)
 
       expect(deletedRecords).toHaveLength(2) // IDs 1 and 2
       expect(activeRecords).toHaveLength(1) // ID 3

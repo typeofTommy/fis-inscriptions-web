@@ -34,6 +34,11 @@ vi.mock('date-fns', () => ({
   format: vi.fn().mockReturnValue('01/01/2024')
 }))
 
+// Mock soft-delete utilities
+vi.mock('@/lib/soft-delete', () => ({
+  selectNotDeleted: vi.fn((table, whereClause) => whereClause)
+}))
+
 describe('PDF Email API - Unit Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -65,7 +70,7 @@ describe('PDF Email API - Unit Tests', () => {
   it('should return 400 for invalid JSON recipients', async () => {
     const mockPdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' })
     
-    const mockFormData = new Map([
+    const mockFormData = new Map<string, string | File>([
       ['pdf', mockPdfFile],
       ['to', 'invalid-json'],
       ['inscriptionId', '1'],
@@ -88,7 +93,7 @@ describe('PDF Email API - Unit Tests', () => {
   it('should return 404 for non-existent inscription', async () => {
     const mockPdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' })
     
-    const mockFormData = new Map([
+    const mockFormData = new Map<string, string | File>([
       ['pdf', mockPdfFile],
       ['to', '["test@example.com"]'],
       ['inscriptionId', '999'],
@@ -122,7 +127,7 @@ describe('PDF Email API - Unit Tests', () => {
       arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8))
     }
     
-    const mockFormData = new Map([
+    const mockFormData = new Map<string, string | any>([
       ['pdf', mockPdfFile],
       ['to', '["test@example.com"]'],
       ['inscriptionId', '1'],
@@ -171,7 +176,7 @@ describe('PDF Email API - Unit Tests', () => {
       arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8))
     }
     
-    const mockFormData = new Map([
+    const mockFormData = new Map<string, string | any>([
       ['pdf', mockPdfFile],
       ['to', '["test@example.com"]'],
       ['inscriptionId', '1'],

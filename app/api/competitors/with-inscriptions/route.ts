@@ -4,6 +4,7 @@ import {db} from "@/app/db/inscriptionsDB";
 import {
   competitors,
   inscriptionCompetitors,
+  inscriptions,
 } from "@/drizzle/schemaInscriptions";
 
 export async function GET(request: Request) {
@@ -16,16 +17,21 @@ export async function GET(request: Request) {
 
     const where = and(
       eq(competitors.gender, gender),
-      isNull(inscriptionCompetitors.deletedAt)
+      isNull(inscriptionCompetitors.deletedAt),
+      isNull(inscriptions.deletedAt)
     );
 
-    // On récupère les compétiteurs du genre demandé qui ont au moins une inscription dans inscriptionCompetitors (non supprimées)
+    // On récupère les compétiteurs du genre demandé qui ont au moins une inscription dans inscriptionCompetitors (non supprimées) et dont l'inscription n'est pas supprimée
     const c = await db
       .selectDistinctOn([competitors.competitorid])
       .from(competitors)
       .innerJoin(
         inscriptionCompetitors,
         eq(competitors.competitorid, inscriptionCompetitors.competitorId)
+      )
+      .innerJoin(
+        inscriptions,
+        eq(inscriptionCompetitors.inscriptionId, inscriptions.id)
       )
       .where(where)
       .orderBy(competitors.competitorid, competitors.lastname);

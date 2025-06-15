@@ -16,7 +16,7 @@ export async function GET(
   }
 
   // 1. Trouver toutes les inscriptions où ce compétiteur est inscrit (non supprimées)
-  const links = await db
+  const links: {inscriptionId: number; codexNumber: string}[] = await db
     .select({
       inscriptionId: inscriptionCompetitors.inscriptionId,
       codexNumber: inscriptionCompetitors.codexNumber,
@@ -33,7 +33,7 @@ export async function GET(
 
   // 2. Grouper par inscriptionId et filtrer les inscriptions non supprimées
   const inscriptionIds = Array.from(new Set(links.map((l) => l.inscriptionId)));
-  const inscriptionsData: any[] = await db
+  const inscriptionsData: (typeof inscriptions.$inferSelect)[] = await db
     .select()
     .from(inscriptions)
     .where(
@@ -46,12 +46,11 @@ export async function GET(
   // 3. Pour chaque inscription, retrouver les codex où ce compétiteur est inscrit
   const result = inscriptionsData.map((insc) => {
     // eventData.competitions est un tableau d'objets avec un champ codex
-    const codexList = (insc.eventData?.competitions || []).filter(
-      (c: {codex: string}) =>
-        links.some(
-          (l) =>
-            l.inscriptionId === insc.id && l.codexNumber === String(c.codex)
-        )
+    const codexList = (insc.eventData?.competitions || []).filter((c) =>
+      links.some(
+        (l) =>
+          l.inscriptionId === insc.id && l.codexNumber === c.codex.toString()
+      )
     );
     return {
       inscriptionId: insc.id,

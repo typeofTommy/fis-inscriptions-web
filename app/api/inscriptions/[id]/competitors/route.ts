@@ -9,6 +9,7 @@ import {
 import {clerkClient} from "@clerk/clerk-sdk-node";
 import {getAuth} from "@clerk/nextjs/server";
 import {selectNotDeleted, softDelete} from "@/lib/soft-delete";
+import type {CompetitionItem} from "@/app/types";
 
 export async function GET(
   req: NextRequest,
@@ -35,7 +36,9 @@ export async function GET(
           )
         )
       );
-    const codexNumbers = links.map((l) => l.codexNumber);
+    
+    type LinkType = typeof links[0];
+    const codexNumbers = links.map((l: LinkType) => l.codexNumber);
     // On récupère les infos des codex dans l'inscription
     const inscription = await db
       .select({eventData: inscriptions.eventData})
@@ -43,7 +46,7 @@ export async function GET(
       .where(eq(inscriptions.id, inscriptionId));
     const codexData = inscription[0]?.eventData.competitions || [];
     // On filtre pour ne garder que les codex où ce compétiteur est inscrit
-    const result = codexData.filter((c) =>
+    const result = codexData.filter((c: CompetitionItem) =>
       codexNumbers.includes(String(c.codex))
     );
     return NextResponse.json(result);
@@ -63,7 +66,7 @@ export async function GET(
     const codexData = inscription[0]?.eventData.competitions || [];
     // Pour chaque codex, on récupère les competitorIds et leurs infos
     const result = await Promise.all(
-      codexData.map(async (codex) => {
+      codexData.map(async (codex: CompetitionItem) => {
         // 1. Récupérer les competitorIds liés à cette inscription et ce codex (non supprimés)
         const links = await db
           .select({competitorId: inscriptionCompetitors.competitorId})
@@ -77,7 +80,9 @@ export async function GET(
               )
             )
           );
-        const competitorIds = links.map((l) => l.competitorId);
+        
+        type InnerLinkType = typeof links[0];
+        const competitorIds = links.map((l: InnerLinkType) => l.competitorId);
         if (competitorIds.length === 0) {
           return {codexNumber: codex.codex, competitors: []};
         }
@@ -118,9 +123,11 @@ export async function GET(
         )
       )
     );
-  const competitorIds = links.map((l) => l.competitorId);
+  
+  type MainLinkType = typeof links[0];
+  const competitorIds = links.map((l: MainLinkType) => l.competitorId);
   const addedByMap = Object.fromEntries(
-    links.map((l) => [l.competitorId, l.addedBy])
+    links.map((l: MainLinkType) => [l.competitorId, l.addedBy])
   );
 
   if (competitorIds.length === 0) {
@@ -152,6 +159,8 @@ export async function GET(
     .from(competitors)
     .where(inArray(competitors.competitorid, competitorIds.map(Number)));
 
+  type CompetitorResultType = typeof c[0];
+  
   // Ajout de l'email Clerk
   const uniqueUserIds = Array.from(new Set(Object.values(addedByMap))).filter(
     (id) => !!id && id !== "Unknown"
@@ -172,7 +181,7 @@ export async function GET(
   );
 
   // Ajoute le champ addedByEmail à chaque compétiteur
-  const result = c.map((comp) => {
+  const result = c.map((comp: CompetitorResultType) => {
     const addedByKey = String(addedByMap[comp.competitorid] ?? "");
     return {
       ...comp,

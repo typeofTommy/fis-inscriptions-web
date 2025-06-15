@@ -4,22 +4,42 @@ import {config} from "dotenv";
 
 config({path: ".env"});
 
-const databaseUrl = process.env.NEON_DATABASE_URL;
+// Check if we're in test mode
+const isTestMode = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 
-// During build time, we might not have database access
-// Create a placeholder that will fail at runtime if used without proper env
-let db: ReturnType<typeof drizzle>;
+// Test database instance - will be set by tests
+let testDb: any = null;
 
-if (databaseUrl) {
-  const sql = neon(databaseUrl);
-  db = drizzle({client: sql});
-} else {
-  // Create a placeholder that will throw a descriptive error at runtime
-  db = new Proxy({} as any, {
-    get() {
-      throw new Error("NEON_DATABASE_URL environment variable is required");
-    }
-  });
+// Function to set test database (called by test setup)
+export function setTestDatabase(database: any) {
+  testDb = database;
 }
 
-export { db };
+// Function to get the current database instance
+export function getDatabase() {
+  if (isTestMode && testDb) {
+    return testDb;
+  }
+  
+  const databaseUrl = process.env.NEON_DATABASE_URL;
+  
+  if (databaseUrl) {
+    const sql = neon(databaseUrl);
+    return drizzle({client: sql});
+  } else {
+    // Create a placeholder that will throw a descriptive error at runtime
+    return new Proxy({} as any, {
+      get() {
+        throw new Error("NEON_DATABASE_URL environment variable is required");
+      }
+    });
+  }
+}
+
+// Export the database instance
+export const db = new Proxy({} as any, {
+  get(target, prop) {
+    const currentDb = getDatabase();
+    return currentDb[prop];
+  }
+});

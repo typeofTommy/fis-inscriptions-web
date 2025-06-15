@@ -33,13 +33,15 @@ export const GET = async (
         isNull(inscriptionCompetitors.deletedAt)
       )
     );
-  const competitorIds = links.map((l) => l.competitorId);
+  
+  type LinkType = typeof links[0];
+  const competitorIds = links.map((l: LinkType) => l.competitorId);
 
   // Construire un mapping competitorId -> [codexNumber]
   const codexMap: Record<number, string[]> = {};
   // Mapping competitorId -> addedBy (on prend le premier si plusieurs)
   const addedByMap: Record<number, string> = {};
-  links.forEach((l) => {
+  links.forEach((l: LinkType) => {
     if (!codexMap[l.competitorId]) codexMap[l.competitorId] = [];
     codexMap[l.competitorId].push(l.codexNumber);
     if (!addedByMap[l.competitorId])
@@ -70,6 +72,8 @@ export const GET = async (
     .from(competitors)
     .where(inArray(competitors.competitorid, competitorIds.map(Number)));
 
+  type CompetitorType = typeof competitorsData[0];
+  
   // Récupérer tous les Clerk userId distincts
   const uniqueUserIds = Array.from(new Set(Object.values(addedByMap))).filter(
     (id): id is string => !!id && id !== "Unknown"
@@ -92,7 +96,7 @@ export const GET = async (
 
   // Formater la réponse avec un objet points et l'email de l'ajouteur
   const result = competitorsData
-    .map((c) => ({
+    .map((c: CompetitorType) => ({
       competitorid: c.competitorid,
       fiscode: c.fiscode,
       lastname: c.lastname,
@@ -111,8 +115,10 @@ export const GET = async (
       codexNumbers: codexMap[c.competitorid] || [],
       addedBy: addedByMap[c.competitorid] || "Unknown",
       addedByEmail: userEmailMap[addedByMap[c.competitorid]] || "Unknown",
-    }))
-    .filter((c) => Array.isArray(c.codexNumbers) && c.codexNumbers.length > 0);
+    }));
 
-  return NextResponse.json(result);
+  type ResultType = typeof result[0];
+  const filteredResult = result.filter((c: ResultType) => Array.isArray(c.codexNumbers) && c.codexNumbers.length > 0);
+
+  return NextResponse.json(filteredResult);
 };
