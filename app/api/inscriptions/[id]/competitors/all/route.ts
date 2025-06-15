@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
-import {eq, inArray} from "drizzle-orm";
+import {and, eq, inArray, isNull} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
 import {
   competitors,
@@ -27,7 +27,12 @@ export const GET = async (
       addedBy: inscriptionCompetitors.addedBy,
     })
     .from(inscriptionCompetitors)
-    .where(eq(inscriptionCompetitors.inscriptionId, inscriptionId));
+    .where(
+      and(
+        eq(inscriptionCompetitors.inscriptionId, inscriptionId),
+        isNull(inscriptionCompetitors.deletedAt)
+      )
+    );
   const competitorIds = links.map((l) => l.competitorId);
 
   // Construire un mapping competitorId -> [codexNumber]
