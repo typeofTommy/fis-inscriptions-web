@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { InscriptionsTable } from '@/components/InscriptionsTable'
-import { vi } from 'vitest'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { Inscription } from '@/app/types'
 
 // Mock the hooks and dependencies
@@ -23,37 +23,45 @@ vi.mock('next/image', () => ({
 }))
 
 // Mock data
-const mockInscriptions: Inscription[] = [
+const mockInscriptions: any[] = [
   {
     id: 1,
-    codex: 1234,
-    gender: 'M',
-    raceDiscipline: 'AL',
-    raceLevel: 'FIS',
-    eventName: 'Test Event',
-    startDate: '2024-01-15',
-    endDate: '2024-01-17',
-    venue: 'Test Venue',
-    country: 'FRA',
+    eventId: 1234,
+    eventData: {
+      codex: 1234,
+      gender: 'M',
+      raceDiscipline: 'AL',
+      raceLevel: 'FIS',
+      eventName: 'Test Event',
+    startDate: new Date('2024-01-15'),
+    endDate: new Date('2024-01-17'),
+      venue: 'Test Venue',
+      country: 'FRA'
+    },
     status: 'open',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
+    createdBy: 'test-user',
+    createdAt: new Date('2024-01-01T00:00:00Z'),
+    emailSentAt: null,
     deletedAt: null
   },
   {
     id: 2,
-    codex: 5678,
-    gender: 'F',
-    raceDiscipline: 'SL',
-    raceLevel: 'NC',
-    eventName: 'Another Event',
-    startDate: '2024-02-15',
-    endDate: '2024-02-17',
-    venue: 'Another Venue',
-    country: 'SUI',
+    eventId: 5678,
+    eventData: {
+      codex: 5678,
+      gender: 'F',
+      raceDiscipline: 'SL',
+      raceLevel: 'NC',
+      eventName: 'Another Event',
+    startDate: new Date('2024-02-15'),
+    endDate: new Date('2024-02-17'),
+      venue: 'Another Venue',
+      country: 'SUI'
+    },
     status: 'validated',
-    createdAt: '2024-01-02T00:00:00Z',
-    updatedAt: '2024-01-02T00:00:00Z',
+    createdBy: 'test-user',
+    createdAt: new Date('2024-01-02T00:00:00Z'),
+    emailSentAt: null,
     deletedAt: null
   }
 ]
@@ -62,9 +70,9 @@ const mockInscriptions: Inscription[] = [
 const mockApiResponse = {
   inscriptions: mockInscriptions,
   competitions: mockInscriptions.map(i => ({
-    eventId: i.codex,
-    disciplineCode: i.raceDiscipline,
-    name: i.eventName
+    eventId: i.eventId,
+    disciplineCode: i.eventData.raceDiscipline,
+    name: i.eventData.eventName
   }))
 }
 

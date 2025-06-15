@@ -185,7 +185,7 @@ devDependencies:
     specifier: ^5.6.9
     version: 5.6.9(@babel/core@7.27.4)(react-dom@19.1.0)(react@19.1.0)
   '@types/node':
-    specifier: ^20
+    specifier: ^20.17.31
     version: 20.17.31
   '@types/pg':
     specifier: ^8.11.14

@@ -9,19 +9,19 @@ import type { Inscription } from '@/app/types'
 describe('Date utilities', () => {
   describe('getSeasonFromDate', () => {
     it('should return correct season for January date', () => {
-      expect(getSeasonFromDate('2024-01-15')).toBe('2023-2024')
+      expect(getSeasonFromDate(new Date('2024-01-15'))).toBe('2023-2024')
     })
 
     it('should return correct season for September date', () => {
-      expect(getSeasonFromDate('2024-09-15')).toBe('2024-2025')
+      expect(getSeasonFromDate(new Date('2024-09-15'))).toBe('2024-2025')
     })
 
     it('should return correct season for July date (end of season)', () => {
-      expect(getSeasonFromDate('2024-07-15')).toBe('2023-2024')
+      expect(getSeasonFromDate(new Date('2024-07-15'))).toBe('2023-2024')
     })
 
     it('should return correct season for August date (start of new season)', () => {
-      expect(getSeasonFromDate('2024-08-15')).toBe('2024-2025')
+      expect(getSeasonFromDate(new Date('2024-08-15'))).toBe('2024-2025')
     })
 
     it('should handle Date objects', () => {
@@ -44,7 +44,7 @@ describe('Date utilities', () => {
   })
 
   describe('getSeasonsFromInscriptions', () => {
-    const mockInscriptions: Inscription[] = [
+    const mockInscriptions: any[] = [
       {
         id: 1,
         codex: 1234,
@@ -52,13 +52,13 @@ describe('Date utilities', () => {
         raceDiscipline: 'AL',
         raceLevel: 'FIS',
         eventName: 'Winter Event',
-        startDate: '2024-01-15',
-        endDate: '2024-01-17',
+        startDate: new Date('2024-01-15'),
+        endDate: new Date('2024-01-17'),
         venue: 'Test Venue',
         country: 'FRA',
         status: 'open',
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z',
+        createdAt: new Date('2024-01-01T00:00:00Z'),
+        updatedAt: new Date('2024-01-01T00:00:00Z'),
         deletedAt: null
       },
       {
@@ -68,13 +68,13 @@ describe('Date utilities', () => {
         raceDiscipline: 'SL',
         raceLevel: 'NC',
         eventName: 'Summer Event',
-        startDate: '2024-09-15',
-        endDate: '2024-09-17',
+        startDate: new Date('2024-09-15'),
+        endDate: new Date('2024-09-17'),
         venue: 'Another Venue',
         country: 'SUI',
         status: 'validated',
-        createdAt: '2024-01-02T00:00:00Z',
-        updatedAt: '2024-01-02T00:00:00Z',
+        createdAt: new Date('2024-01-02T00:00:00Z'),
+        updatedAt: new Date('2024-01-02T00:00:00Z'),
         deletedAt: null
       }
     ]
