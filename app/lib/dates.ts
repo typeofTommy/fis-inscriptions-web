@@ -11,7 +11,7 @@ export const parseLocalDate = (dateString: string) => {
 export const getSeasonFromDate = (date: Date): number => {
   const year = date.getFullYear();
   const month = date.getMonth() + 1; // getMonth() retourne 0-11, on veut 1-12
-  
+
   // Si on est entre juillet (7) et décembre (12), c'est la saison de l'année suivante
   if (month >= 7) {
     return year + 1;
@@ -32,17 +32,21 @@ export const getCurrentSeason = (): number => {
 };
 
 // Génère la liste des saisons disponibles basée sur les dates des inscriptions
-export const getSeasonsFromInscriptions = (inscriptions: Array<{eventData: {startDate: string}}>): number[] => {
+export const getSeasonsFromInscriptions = (
+  inscriptions: Array<{eventData: {startDate: string}}>
+): number[] => {
   const seasons = new Set<number>();
-  
-  inscriptions.forEach(inscription => {
+
+  inscriptions.forEach((inscription) => {
     const date = new Date(inscription.eventData.startDate);
     const season = getSeasonFromDate(date);
     seasons.add(season);
   });
-  
-  // Ajoute aussi la saison actuelle au cas où il n'y aurait pas d'inscriptions
-  seasons.add(getCurrentSeason());
-  
+
+  // Ajoute la saison actuelle seulement s'il n'y a aucune inscription
+  if (seasons.size === 0) {
+    seasons.add(getCurrentSeason());
+  }
+
   return Array.from(seasons).sort((a, b) => b - a); // Trie par ordre décroissant
 };

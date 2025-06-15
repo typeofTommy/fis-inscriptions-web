@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import {useQuery} from "@tanstack/react-query";
 import {
   ColumnDef,
@@ -263,13 +264,19 @@ export function InscriptionsTable() {
           stationName = "Non renseigné";
         }
         return (
-          <span>{stationName ? stationName[0].toUpperCase() + stationName.slice(1) : "Non renseigné"}</span>
+          <span>
+            {stationName
+              ? stationName[0].toUpperCase() + stationName.slice(1)
+              : "Non renseigné"}
+          </span>
         );
       },
       filterFn: (row, id, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
         const locationId = row.original.eventData.place;
-        return locationId ? locationId.toLowerCase().includes(filterValue.toLowerCase()) : false;
+        return locationId
+          ? locationId.toLowerCase().includes(filterValue.toLowerCase())
+          : false;
       },
     },
     {
@@ -343,6 +350,7 @@ export function InscriptionsTable() {
               <Badge
                 key={discipline}
                 className={colorBadgePerDiscipline[discipline] || "bg-gray-300"}
+                data-testid={`badge-discipline-${discipline}`}
               >
                 {discipline}
               </Badge>
@@ -378,6 +386,7 @@ export function InscriptionsTable() {
               <Badge
                 key={raceLevel}
                 className={colorBadgePerRaceLevel[raceLevel] || "bg-gray-300"}
+                data-testid={`badge-level-${raceLevel}`}
               >
                 {raceLevel}
               </Badge>
@@ -405,24 +414,33 @@ export function InscriptionsTable() {
           Statut
         </Button>
       ),
-      cell: ({row}) => (
-        <div className="flex flex-col gap-1">
-          <Badge className={statusColors[row.original.status] || "bg-gray-200"}>
-            {row.original.status === "open"
-              ? "Ouverte"
-              : row.original.status === "validated"
-                ? "Validée"
-                : row.original.status === "email_sent"
-                  ? "Email envoyé"
-                  : row.original.status}
-          </Badge>
-          {row.original.status === "email_sent" && row.original.emailSentAt && (
-            <span className="text-xs text-gray-500">
-              {format(new Date(row.original.emailSentAt), "dd/MM/yyyy HH:mm")}
-            </span>
-          )}
-        </div>
-      ),
+      cell: ({row}) => {
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge
+              data-testid={`badge-status-${row.original.status}`}
+              className={statusColors[row.original.status] || "bg-gray-200"}
+            >
+              {row.original.status === "open"
+                ? "Ouverte"
+                : row.original.status === "validated"
+                  ? "Validée"
+                  : row.original.status === "email_sent"
+                    ? "Email envoyé"
+                    : row.original.status}
+            </Badge>
+            {row.original.status === "email_sent" &&
+              row.original.emailSentAt && (
+                <span className="text-xs text-gray-500">
+                  {format(
+                    new Date(row.original.emailSentAt),
+                    "dd/MM/yyyy HH:mm"
+                  )}
+                </span>
+              )}
+          </div>
+        );
+      },
       filterFn: (row, id, value) => {
         if (!value) return true;
         return row.original.status === value;
@@ -449,6 +467,7 @@ export function InscriptionsTable() {
                 className={`${
                   colorBadgePerGender[sex === "M" ? "M" : "W"] || ""
                 } text-white`}
+                data-testid={`badge-sex-${sex}`}
               >
                 {sex}
               </Badge>
@@ -919,6 +938,7 @@ export function InscriptionsTable() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  data-testid={`row-inscription-${row.id}`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
