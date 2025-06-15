@@ -4,6 +4,7 @@ import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {eq} from "drizzle-orm";
 import {format} from "date-fns";
+import {selectNotDeleted} from "@/lib/soft-delete";
 
 export const dynamic = 'force-dynamic';
 
@@ -43,11 +44,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Récupérer les informations de l'inscription depuis la base de données
+    // Récupérer les informations de l'inscription depuis la base de données (non supprimée)
     const inscription = await db
       .select()
       .from(inscriptions)
-      .where(eq(inscriptions.id, Number(inscriptionId)))
+      .where(selectNotDeleted(inscriptions, eq(inscriptions.id, Number(inscriptionId))))
       .limit(1);
 
     if (!inscription.length) {
@@ -136,7 +137,7 @@ export async function POST(request: Request) {
           </p>
           <p style="font-size: 16px;">Best regards.</p>
           <div style="text-align: center; margin-top: 32px;">
-            <img src="${isWomen ? "https://i.imgur.com/jlKN5Y2.png" : "https://i.imgur.com/tSwmL0f.png"}" alt="French Team Email Signature" style="max-width: 100px; width: 100%; height: auto; display: inline-block;" />
+            <img src="${isWomen ? "https://i.imgur.com/ISeoDQp.jpeg" : "https://i.imgur.com/tSwmL0f.png"}" alt="French Team Email Signature" style="max-width: 100px; width: 100%; height: auto; display: inline-block;" />
           </div>
         </div>
       `,
