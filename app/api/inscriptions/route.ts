@@ -4,6 +4,7 @@ import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {Resend} from "resend";
 import {clerkClient} from "@clerk/clerk-sdk-node";
+import {isNull} from "drizzle-orm";
 
 // Define the schema for the request body (matching the form schema)
 const inscriptionSchema = z.object({
@@ -115,6 +116,9 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const inscripList = await db.select().from(inscriptions);
+  const inscripList = await db
+    .select()
+    .from(inscriptions)
+    .where(isNull(inscriptions.deletedAt));
   return NextResponse.json(inscripList);
 }
