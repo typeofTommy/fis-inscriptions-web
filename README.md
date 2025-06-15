@@ -1,5 +1,12 @@
 # FIS Inscriptions Web Application
 
+[![CI](https://github.com/USERNAME/fis-inscriptions-web/workflows/CI/badge.svg)](https://github.com/USERNAME/fis-inscriptions-web/actions)
+[![Coverage Status](https://coveralls.io/repos/github/USERNAME/fis-inscriptions-web/badge.svg?branch=main)](https://coveralls.io/github/USERNAME/fis-inscriptions-web?branch=main)
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A comprehensive digital platform for managing French alpine ski team registrations for international FIS competitions. This application streamlines the complex process of submitting official team entries to competition organizers worldwide while ensuring full compliance with FIS regulations.
 
 ## 🎯 Business Overview
