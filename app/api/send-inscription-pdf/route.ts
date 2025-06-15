@@ -6,7 +6,7 @@ import {eq} from "drizzle-orm";
 import {format} from "date-fns";
 import {selectNotDeleted} from "@/lib/soft-delete";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -48,7 +48,12 @@ export async function POST(request: Request) {
     const inscription = await db
       .select()
       .from(inscriptions)
-      .where(selectNotDeleted(inscriptions, eq(inscriptions.id, Number(inscriptionId))))
+      .where(
+        selectNotDeleted(
+          inscriptions,
+          eq(inscriptions.id, Number(inscriptionId))
+        )
+      )
       .limit(1);
 
     if (!inscription.length) {
@@ -137,7 +142,7 @@ export async function POST(request: Request) {
           </p>
           <p style="font-size: 16px;">Best regards.</p>
           <div style="text-align: center; margin-top: 32px;">
-            <img src="${isWomen ? "https://i.imgur.com/ISeoDQp.jpeg" : "https://i.imgur.com/tSwmL0f.png"}" alt="French Team Email Signature" style="max-width: 100px; width: 100%; height: auto; display: inline-block;" />
+            <img src="${isWomen ? "https://i.imgur.com/ISeoDQp.jpeg" : "https://i.imgur.com/tSwmL0f.png"}" alt="French Team Email Signature" style="max-width: 300px; width: 100%; height: auto; display: inline-block;" />
           </div>
         </div>
       `,
