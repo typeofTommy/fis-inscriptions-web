@@ -6,6 +6,7 @@ import {
   inscriptionCompetitors,
   inscriptions,
 } from "@/drizzle/schemaInscriptions";
+import {Competitor} from "@/app/types";
 
 export async function GET(request: Request) {
   try {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     );
 
     // On récupère les compétiteurs du genre demandé qui ont au moins une inscription dans inscriptionCompetitors (non supprimées) et dont l'inscription n'est pas supprimée
-    const c = await db
+    const c: {competitors: Competitor}[] = await db
       .selectDistinctOn([competitors.competitorid])
       .from(competitors)
       .innerJoin(
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
 
     // On retourne uniquement la liste des compétiteurs
     return NextResponse.json(
-      c.map((row: any) => row.competitors).filter((comp: any) => !!comp)
+      c.map((row) => row.competitors).filter((comp) => !!comp)
     );
   } catch (error) {
     console.error("Erreur lors de la récupération des compétiteurs:", error);

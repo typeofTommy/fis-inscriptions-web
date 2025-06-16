@@ -50,6 +50,13 @@
       "when": 1749911734483,
       "tag": "0006_serious_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1750089255377,
+      "tag": "0007_pink_tiger_shark",
+      "breakpoints": true
     }
   ]
 }

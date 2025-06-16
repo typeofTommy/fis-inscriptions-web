@@ -97,8 +97,8 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
           <TabsContent value="details_competitors">
             <CodexTabs inscriptionId={params.id} genderFilter={genderFilter} />
           </TabsContent>
-          <TabsContent value="coaches">
-            <div className="space-y-4">
+          <TabsContent value="coaches" className="mt-6">
+            <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
@@ -108,15 +108,18 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
                     Liste des entraîneurs accompagnant la délégation
                   </p>
                 </div>
-                {inscription?.status === "open" && (
-                  <AddCoachModal
-                    inscriptionId={params.id}
-                    triggerText="Ajouter un entraîneur"
-                    triggerTextMobile="+ Coach"
-                    eventStartDate={inscription?.eventData?.startDate}
-                    eventEndDate={inscription?.eventData?.endDate}
-                  />
-                )}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Coaches.WhatsAppButton inscriptionId={params.id} />
+                  {inscription?.status === "open" && (
+                    <AddCoachModal
+                      inscriptionId={params.id}
+                      triggerText="Ajouter un entraîneur"
+                      triggerTextMobile="+ Coach"
+                      eventStartDate={inscription?.eventData?.startDate}
+                      eventEndDate={inscription?.eventData?.endDate}
+                    />
+                  )}
+                </div>
               </div>
               <Coaches inscriptionId={params.id} />
             </div>

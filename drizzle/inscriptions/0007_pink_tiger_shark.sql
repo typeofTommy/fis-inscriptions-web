@@ -1,0 +1,1 @@
+ALTER TABLE "inscriptionsDB"."inscription_coaches" ADD COLUMN "whatsapp_phone" text;

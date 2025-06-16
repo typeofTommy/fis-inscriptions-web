@@ -19,6 +19,7 @@ interface CoachData {
   team?: string;
   startDate: string;
   endDate: string;
+  whatsappPhone?: string;
 }
 
 function useSaveCoach(inscriptionId: string) {
@@ -60,6 +61,7 @@ export default function AddCoachModal({
   const [team, setTeam] = useState("");
   const [startDate, setStartDate] = useState(eventStartDate || "");
   const [endDate, setEndDate] = useState(eventEndDate || "");
+  const [whatsappPhone, setWhatsappPhone] = useState("");
 
   const {mutate: saveCoach, isPending: saving} = useSaveCoach(inscriptionId);
 
@@ -101,6 +103,7 @@ export default function AddCoachModal({
         team: team.trim() || undefined,
         startDate: startDate,
         endDate: endDate,
+        whatsappPhone: whatsappPhone.trim() || undefined,
       },
       {
         onSuccess: () => {
@@ -109,11 +112,12 @@ export default function AddCoachModal({
           setTeam("");
           setStartDate(eventStartDate || "");
           setEndDate(eventEndDate || "");
+          setWhatsappPhone("");
           setOpen(false);
         },
       }
     );
-  }, [firstName, lastName, team, startDate, endDate, saveCoach]);
+  }, [firstName, lastName, team, startDate, endDate, whatsappPhone, saveCoach]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -121,7 +125,7 @@ export default function AddCoachModal({
         handleSave();
       }
     },
-    [handleSave, saving, firstName, lastName, startDate, endDate, eventStartDate, eventEndDate]
+    [handleSave, saving, firstName, lastName, startDate, endDate, whatsappPhone, eventStartDate, eventEndDate]
   );
 
   return (
@@ -135,6 +139,7 @@ export default function AddCoachModal({
           setTeam("");
           setStartDate(eventStartDate || "");
           setEndDate(eventEndDate || "");
+          setWhatsappPhone("");
         }
       }}
     >
@@ -187,6 +192,20 @@ export default function AddCoachModal({
               value={team}
               onChange={(e) => setTeam(e.target.value)}
               onKeyDown={handleKeyDown}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="coach-whatsapp">Téléphone WhatsApp (optionnel)</Label>
+            <div className="text-xs text-gray-500 mb-1">
+              Pour créer un groupe WhatsApp avec les coachs automatiquement
+            </div>
+            <Input
+              id="coach-whatsapp"
+              placeholder="+33123456789"
+              value={whatsappPhone}
+              onChange={(e) => setWhatsappPhone(e.target.value)}
+              onKeyDown={handleKeyDown}
+              type="tel"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

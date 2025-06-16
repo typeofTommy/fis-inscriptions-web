@@ -28,6 +28,7 @@ export async function GET(
         team: inscriptionCoaches.team,
         startDate: inscriptionCoaches.startDate,
         endDate: inscriptionCoaches.endDate,
+        whatsappPhone: inscriptionCoaches.whatsappPhone,
         addedBy: inscriptionCoaches.addedBy,
         createdAt: inscriptionCoaches.createdAt,
         deletedAt: inscriptionCoaches.deletedAt,
@@ -99,6 +100,7 @@ export async function POST(
       team?: string;
       startDate?: string;
       endDate?: string;
+      whatsappPhone?: string;
     } = {};
     try {
       body = await req.json();
@@ -106,7 +108,7 @@ export async function POST(
       return NextResponse.json({error: "Invalid JSON body"}, {status: 400});
     }
 
-    const {firstName, lastName, team, startDate, endDate} = body;
+    const {firstName, lastName, team, startDate, endDate, whatsappPhone} = body;
     if (
       !firstName ||
       !lastName ||
@@ -182,6 +184,7 @@ export async function POST(
         team: team?.trim() || null,
         startDate: startDate.trim(),
         endDate: endDate.trim(),
+        whatsappPhone: whatsappPhone?.trim() || null,
         addedBy: userId,
       })
       .returning();
