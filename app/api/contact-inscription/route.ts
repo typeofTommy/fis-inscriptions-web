@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         ? `${user.firstName} ${user.lastName}`
         : user.username || userEmail || "Utilisateur";
 
-    const eventUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/inscriptions/${inscription.id}`;
+    const eventUrl = `https://www.inscriptions-fis-etranger.fr/inscriptions/${inscription.id}`;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
