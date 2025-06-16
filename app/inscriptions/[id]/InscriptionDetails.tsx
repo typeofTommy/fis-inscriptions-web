@@ -27,6 +27,8 @@ import {Label} from "@/components/ui/label";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import Link from "next/link";
+import {ContactModal} from "./ContactModal";
+import {useUser} from "@clerk/nextjs";
 
 interface InscriptionDetailsProps {
   id: string;
@@ -42,6 +44,7 @@ export const InscriptionDetails = ({
   isMixedEvent,
 }: InscriptionDetailsProps) => {
   const {data: inscription, isLoading, error} = useInscription(id);
+  const {user} = useUser();
 
   const permissionToEdit = usePermissionToEdit(inscription, "actionsBtn");
 
@@ -147,6 +150,11 @@ export const InscriptionDetails = ({
                     </div>
                   </DialogContent>
                 </Dialog>
+              )}
+              {user && (
+                <div className="flex-shrink-0">
+                  <ContactModal inscriptionId={id} />
+                </div>
               )}
               {permissionToEdit && inscription && (
                 <div className="flex-shrink-0">
