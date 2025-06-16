@@ -33,14 +33,14 @@ import {useUser} from "@clerk/nextjs";
 interface InscriptionDetailsProps {
   id: string;
   genderFilter: "both" | "M" | "W";
-  setGenderFilter: (value: "both" | "M" | "W") => void;
+  setGenderFilterAction: (value: "both" | "M" | "W") => void;
   isMixedEvent: boolean;
 }
 
 export const InscriptionDetails = ({
   id,
   genderFilter,
-  setGenderFilter,
+  setGenderFilterAction,
   isMixedEvent,
 }: InscriptionDetailsProps) => {
   const {data: inscription, isLoading, error} = useInscription(id);
@@ -98,7 +98,9 @@ export const InscriptionDetails = ({
                 style={{lineHeight: 1}}
               >
                 <span className="md:hidden">Détail inscription</span>
-                <span className="hidden md:inline">Détails de l&apos;inscription</span>
+                <span className="hidden md:inline">
+                  Détails de l&apos;inscription
+                </span>
                 <div className="flex items-center gap-2">
                   <span
                     className={
@@ -135,7 +137,9 @@ export const InscriptionDetails = ({
                     >
                       <InfoIcon className="h-4 w-4 mr-1 md:mr-2" />
                       <span className="md:hidden">Détail</span>
-                      <span className="hidden md:inline">Détail de l&apos;événement</span>
+                      <span className="hidden md:inline">
+                        Détail de l&apos;événement
+                      </span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="w-[95vw] md:w-11/12 !max-w-none max-h-[90vh] overflow-y-auto">
@@ -240,7 +244,7 @@ export const InscriptionDetails = ({
           </h2>
           <RadioGroup
             value={genderFilter}
-            onValueChange={setGenderFilter}
+            onValueChange={setGenderFilterAction}
             className="flex flex-row items-center gap-2 md:gap-6"
           >
             <div className="flex items-center space-x-1 cursor-pointer">
@@ -249,7 +253,10 @@ export const InscriptionDetails = ({
                 id="r1"
                 className="cursor-pointer h-4 w-4 md:h-5 md:w-5"
               />
-              <Label htmlFor="r1" className="cursor-pointer text-sm md:text-base">
+              <Label
+                htmlFor="r1"
+                className="cursor-pointer text-sm md:text-base"
+              >
                 <Badge className="bg-sky-100 text-sky-700 hover:bg-sky-200 px-1.5 md:px-3 py-1 text-xs md:text-sm">
                   Tous
                 </Badge>
@@ -261,10 +268,14 @@ export const InscriptionDetails = ({
                 id="r2"
                 className="cursor-pointer h-4 w-4 md:h-5 md:w-5"
               />
-              <Label htmlFor="r2" className="cursor-pointer text-sm md:text-base">
+              <Label
+                htmlFor="r2"
+                className="cursor-pointer text-sm md:text-base"
+              >
                 <Badge
                   className={
-                    colorBadgePerGender.M + " text-white px-1.5 md:px-3 py-1 text-xs md:text-sm"
+                    colorBadgePerGender.M +
+                    " text-white px-1.5 md:px-3 py-1 text-xs md:text-sm"
                   }
                 >
                   <span className="md:hidden">H</span>
@@ -278,10 +289,14 @@ export const InscriptionDetails = ({
                 id="r3"
                 className="cursor-pointer h-4 w-4 md:h-5 md:w-5"
               />
-              <Label htmlFor="r3" className="cursor-pointer text-sm md:text-base">
+              <Label
+                htmlFor="r3"
+                className="cursor-pointer text-sm md:text-base"
+              >
                 <Badge
                   className={
-                    colorBadgePerGender.W + " text-white px-1.5 md:px-3 py-1 text-xs md:text-sm"
+                    colorBadgePerGender.W +
+                    " text-white px-1.5 md:px-3 py-1 text-xs md:text-sm"
                   }
                 >
                   <span className="md:hidden">F</span>

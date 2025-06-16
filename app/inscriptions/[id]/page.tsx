@@ -9,7 +9,7 @@ import {Coaches} from "./Coaches";
 import AddCoachModal from "./AddCoachModal";
 import {useInscription} from "@/app/inscriptions/form/api";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import {Loader2} from "lucide-react";
 
 interface PageProps {
@@ -63,7 +63,7 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
       <InscriptionDetails
         id={params.id}
         genderFilter={genderFilter}
-        setGenderFilter={setGenderFilter}
+        setGenderFilterAction={setGenderFilter}
         isMixedEvent={isMixedEvent}
       />
       <div className="bg-white p-3 md:p-4 mt-4 md:mt-6">

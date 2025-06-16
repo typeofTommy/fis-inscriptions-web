@@ -98,6 +98,7 @@ export const inscriptionCoaches = inscriptionsSchema.table(
     team: text("team"),
     startDate: text("start_date").notNull(),
     endDate: text("end_date").notNull(),
+    whatsappPhone: text("whatsapp_phone"),
     addedBy: text("added_by").default("Unknown"),
     createdAt: timestamp("created_at").defaultNow(),
     deletedAt: timestamp("deleted_at"),
