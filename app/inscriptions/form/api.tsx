@@ -45,15 +45,18 @@ export const useCreateInscription = () => {
 };
 
 // Hook pour vérifier un codex
-export const useCodexCheck = (codex: string, inscriptionId?: string) => {
+export const useCodexCheck = (codex: string, inscriptionId?: string, seasonCode?: string) => {
   const debouncedCodex = useDebouncedValue(codex, 400);
   const query = useQuery({
-    queryKey: ["codex-check", debouncedCodex, inscriptionId],
+    queryKey: ["codex-check", debouncedCodex, inscriptionId, seasonCode],
     queryFn: async () => {
       if (!debouncedCodex || debouncedCodex.length < 3) return {exists: false};
       let url = `/api/codex/check?number=${encodeURIComponent(debouncedCodex)}`;
       if (inscriptionId) {
         url += `&excludeId=${encodeURIComponent(inscriptionId)}`;
+      }
+      if (seasonCode) {
+        url += `&seasonCode=${encodeURIComponent(seasonCode)}`;
       }
       const res = await fetch(url);
       if (!res.ok) throw new Error("Erreur API");

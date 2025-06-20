@@ -36,9 +36,14 @@ export const InscriptionFormWrapper = () => {
     error,
   } = useCompetitionByCodex(searchedCodex ? Number(searchedCodex) : 0);
   const {createInscription} = useCreateInscription();
-  const {data: codexCheck} = useCodexCheck(searchedCodex ?? "");
 
   const event = eventUntyped as Competition | null | undefined;
+  
+  const {data: codexCheck} = useCodexCheck(
+    searchedCodex ?? "", 
+    undefined, 
+    event?.seasonCode ? String(event.seasonCode) : undefined
+  );
 
   const isTrainingEvent =
     event &&
