@@ -12,8 +12,8 @@ export const getSeasonFromDate = (date: Date): number => {
   const year = date.getFullYear();
   const month = date.getMonth() + 1; // getMonth() retourne 0-11, on veut 1-12
 
-  // Si on est entre juillet (7) et décembre (12), c'est la saison de l'année suivante
-  if (month >= 7) {
+  // Si on est entre mai (7) et décembre (12), c'est la saison de l'année suivante
+  if (month >= 5) {
     return year + 1;
   }
   // Si on est entre janvier (1) et avril (4), c'est la saison de l'année courante
