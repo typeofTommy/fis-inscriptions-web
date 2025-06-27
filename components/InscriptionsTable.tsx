@@ -120,7 +120,6 @@ export function InscriptionsTable() {
     {id: "season", value: getCurrentSeason()},
   ]);
 
-  console.log(1, getCurrentSeason());
   const [showFilters, setShowFilters] = useState(false);
 
   const {data, isLoading} = useQuery<Inscription[]>({

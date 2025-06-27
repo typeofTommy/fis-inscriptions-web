@@ -57,7 +57,6 @@ export const GET = async (req: NextRequest) => {
   );
   if (!fisEventRes.ok) {
     const fisError = await fisEventRes.text();
-    console.log("FIS Codex Data:", fisCodexData);
     return NextResponse.json(
       {
         error: "FIS API error (events)",

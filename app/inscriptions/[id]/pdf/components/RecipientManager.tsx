@@ -113,9 +113,6 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     type: "success" | "error";
   } | null>(null);
 
-  // const {user} = useUser(); // Removed as unused
-  // console.log({user}); // Keep for debugging if needed, or remove
-
   const predefinedRecipients = useMemo(() => {
     const processedEmails: DisplayRecipient[] = [];
     PREDEFINED_EMAILS.ALL_RACES.forEach(({email, name, reason}) => {
@@ -370,15 +367,15 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
           "PDF envoyé avec succès ! Email ID: " + (result.emailId || "N/A"),
         type: "success",
       });
-      
+
       // Invalide les caches React Query pour mettre à jour l'interface
       await queryClient.invalidateQueries({
-        queryKey: ["inscriptions"]
+        queryKey: ["inscriptions"],
       });
       await queryClient.invalidateQueries({
-        queryKey: ["inscription-competitors-all", Number(inscriptionId)]
+        queryKey: ["inscription-competitors-all", Number(inscriptionId)],
       });
-      
+
       // Met à jour le toast en succès
       if (toastInstance && toastInstance.update) {
         toastInstance.update({
@@ -392,7 +389,10 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       }
     } catch (error: unknown) {
       setSendStatus({
-        message: error instanceof Error ? error.message : "Une erreur est survenue lors de l'envoi.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Une erreur est survenue lors de l'envoi.",
         type: "error",
       });
       // Met à jour le toast en erreur
@@ -401,7 +401,9 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
           id: toastId,
           title: "Erreur lors de l'envoi",
           description:
-            error instanceof Error ? error.message : "Une erreur est survenue lors de l'envoi.",
+            error instanceof Error
+              ? error.message
+              : "Une erreur est survenue lors de l'envoi.",
           open: true,
           duration: 1000000,
           variant: "destructive",

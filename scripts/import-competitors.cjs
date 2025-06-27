@@ -225,7 +225,6 @@ const main = async () => {
   let lastValidCsv = "";
   let attempts = 0;
   while (attempts < MAX_ATTEMPTS) {
-    console.log(`Test listid=${listid}...`);
     const csv = await fetchCsv(listid);
     if (isValidCsv(csv, listid)) {
       lastValidListId = listid;

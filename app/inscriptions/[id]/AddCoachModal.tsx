@@ -9,9 +9,16 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
-import {useMutation, useQueryClient} from "@tanstack/react-query";
+import {useMutation, useQueryClient, useQuery} from "@tanstack/react-query";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CoachData {
   firstName: string;
@@ -21,6 +28,24 @@ interface CoachData {
   endDate: string;
   whatsappPhone?: string;
 }
+
+type PreviousCoach = {
+  firstName: string;
+  lastName: string;
+  team?: string;
+  whatsappPhone?: string;
+};
+
+const usePreviousCoaches = () => {
+  return useQuery<PreviousCoach[]>({
+    queryKey: ["previous-coaches"],
+    queryFn: async () => {
+      const res = await fetch("/api/coaches/previous");
+      if (!res.ok) throw new Error("Erreur lors du chargement des coachs précédents");
+      return res.json();
+    },
+  });
+};
 
 function useSaveCoach(inscriptionId: string) {
   const queryClient = useQueryClient();
@@ -64,33 +89,58 @@ export default function AddCoachModal({
   const [whatsappPhone, setWhatsappPhone] = useState("");
 
   const {mutate: saveCoach, isPending: saving} = useSaveCoach(inscriptionId);
+  const {data: previousCoaches = []} = usePreviousCoaches();
 
-  const isFormValid = () => {
+  const handleQuickSelect = (value: string) => {
+    if (value === "manual") {
+      // Reset pour saisie manuelle
+      setFirstName("");
+      setLastName("");
+      setTeam("");
+      setWhatsappPhone("");
+      return;
+    }
+
+    const coach = previousCoaches.find(
+      (c) => `${c.firstName}-${c.lastName}` === value
+    );
+    if (coach) {
+      setFirstName(coach.firstName);
+      setLastName(coach.lastName);
+      setTeam(coach.team || "");
+      setWhatsappPhone(coach.whatsappPhone || "");
+    }
+  };
+
+  const isFormValid = useCallback(() => {
     if (!firstName.trim() || !lastName.trim() || !startDate || !endDate) {
       return false;
     }
-    
+
     // Validation des dates
     if (eventStartDate && startDate < eventStartDate) {
       return false;
     }
-    
+
     if (eventEndDate && endDate > eventEndDate) {
       return false;
     }
-    
+
     if (startDate > endDate) {
       return false;
     }
-    
+
     return true;
-  };
+  }, [firstName, lastName, startDate, endDate, eventStartDate, eventEndDate]);
 
   const getDateError = () => {
     if (!startDate || !endDate) return "Les dates sont obligatoires";
-    if (startDate > endDate) return "Le premier jour doit être avant le dernier jour";
-    if (eventStartDate && startDate < eventStartDate) return "Le premier jour ne peut pas être avant le début de l'événement";
-    if (eventEndDate && endDate > eventEndDate) return "Le dernier jour ne peut pas être après la fin de l'événement";
+    if (startDate > endDate)
+      return "Le premier jour doit être avant le dernier jour";
+    if (eventStartDate && startDate < eventStartDate)
+      return "Le premier jour ne peut pas être avant le début de l'événement";
+    if (eventEndDate && endDate > eventEndDate)
+      return "Le dernier jour ne peut pas être après la fin de l'événement";
     return null;
   };
 
@@ -117,7 +167,7 @@ export default function AddCoachModal({
         },
       }
     );
-  }, [firstName, lastName, team, startDate, endDate, whatsappPhone, saveCoach]);
+  }, [firstName, lastName, team, startDate, endDate, whatsappPhone, saveCoach, eventStartDate, eventEndDate, isFormValid]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -125,7 +175,7 @@ export default function AddCoachModal({
         handleSave();
       }
     },
-    [handleSave, saving, firstName, lastName, startDate, endDate, whatsappPhone, eventStartDate, eventEndDate]
+    [handleSave, saving, isFormValid]
   );
 
   return (
@@ -161,6 +211,31 @@ export default function AddCoachModal({
           <DialogTitle>Ajouter un coach</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {previousCoaches.length > 0 && (
+            <div className="space-y-2">
+              <Label>Sélection rapide</Label>
+              <Select onValueChange={handleQuickSelect}>
+                <SelectTrigger className="cursor-pointer">
+                  <SelectValue placeholder="Choisir un coach précédemment ajouté" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Saisie manuelle</SelectItem>
+                  {previousCoaches.map((coach) => (
+                    <SelectItem
+                      key={`${coach.firstName}-${coach.lastName}`}
+                      value={`${coach.firstName}-${coach.lastName}`}
+                      className="cursor-pointer"
+                    >
+                      {coach.firstName} {coach.lastName}{coach.team ? ` (${coach.team})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="text-xs text-gray-500">
+                Sélectionnez un coach pour pré-remplir les informations, ou choisissez &quot;Saisie manuelle&quot;
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="coach-firstname">Prénom</Label>
@@ -195,7 +270,9 @@ export default function AddCoachModal({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="coach-whatsapp">Téléphone WhatsApp (optionnel)</Label>
+            <Label htmlFor="coach-whatsapp">
+              Téléphone WhatsApp (recommandé)
+            </Label>
             <div className="text-xs text-gray-500 mb-1">
               Pour créer un groupe WhatsApp avec les coachs automatiquement
             </div>
@@ -235,9 +312,7 @@ export default function AddCoachModal({
             </div>
           </div>
           {getDateError() && (
-            <div className="text-sm text-red-600 mt-2">
-              {getDateError()}
-            </div>
+            <div className="text-sm text-red-600 mt-2">{getDateError()}</div>
           )}
         </div>
         <DialogFooter>

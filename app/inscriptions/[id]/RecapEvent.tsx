@@ -614,6 +614,8 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
     [
       columnHelper,
       inscription?.eventData.competitions,
+      inscription?.status,
+      inscriptionId,
       genderFilter,
       permissionToEdit,
       openDialog,

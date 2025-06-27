@@ -18,6 +18,7 @@ import {
 } from "@/drizzle/schemaInscriptions";
 import {db} from "@/app/db/inscriptionsDB";
 import {eq} from "drizzle-orm";
+import {selectNotDeleted} from "@/lib/soft-delete";
 import {RecipientManager, Recipient} from "./components/RecipientManager";
 import {clerkClient, auth} from "@clerk/nextjs/server";
 import type {User} from "@clerk/nextjs/server";
@@ -65,7 +66,12 @@ export default async function PdfPage({
       endDate: inscriptionCoaches.endDate,
     })
     .from(inscriptionCoaches)
-    .where(eq(inscriptionCoaches.inscriptionId, Number(id)));
+    .where(
+      selectNotDeleted(
+        inscriptionCoaches,
+        eq(inscriptionCoaches.inscriptionId, Number(id))
+      )
+    );
 
   // Typage explicite du résultat de l'innerJoin
   type RawCompetitorRow = {
@@ -78,7 +84,12 @@ export default async function PdfPage({
       inscriptionCompetitors: inscriptionCompetitors,
     })
     .from(inscriptionCompetitors)
-    .where(eq(inscriptionCompetitors.inscriptionId, Number(id)))
+    .where(
+      selectNotDeleted(
+        inscriptionCompetitors,
+        eq(inscriptionCompetitors.inscriptionId, Number(id))
+      )
+    )
     .innerJoin(
       competitorsTable,
       eq(inscriptionCompetitors.competitorId, competitorsTable.competitorid)
@@ -307,8 +318,6 @@ export default async function PdfPage({
       recipients.push(modifierDetails);
     }
   });
-
-  console.log(eventData);
 
   // Ajout du destinataire spécifique à l'event (emailEntries ou fallback sur emailGeneral)
   let eventContactEmail = null;
