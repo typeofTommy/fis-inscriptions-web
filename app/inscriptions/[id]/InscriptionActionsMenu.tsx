@@ -21,6 +21,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {Inscription} from "@/app/types";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import {UpdateEventDataModal} from "./UpdateEventDataModal";
@@ -38,11 +45,13 @@ export function InscriptionActionsMenu({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [genderDialogOpen, setGenderDialogOpen] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
   const queryClient = useQueryClient();
   const router = useRouter();
 
   const statusMutation = useMutation({
-    mutationFn: async (status: "open" | "validated") => {
+    mutationFn: async (status: "open" | "validated" | "email_sent") => {
       const res = await fetch(
         `/api/inscriptions/${inscription.id}/status?status=${status}`,
         {
@@ -100,10 +109,24 @@ export function InscriptionActionsMenu({
     },
   });
 
-  const handleStatus = (status: "open" | "validated") => {
-    if (inscription.status === status) return;
-    statusMutation.mutate(status);
+  const handleStatusChange = () => {
+    if (!selectedStatus || selectedStatus === inscription.status) {
+      setStatusDialogOpen(false);
+      setSelectedStatus("");
+      return;
+    }
+    statusMutation.mutate(
+      selectedStatus as "open" | "validated" | "email_sent"
+    );
+    setStatusDialogOpen(false);
+    setSelectedStatus("");
     setPopoverOpen(false);
+  };
+
+  const statusLabels = {
+    open: "En cours (ouvert)",
+    validated: "Clôturé (validé)",
+    email_sent: "Email envoyé",
   };
 
   const isMixteEvent =
@@ -169,27 +192,17 @@ export function InscriptionActionsMenu({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-2 flex flex-col gap-1 items-start text-left">
-        {inscription.status !== "open" && (
-          <Button
-            variant="ghost"
-            className="justify-start w-full cursor-pointer"
-            onClick={() => handleStatus("open")}
-            disabled={statusMutation.isPending || readonly}
-          >
-            Ouvrir
-          </Button>
-        )}
         <Button
           variant="ghost"
           className="justify-start w-full cursor-pointer"
-          onClick={() => handleStatus("validated")}
-          disabled={
-            statusMutation.isPending ||
-            inscription.status === "validated" ||
-            readonly
-          }
+          onClick={() => {
+            setSelectedStatus("");
+            setStatusDialogOpen(true);
+            setPopoverOpen(false);
+          }}
+          disabled={statusMutation.isPending || readonly}
         >
-          Clôturer
+          Changer le statut
         </Button>
         <Button
           variant="ghost"
@@ -314,6 +327,66 @@ export function InscriptionActionsMenu({
         onClose={() => setUpdateModalOpen(false)}
         inscription={inscription}
       />
+
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Changer le statut de l&apos;inscription</DialogTitle>
+            <DialogDescription>
+              Statut actuel :{" "}
+              <strong>
+                {statusLabels[inscription.status as keyof typeof statusLabels]}
+              </strong>
+              <br />
+              Sélectionnez le nouveau statut souhaité.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="cursor-pointer">
+                <SelectValue placeholder="Choisir un statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="open" className="cursor-pointer">
+                  {statusLabels.open}
+                </SelectItem>
+                <SelectItem value="validated" className="cursor-pointer">
+                  {statusLabels.validated}
+                </SelectItem>
+                <SelectItem value="email_sent" className="cursor-pointer">
+                  {statusLabels.email_sent}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setStatusDialogOpen(false);
+                setSelectedStatus("");
+              }}
+              className="cursor-pointer"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleStatusChange}
+              disabled={
+                !selectedStatus ||
+                selectedStatus === inscription.status ||
+                statusMutation.isPending
+              }
+              className="cursor-pointer"
+            >
+              {statusMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Confirmer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Popover>
   );
 }

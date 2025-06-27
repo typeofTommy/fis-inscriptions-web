@@ -145,11 +145,30 @@ const main = async () => {
     ORDER BY ic.deleted_at ASC;
   `);
 
+  // Récupère les événements qui arrivent dans les 7 prochains jours et dont l'email/PDF n'a pas encore été envoyé
+  const {rows: upcomingEventsWithoutEmail} = await client.query(`
+    SELECT
+      id,
+      event_id,
+      event_data->>'place' AS event_location,
+      event_data->>'startDate' AS event_start_date,
+      event_data->>'endDate' AS event_end_date,
+      status,
+      created_by,
+      created_at
+    FROM "inscriptionsDB".inscriptions
+    WHERE deleted_at IS NULL
+      AND status != 'email_sent'
+      AND email_sent_at IS NULL
+      AND (event_data->>'startDate')::date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
+    ORDER BY (event_data->>'startDate')::date ASC;
+  `);
+
   await client.end();
 
-  // Si aucun changement, on n'envoie pas d'email
-  if (events.length === 0 && competitors.length === 0 && deletedEvents.length === 0 && deletedCompetitors.length === 0 && coaches.length === 0 && deletedCoaches.length === 0) {
-    console.log("Aucun changement aujourd'hui, aucun email envoyé.");
+  // Si aucun changement et aucun événement à venir sans email, on n'envoie pas d'email
+  if (events.length === 0 && competitors.length === 0 && deletedEvents.length === 0 && deletedCompetitors.length === 0 && coaches.length === 0 && deletedCoaches.length === 0 && upcomingEventsWithoutEmail.length === 0) {
+    console.log("Aucun changement aujourd'hui et aucun événement à venir sans email, aucun email envoyé.");
     return;
   }
 
@@ -393,6 +412,37 @@ const main = async () => {
                     .join("");
                 })()}
               </ul>
+            </div>`;
+              })
+              .join("")
+      }
+    </div>
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#f59e0b;">Événements à venir sans email/PDF envoyé</h3>
+      ${
+        upcomingEventsWithoutEmail.length === 0
+          ? `<i style='color:#6b7280;'>Aucun événement à venir sans email/PDF dans les 7 prochains jours.</i>`
+          : upcomingEventsWithoutEmail
+              .map((evt) => {
+                const email = userIdToEmail[evt.created_by] || evt.created_by;
+                const startDate = format(
+                  new Date(evt.event_start_date),
+                  "dd MMMM yyyy",
+                  {locale: fr}
+                );
+                const endDate = format(
+                  new Date(evt.event_end_date),
+                  "dd MMMM yyyy",
+                  {locale: fr}
+                );
+                const daysUntilStart = Math.ceil((new Date(evt.event_start_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                const urgencyColor = daysUntilStart <= 2 ? '#dc2626' : daysUntilStart <= 5 ? '#f59e0b' : '#16a34a';
+                return `<div style='margin-bottom:16px;border-left:4px solid ${urgencyColor};padding-left:12px;'>
+              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location}</a><br>
+              <span style='color:#374151;'>📅 ${startDate === endDate ? startDate : `${startDate} → ${endDate}`}</span><br>
+              <span style='color:${urgencyColor};font-weight:500;'>⚠️ Dans ${daysUntilStart} jour${daysUntilStart > 1 ? 's' : ''}</span> | 
+              <span style='color:#6b7280;'>Statut: ${evt.status}</span> | 
+              <span style='color:#6b7280;'>Créé par: ${email}</span>
             </div>`;
               })
               .join("")
