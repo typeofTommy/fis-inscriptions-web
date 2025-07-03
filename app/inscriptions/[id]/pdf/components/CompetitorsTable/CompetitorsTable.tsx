@@ -54,7 +54,7 @@ export const CompetitorsTable = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs border-separate border-spacing-0">
+      <table className="w-full text-xs border-collapse">
         <thead>
           <tr className="border-b border-black">
             <th className="border-r border-black p-1 font-semibold">
