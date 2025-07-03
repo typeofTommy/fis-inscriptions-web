@@ -20,6 +20,7 @@ import {db} from "@/app/db/inscriptionsDB";
 import {eq} from "drizzle-orm";
 import {selectNotDeleted} from "@/lib/soft-delete";
 import {RecipientManager, Recipient} from "./components/RecipientManager";
+import {BrowserWarning} from "./components/BrowserWarning";
 import {clerkClient, auth} from "@clerk/nextjs/server";
 import type {User} from "@clerk/nextjs/server";
 import type {Competition, CompetitionItem} from "@/app/types";
@@ -378,6 +379,7 @@ export default async function PdfPage({
 
   return (
     <div className="max-w-4xl mx-auto p-4 bg-white">
+      <BrowserWarning />
       <div id="pdf-content" className="bg-white w-[21cm] mx-auto">
         <Header />
         <div className="border-2 border-black">
