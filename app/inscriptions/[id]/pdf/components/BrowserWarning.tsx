@@ -67,8 +67,8 @@ export const BrowserWarning = () => {
             <button
               onClick={() => {
                 const currentUrl = window.location.href;
-                const safariUrl = `x-safari://open?url=${encodeURIComponent(currentUrl)}`;
-                window.location.href = safariUrl;
+                const safariUrl = currentUrl.replace(/^https?:/, 'x-safari-https:');
+                window.location.replace(safariUrl);
               }}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 cursor-pointer"
             >
