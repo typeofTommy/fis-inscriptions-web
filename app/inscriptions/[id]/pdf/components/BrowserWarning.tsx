@@ -9,7 +9,7 @@ type BrowserInfo = {
   isMac: boolean;
 };
 
-const detectBrowser = (): BrowserInfo => {
+export const detectBrowser = (): BrowserInfo => {
   if (typeof window === "undefined") {
     return {isChrome: false, isSafari: false, isMac: false};
   }
@@ -63,16 +63,17 @@ export const BrowserWarning = () => {
               </li>
             </ul>
           </div>
-          <div className="mt-3 flex items-center space-x-4">
+          <div className="mt-4 flex items-center space-x-4">
             <button
-              onClick={() => setShowWarning(false)}
-              className="text-xs text-yellow-800 hover:text-yellow-900 underline cursor-pointer"
+              onClick={() => {
+                const currentUrl = window.location.href;
+                const safariUrl = `x-safari://open?url=${encodeURIComponent(currentUrl)}`;
+                window.location.href = safariUrl;
+              }}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 cursor-pointer"
             >
-              Masquer cet avertissement
+              🧭 Ouvrir dans Safari
             </button>
-            <span className="text-xs text-yellow-600">
-              Cet avertissement ne s&apos;affichera pas dans le PDF
-            </span>
           </div>
         </div>
       </div>

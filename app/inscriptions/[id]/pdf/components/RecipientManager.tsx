@@ -3,6 +3,7 @@
 import React, {useState, useEffect, useMemo} from "react";
 import {toast} from "@/components/ui/use-toast";
 import {useQueryClient} from "@tanstack/react-query";
+import {BrowserWarning, detectBrowser} from "./BrowserWarning";
 
 export type Recipient = {
   email: string;
@@ -112,6 +113,13 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     message: string;
     type: "success" | "error";
   } | null>(null);
+
+  // Detect if user is on Chrome macOS
+  const [isChromeOnMac, setIsChromeOnMac] = useState(false);
+  useEffect(() => {
+    const browserInfo = detectBrowser();
+    setIsChromeOnMac(browserInfo.isChrome && browserInfo.isMac);
+  }, []);
 
   const predefinedRecipients = useMemo(() => {
     const processedEmails: DisplayRecipient[] = [];
@@ -414,6 +422,10 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     }
   };
 
+  if (isChromeOnMac) {
+    return <BrowserWarning />;
+  }
+
   return (
     <div className="mt-6 p-4 border-t border-gray-200 print:hidden">
       <h3 className="text-lg font-semibold mb-3">
@@ -532,10 +544,14 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         <div className="mt-6 text-right">
           <button
             type="submit"
-            disabled={isSending || allRecipients.length === 0}
+            disabled={isSending || allRecipients.length === 0 || isChromeOnMac}
             className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:opacity-70 cursor-pointer"
           >
-            {isSending ? "Envoi en cours..." : "Envoyer le PDF par Email"}
+            {isChromeOnMac
+              ? "PDF désactivé sur Chrome macOS"
+              : isSending
+                ? "Envoi en cours..."
+                : "Envoyer le PDF par Email"}
           </button>
         </div>
       </form>
