@@ -21,19 +21,29 @@ export const CompetitorsTable = ({
       switch (codexItem.eventCode) {
         case "SL":
           // Count if has valid points OR is registered (will show 999)
-          hasEntry = (c.slpoints != null && !isNaN(parseFloat(c.slpoints))) || isAssociated;
+          hasEntry =
+            (c.slpoints != null && !isNaN(parseFloat(c.slpoints))) ||
+            isAssociated;
           break;
         case "GS":
-          hasEntry = (c.gspoints != null && !isNaN(parseFloat(c.gspoints))) || isAssociated;
+          hasEntry =
+            (c.gspoints != null && !isNaN(parseFloat(c.gspoints))) ||
+            isAssociated;
           break;
         case "SG":
-          hasEntry = (c.sgpoints != null && !isNaN(parseFloat(c.sgpoints))) || isAssociated;
+          hasEntry =
+            (c.sgpoints != null && !isNaN(parseFloat(c.sgpoints))) ||
+            isAssociated;
           break;
         case "DH":
-          hasEntry = (c.dhpoints != null && !isNaN(parseFloat(c.dhpoints))) || isAssociated;
+          hasEntry =
+            (c.dhpoints != null && !isNaN(parseFloat(c.dhpoints))) ||
+            isAssociated;
           break;
         case "AC":
-          hasEntry = (c.acpoints != null && !isNaN(parseFloat(c.acpoints))) || isAssociated;
+          hasEntry =
+            (c.acpoints != null && !isNaN(parseFloat(c.acpoints))) ||
+            isAssociated;
           break;
         // Add other event codes if necessary
       }
@@ -44,7 +54,10 @@ export const CompetitorsTable = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs border-collapse">
+      <table
+        className="w-full text-xs"
+        style={{borderCollapse: "separate", borderSpacing: "0"}}
+      >
         <thead>
           <tr className="border-b border-black">
             <th className="border-r border-black p-1 font-semibold">
