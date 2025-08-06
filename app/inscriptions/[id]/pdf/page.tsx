@@ -53,6 +53,7 @@ export default async function PdfPage({
     return <p>Données d&apos;événement non trouvées pour cette inscription.</p>;
   }
   const eventData = inscription.eventData as Competition;
+  const competitionNameForEmail = eventData.name || "Inscription";
 
   // Fetch coaches for this inscription
   const coaches = await db
@@ -418,8 +419,7 @@ export default async function PdfPage({
         initialRecipients={uniqueRecipients}
         gender={raceGender}
         inscriptionId={id}
-        emailSentAt={inscription.emailSentAt}
-        eventData={eventData}
+        competitionName={competitionNameForEmail}
       />
     </div>
   );
