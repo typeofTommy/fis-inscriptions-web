@@ -27,8 +27,9 @@ type DisplayRecipient = {
 type RecipientManagerProps = {
   initialRecipients: Recipient[];
   gender?: "M" | "W";
-  inscriptionId: string; // Added
-  competitionName: string; // Added
+  inscriptionId: string;
+  emailSentAt?: Date | null;
+  eventData: any; // Competition type
 };
 
 // Email constants for predefined recipients
@@ -96,8 +97,9 @@ const getBadgeClassForReason = (reason: string): string => {
 export const RecipientManager: React.FC<RecipientManagerProps> = ({
   initialRecipients,
   gender,
-  inscriptionId, // Use new prop
-  competitionName, // Use new prop
+  inscriptionId,
+  emailSentAt,
+  eventData,
 }) => {
   const queryClient = useQueryClient();
   const [selectedRecipients, setSelectedRecipients] = useState<
@@ -106,6 +108,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   const [customEmails, setCustomEmails] = useState<DisplayRecipient[]>([]);
   const [newEmail, setNewEmail] = useState<string>("");
   const [emailError, setEmailError] = useState<string>("");
+  const [emailSubject, setEmailSubject] = useState<string>("");
 
   // State for API call UI feedback
   const [isSending, setIsSending] = useState(false);
@@ -120,6 +123,56 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     const browserInfo = detectBrowser();
     setIsChromeOnMac(browserInfo.isChrome && browserInfo.isMac);
   }, []);
+
+  // Generate default email subject
+  useEffect(() => {
+    const formatShortDate = (start: Date, end: Date) => {
+      const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      ];
+      const startD = new Date(start);
+      const endD = new Date(end);
+      const sameMonth = startD.getMonth() === endD.getMonth();
+      const sameYear = startD.getFullYear() === endD.getFullYear();
+      const yearStr = String(endD.getFullYear()).slice(-2);
+      
+      if (sameMonth && sameYear) {
+        return `${startD.getDate()}-${endD.getDate()} ${months[endD.getMonth()]} ${yearStr}`;
+      } else {
+        // Fallback for different months using native JS
+        const formatDate = (date: Date) => {
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        };
+        return `${formatDate(startD)}-${formatDate(endD)}`;
+      }
+    };
+
+    if (eventData) {
+      const shortDate = formatShortDate(
+        new Date(eventData.startDate),
+        new Date(eventData.endDate)
+      );
+      const place = eventData.place || "";
+      const nation = eventData.placeNationCode ? `(${eventData.placeNationCode})` : "";
+      const subjectGender = gender === "M" ? "MEN" : gender === "W" ? "WOMEN" : "TEAM";
+      
+      let subjectLine = `French 🇫🇷 ${subjectGender} entries for ${shortDate} ➞ ${place} ${nation}-FIS`
+        .replace(/ +/g, " ")
+        .replace(" ()", "")
+        .trim();
+      
+      // Add [UPDATE] prefix if email was already sent
+      if (emailSentAt) {
+        subjectLine = `[UPDATE] ${subjectLine}`;
+      }
+      
+      setEmailSubject(subjectLine);
+    }
+  }, [eventData, gender, emailSentAt]);
 
   const predefinedRecipients = useMemo(() => {
     const processedEmails: DisplayRecipient[] = [];
@@ -340,24 +393,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       formData.append("pdf", pdfBlob, "inscription.pdf");
       formData.append("to", JSON.stringify(selectedEmails));
       formData.append("inscriptionId", inscriptionId);
-      formData.append(
-        "subject",
-        (() => {
-          let subject = `Inscription FIS: ${competitionName}`;
-          if (typeof window !== "undefined") {
-            const place = document
-              .querySelector("[data-fis-place]")
-              ?.textContent?.trim();
-            const date = document
-              .querySelector("[data-fis-date]")
-              ?.textContent?.trim();
-            if (place) subject += ` - ${place}`;
-            if (date) subject += ` - ${date}`;
-          }
-          if (gender) subject += ` (${gender})`;
-          return subject;
-        })()
-      );
+      formData.append("subject", emailSubject);
       if (gender) formData.append("gender", gender);
 
       const response = await fetch("/api/send-inscription-pdf", {
@@ -451,6 +487,39 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
           handleSendPdf();
         }}
       >
+        {/* Email Subject Field */}
+        <div className="mb-4">
+          <label
+            htmlFor="emailSubject"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Sujet de l&apos;email :
+          </label>
+          <input
+            type="text"
+            id="emailSubject"
+            value={emailSubject}
+            onChange={(e) => setEmailSubject(e.target.value)}
+            disabled={isSending}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+            placeholder="Sujet de l'email"
+            required
+          />
+          {emailSentAt && (
+            <p className="mt-1 text-xs text-amber-600">
+              ⚠️ Cet email a déjà été envoyé le {(() => {
+                const date = new Date(emailSentAt);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${day}/${month}/${year} à ${hours}:${minutes}`;
+              })()}. Le préfixe [UPDATE] a été ajouté automatiquement.
+            </p>
+          )}
+        </div>
+
         <div className="space-y-4">
           {allRecipients.map((recipient) => (
             <div

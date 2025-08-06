@@ -3,7 +3,7 @@ import {Resend} from "resend";
 import {db} from "@/app/db/inscriptionsDB";
 import {inscriptions} from "@/drizzle/schemaInscriptions";
 import {eq} from "drizzle-orm";
-import {format} from "date-fns";
+// Removed date-fns import - using native JS instead
 import {selectNotDeleted} from "@/lib/soft-delete";
 
 export const dynamic = "force-dynamic";
@@ -70,25 +70,19 @@ export async function POST(request: Request) {
       process.env.RESEND_FROM_EMAIL ||
       "Inscriptions FIS Etranger <noreply@inscriptions-fis-etranger.fr>";
 
-    // Construction du sujet au format demandé
-    // Ex: French 🇫🇷 MEN entries for 11-12 Apr 25 ➞ Prali (ITA)-FIS
+    // Use the subject provided by the frontend
+    const subjectLine = subject;
+    
+    // Extract gender information for email body and filename
     const isMen = gender === "M";
     const isWomen = gender === "W";
-    // Format date courte type '11-12 Apr 25'
+    const subjectGender = isMen ? "MEN" : isWomen ? "WOMEN" : "TEAM";
+    
+    // Format date for the email body and filename using native JS
     const formatShortDate = (start: Date, end: Date) => {
       const months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
       ];
       const startD = new Date(start);
       const endD = new Date(end);
@@ -98,8 +92,14 @@ export async function POST(request: Request) {
       if (sameMonth && sameYear) {
         return `${startD.getDate()}-${endD.getDate()} ${months[endD.getMonth()]} ${yearStr}`;
       } else {
-        // fallback: full dates
-        return `${format(startD, "dd/MM/yyyy")}-${format(endD, "dd/MM/yyyy")}`;
+        // Fallback for different months using native JS
+        const formatDate = (date: Date) => {
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        };
+        return `${formatDate(startD)}-${formatDate(endD)}`;
       }
     };
     const shortDate = formatShortDate(
@@ -110,12 +110,6 @@ export async function POST(request: Request) {
     const nation = eventData.placeNationCode
       ? `(${eventData.placeNationCode})`
       : "";
-    const subjectGender = isMen ? "MEN" : isWomen ? "WOMEN" : "TEAM";
-    const subjectLine =
-      `French 🇫🇷 ${subjectGender} entries for ${shortDate} ➞ ${place} ${nation}-FIS`
-        .replace(/ +/g, " ")
-        .replace(" ()", "")
-        .trim();
 
     const resend = getResendClient();
     const {data, error: emailError} = await resend.emails.send({
