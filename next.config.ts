@@ -32,9 +32,10 @@ const nextConfig: NextConfig = {
   },
 };
 
+// Temporarily disable PWA due to build issues
 export default withPWA({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
-  register: true,
+  disable: true, // Disabled for all environments
+  register: false,
   skipWaiting: true,
 })(nextConfig as any);
