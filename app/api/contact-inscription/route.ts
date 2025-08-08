@@ -67,7 +67,13 @@ export async function POST(request: NextRequest) {
           <p><strong>Événement :</strong> ${inscription.eventData?.eventName || "Non renseigné"}</p>
           <p><strong>Lieu :</strong> ${inscription.eventData?.place || "Non renseigné"}</p>
           <p><strong>Dates :</strong> ${inscription.eventData?.startDate ? new Date(inscription.eventData.startDate).toLocaleDateString("fr-FR") : "Non renseigné"} - ${inscription.eventData?.endDate ? new Date(inscription.eventData.endDate).toLocaleDateString("fr-FR") : "Non renseigné"}</p>
-          <p><strong>Statut :</strong> ${inscription.status === "open" ? "Ouverte" : "Clôturée"}</p>
+          <p><strong>Statut :</strong> ${
+            inscription.status === "open" 
+              ? "Ouverte" 
+              : inscription.status === "cancelled" 
+                ? "Course annulée" 
+                : "Clôturée"
+          }</p>
           <p><strong>Lien :</strong> <a href="${eventUrl}" style="color: #2563eb;">Voir l'inscription</a></p>
         </div>
 

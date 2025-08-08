@@ -23,7 +23,7 @@ export async function PATCH(
       );
     }
 
-    if (status !== "open" && status !== "validated" && status !== "email_sent") {
+    if (status !== "open" && status !== "validated" && status !== "email_sent" && status !== "cancelled") {
       return NextResponse.json({error: "Statut invalide"}, {status: 400});
     }
 

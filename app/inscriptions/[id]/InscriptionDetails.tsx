@@ -107,11 +107,17 @@ export const InscriptionDetails = ({
                       `px-2 md:px-3 py-0.5 rounded-full text-xs font-semibold flex items-center` +
                       (inscription.status === "open"
                         ? " bg-sky-100 text-sky-700 border border-sky-300"
-                        : " bg-emerald-100 text-emerald-700 border border-emerald-300")
+                        : inscription.status === "cancelled"
+                          ? " bg-red-100 text-red-700 border border-red-300"
+                          : " bg-emerald-100 text-emerald-700 border border-emerald-300")
                     }
                     style={{minHeight: "1.5rem", width: "fit-content"}}
                   >
-                    {inscription.status === "open" ? "Ouverte" : "Clôturée"}
+                    {inscription.status === "open" 
+                      ? "Ouverte" 
+                      : inscription.status === "cancelled"
+                        ? "Course annulée"
+                        : "Clôturée"}
                   </span>
                   {inscription.status === "email_sent" && (
                     <span

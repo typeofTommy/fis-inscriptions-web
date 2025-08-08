@@ -51,7 +51,7 @@ export function InscriptionActionsMenu({
   const router = useRouter();
 
   const statusMutation = useMutation({
-    mutationFn: async (status: "open" | "validated" | "email_sent") => {
+    mutationFn: async (status: "open" | "validated" | "email_sent" | "cancelled") => {
       const res = await fetch(
         `/api/inscriptions/${inscription.id}/status?status=${status}`,
         {
@@ -116,7 +116,7 @@ export function InscriptionActionsMenu({
       return;
     }
     statusMutation.mutate(
-      selectedStatus as "open" | "validated" | "email_sent"
+      selectedStatus as "open" | "validated" | "email_sent" | "cancelled"
     );
     setStatusDialogOpen(false);
     setSelectedStatus("");
@@ -127,6 +127,7 @@ export function InscriptionActionsMenu({
     open: "En cours (ouvert)",
     validated: "Clôturé (validé)",
     email_sent: "Email envoyé",
+    cancelled: "Course annulée",
   };
 
   const isMixteEvent =
@@ -355,6 +356,9 @@ export function InscriptionActionsMenu({
                 </SelectItem>
                 <SelectItem value="email_sent" className="cursor-pointer">
                   {statusLabels.email_sent}
+                </SelectItem>
+                <SelectItem value="cancelled" className="cursor-pointer">
+                  {statusLabels.cancelled}
                 </SelectItem>
               </SelectContent>
             </Select>

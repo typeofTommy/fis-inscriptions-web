@@ -20,6 +20,7 @@ const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
   validated: "bg-blue-100 text-blue-800 border-blue-200",
   email_sent: "bg-orange-100 text-orange-800 border-orange-200",
+  cancelled: "bg-red-100 text-red-800 border-red-200",
 };
 
 const CompetitorCountCell = ({inscriptionId}: {inscriptionId: number}) => {
@@ -147,7 +148,9 @@ export function InscriptionCard({inscription}: {inscription: Inscription}) {
                       ? "Validée"
                       : inscription.status === "email_sent"
                         ? "Email envoyé"
-                        : inscription.status}
+                        : inscription.status === "cancelled"
+                          ? "Course annulée"
+                          : inscription.status}
                 </Badge>
                 {inscription.status === "email_sent" && inscription.emailSentAt && (
                   <span className="text-xs text-gray-500">

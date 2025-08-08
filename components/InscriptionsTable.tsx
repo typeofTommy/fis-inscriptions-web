@@ -48,6 +48,7 @@ const statusColors: Record<string, string> = {
   open: "bg-green-100 text-green-800 border-green-200",
   validated: "bg-blue-100 text-blue-800 border-blue-200",
   email_sent: "bg-orange-100 text-orange-800 border-orange-200",
+  cancelled: "bg-red-100 text-red-800 border-red-200",
 };
 
 // Composant pour afficher le nombre de compétiteurs pour une inscription
@@ -428,7 +429,9 @@ export function InscriptionsTable() {
                   ? "Validée"
                   : row.original.status === "email_sent"
                     ? "Email envoyé"
-                    : row.original.status}
+                    : row.original.status === "cancelled"
+                      ? "Course annulée"
+                      : row.original.status}
             </Badge>
             {row.original.status === "email_sent" &&
               row.original.emailSentAt && (
