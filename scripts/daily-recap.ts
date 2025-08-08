@@ -35,6 +35,8 @@ const main = async () => {
     WHERE ic.created_at >= CURRENT_DATE
       AND ic.created_at < CURRENT_DATE + INTERVAL '1 day'
       AND ic.deleted_at IS NULL
+      AND i.deleted_at IS NULL
+      AND i.status != 'cancelled'
     ORDER BY ic.created_at ASC;
   `);
 
@@ -58,6 +60,8 @@ const main = async () => {
     JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
     WHERE ic.deleted_at >= CURRENT_DATE
       AND ic.deleted_at < CURRENT_DATE + INTERVAL '1 day'
+      AND i.deleted_at IS NULL
+      AND i.status != 'cancelled'
     ORDER BY ic.deleted_at ASC;
   `);
 
@@ -118,6 +122,8 @@ const main = async () => {
     WHERE ic.created_at >= CURRENT_DATE
       AND ic.created_at < CURRENT_DATE + INTERVAL '1 day'
       AND ic.deleted_at IS NULL
+      AND i.deleted_at IS NULL
+      AND i.status != 'cancelled'
     ORDER BY ic.created_at ASC;
   `);
 
@@ -142,6 +148,8 @@ const main = async () => {
     JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
     WHERE ic.deleted_at >= CURRENT_DATE
       AND ic.deleted_at < CURRENT_DATE + INTERVAL '1 day'
+      AND i.deleted_at IS NULL
+      AND i.status != 'cancelled'
     ORDER BY ic.deleted_at ASC;
   `);
 
@@ -158,7 +166,7 @@ const main = async () => {
       created_at
     FROM "inscriptionsDB".inscriptions
     WHERE deleted_at IS NULL
-      AND status != 'email_sent'
+      AND status NOT IN ('email_sent', 'cancelled')
       AND email_sent_at IS NULL
       AND (event_data->>'startDate')::date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
     ORDER BY (event_data->>'startDate')::date ASC;
