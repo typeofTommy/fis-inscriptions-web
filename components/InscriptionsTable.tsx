@@ -864,6 +864,7 @@ export function InscriptionsTable() {
                 <SelectItem value="open">Ouverte</SelectItem>
                 <SelectItem value="validated">Clôturée</SelectItem>
                 <SelectItem value="email_sent">Email envoyé</SelectItem>
+                <SelectItem value="cancelled">Course annulée</SelectItem>
               </SelectContent>
             </Select>
           </div>
