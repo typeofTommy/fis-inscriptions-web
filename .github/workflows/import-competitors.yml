@@ -21,7 +21,7 @@ jobs:
       - name: Install script dependencies
         run: pnpm add csv-parse @neondatabase/serverless drizzle-orm
       - name: Download FIS Points List CSV
-        run: curl -o FIS-points-list.csv 'https://data.fis-ski.com/fis_athletes/ajax/fispointslistfunctions/export_fispointslist.html?export_csv=true&sectorcode=AL&seasoncode=2025&listid=412'
+        run: curl -o FIS-points-list.csv 'https://data.fis-ski.com/fis_athletes/ajax/fispointslistfunctions/export_fispointslist.html?export_csv=true&sectorcode=AL&seasoncode=2026&listid=412'
       - name: Run import script
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
