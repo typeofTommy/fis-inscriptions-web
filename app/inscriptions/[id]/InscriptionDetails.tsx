@@ -29,6 +29,7 @@ import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import Link from "next/link";
 import {ContactModal} from "./ContactModal";
 import {useUser} from "@clerk/nextjs";
+import {useUserEmail} from "@/hooks/useUserEmail";
 
 interface InscriptionDetailsProps {
   id: string;
@@ -45,6 +46,7 @@ export const InscriptionDetails = ({
 }: InscriptionDetailsProps) => {
   const {data: inscription, isLoading, error} = useInscription(id);
   const {user} = useUser();
+  const {data: creatorEmail} = useUserEmail(inscription?.createdBy);
 
   const permissionToEdit = usePermissionToEdit(inscription, "actionsBtn");
 
@@ -235,7 +237,7 @@ export const InscriptionDetails = ({
           {/* Creator and Date Info */}
           {inscription.createdBy && inscription.createdAt && (
             <p className="text-xs text-slate-400 mt-2 text-right">
-              Créé par {inscription.createdBy ?? "Utilisateur inconnu"} le{" "}
+              Créé par {creatorEmail ?? inscription.createdBy ?? "Utilisateur inconnu"} le{" "}
               {new Date(inscription.createdAt).toLocaleDateString("fr-FR")}
             </p>
           )}
