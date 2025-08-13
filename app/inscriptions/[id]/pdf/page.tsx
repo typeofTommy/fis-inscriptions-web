@@ -61,6 +61,7 @@ export default async function PdfPage({
       firstName: inscriptionCoaches.firstName,
       lastName: inscriptionCoaches.lastName,
       team: inscriptionCoaches.team,
+      gender: inscriptionCoaches.gender,
       startDate: inscriptionCoaches.startDate,
       endDate: inscriptionCoaches.endDate,
     })
@@ -126,6 +127,11 @@ export default async function PdfPage({
     : filteredCompetitors.length > 0
       ? (filteredCompetitors[0].gender as "M" | "W")
       : "M";
+
+  // Filter coaches by gender - show coaches for this gender or coaches for "both"
+  const filteredCoaches = coaches.filter((coach: typeof coaches[0]) => 
+    coach.gender === "BOTH" || coach.gender === raceGender
+  );
 
   // Filter codexData based on raceGender
   // Assuming CompetitionItem has a genderCode property ('M' or 'W')
@@ -408,7 +414,7 @@ export default async function PdfPage({
             competitors={filteredCompetitors}
             codexData={filteredCodexData}
           />
-          {coaches.length > 0 && <CoachesBlock coaches={coaches} />}
+          {filteredCoaches.length > 0 && <CoachesBlock coaches={filteredCoaches} />}
           <TableFooter gender={raceGender} />
         </div>
         <Footer />

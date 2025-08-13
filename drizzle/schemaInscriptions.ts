@@ -85,6 +85,12 @@ export const competitors = inscriptionsSchema.table("competitors", {
   acsta: text("acsta"),
 });
 
+export const coachGender = inscriptionsSchema.enum("coach_gender", [
+  "M",
+  "W",
+  "BOTH",
+]);
+
 export const inscriptionCoaches = inscriptionsSchema.table(
   "inscription_coaches",
   {
@@ -97,6 +103,7 @@ export const inscriptionCoaches = inscriptionsSchema.table(
     firstName: text("first_name").notNull(),
     lastName: text("last_name").notNull(),
     team: text("team"),
+    gender: coachGender("gender").default("BOTH").notNull(),
     startDate: text("start_date").notNull(),
     endDate: text("end_date").notNull(),
     whatsappPhone: text("whatsapp_phone"),

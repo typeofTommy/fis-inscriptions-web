@@ -422,6 +422,7 @@ export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
               <TableHead>Prénom</TableHead>
               <TableHead>Nom</TableHead>
               <TableHead>Équipe</TableHead>
+              <TableHead>Genre</TableHead>
               <TableHead>WhatsApp</TableHead>
               <TableHead>Premier jour</TableHead>
               <TableHead>Dernier jour</TableHead>
@@ -436,6 +437,9 @@ export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
                 <TableCell className="font-medium">{coach.firstName}</TableCell>
                 <TableCell className="font-medium">{coach.lastName}</TableCell>
                 <TableCell>{coach.team || "-"}</TableCell>
+                <TableCell>
+                  {coach.gender === "M" ? "Hommes" : coach.gender === "W" ? "Femmes" : "Hommes et femmes"}
+                </TableCell>
                 <TableCell>{coach.whatsappPhone || "-"}</TableCell>
                 <TableCell>
                   {coach.startDate

@@ -1,0 +1,2 @@
+CREATE TYPE "inscriptionsDB"."coach_gender" AS ENUM('M', 'W', 'BOTH');--> statement-breakpoint
+ALTER TABLE "inscriptionsDB"."inscription_coaches" ADD COLUMN "gender" "inscriptionsDB"."coach_gender" DEFAULT 'BOTH' NOT NULL;

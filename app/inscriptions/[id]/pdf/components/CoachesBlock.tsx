@@ -6,6 +6,7 @@ type CoachesBlockProps = {
     firstName: string;
     lastName: string;
     team: string | null;
+    gender: "M" | "W" | "BOTH";
     startDate?: string;
     endDate?: string;
   }>;

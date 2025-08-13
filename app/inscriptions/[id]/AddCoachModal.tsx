@@ -24,6 +24,7 @@ interface CoachData {
   firstName: string;
   lastName: string;
   team?: string;
+  gender: "M" | "W" | "BOTH";
   startDate: string;
   endDate: string;
   whatsappPhone?: string;
@@ -84,6 +85,7 @@ export default function AddCoachModal({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [team, setTeam] = useState("");
+  const [gender, setGender] = useState<"M" | "W" | "BOTH">("BOTH");
   const [startDate, setStartDate] = useState(eventStartDate || "");
   const [endDate, setEndDate] = useState(eventEndDate || "");
   const [whatsappPhone, setWhatsappPhone] = useState("");
@@ -97,6 +99,7 @@ export default function AddCoachModal({
       setFirstName("");
       setLastName("");
       setTeam("");
+      setGender("BOTH");
       setWhatsappPhone("");
       return;
     }
@@ -108,6 +111,7 @@ export default function AddCoachModal({
       setFirstName(coach.firstName);
       setLastName(coach.lastName);
       setTeam(coach.team || "");
+      setGender("BOTH"); // Par défaut car les anciens coaches n'ont pas de genre
       setWhatsappPhone(coach.whatsappPhone || "");
     }
   };
@@ -151,6 +155,7 @@ export default function AddCoachModal({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         team: team.trim() || undefined,
+        gender: gender,
         startDate: startDate,
         endDate: endDate,
         whatsappPhone: whatsappPhone.trim() || undefined,
@@ -160,6 +165,7 @@ export default function AddCoachModal({
           setFirstName("");
           setLastName("");
           setTeam("");
+          setGender("BOTH");
           setStartDate(eventStartDate || "");
           setEndDate(eventEndDate || "");
           setWhatsappPhone("");
@@ -167,7 +173,7 @@ export default function AddCoachModal({
         },
       }
     );
-  }, [firstName, lastName, team, startDate, endDate, whatsappPhone, saveCoach, eventStartDate, eventEndDate, isFormValid]);
+  }, [firstName, lastName, team, gender, startDate, endDate, whatsappPhone, saveCoach, eventStartDate, eventEndDate, isFormValid]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -187,6 +193,7 @@ export default function AddCoachModal({
           setFirstName("");
           setLastName("");
           setTeam("");
+          setGender("BOTH");
           setStartDate(eventStartDate || "");
           setEndDate(eventEndDate || "");
           setWhatsappPhone("");
@@ -268,6 +275,19 @@ export default function AddCoachModal({
               onChange={(e) => setTeam(e.target.value)}
               onKeyDown={handleKeyDown}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="coach-gender">Genre *</Label>
+            <Select value={gender} onValueChange={(value: "M" | "W" | "BOTH") => setGender(value)}>
+              <SelectTrigger className="cursor-pointer">
+                <SelectValue placeholder="Choisir le genre" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="M" className="cursor-pointer">Hommes uniquement</SelectItem>
+                <SelectItem value="W" className="cursor-pointer">Femmes uniquement</SelectItem>
+                <SelectItem value="BOTH" className="cursor-pointer">Hommes et femmes</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="coach-whatsapp">

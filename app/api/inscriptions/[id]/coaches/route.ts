@@ -26,6 +26,7 @@ export async function GET(
         firstName: inscriptionCoaches.firstName,
         lastName: inscriptionCoaches.lastName,
         team: inscriptionCoaches.team,
+        gender: inscriptionCoaches.gender,
         startDate: inscriptionCoaches.startDate,
         endDate: inscriptionCoaches.endDate,
         whatsappPhone: inscriptionCoaches.whatsappPhone,
@@ -98,6 +99,7 @@ export async function POST(
       firstName?: string;
       lastName?: string;
       team?: string;
+      gender?: "M" | "W" | "BOTH";
       startDate?: string;
       endDate?: string;
       whatsappPhone?: string;
@@ -108,23 +110,26 @@ export async function POST(
       return NextResponse.json({error: "Invalid JSON body"}, {status: 400});
     }
 
-    const {firstName, lastName, team, startDate, endDate, whatsappPhone} = body;
+    const {firstName, lastName, team, gender, startDate, endDate, whatsappPhone} = body;
     if (
       !firstName ||
       !lastName ||
+      !gender ||
       !startDate ||
       !endDate ||
       typeof firstName !== "string" ||
       typeof lastName !== "string" ||
+      typeof gender !== "string" ||
       typeof startDate !== "string" ||
       typeof endDate !== "string" ||
       firstName.trim().length === 0 ||
       lastName.trim().length === 0 ||
       startDate.trim().length === 0 ||
-      endDate.trim().length === 0
+      endDate.trim().length === 0 ||
+      !["M", "W", "BOTH"].includes(gender)
     ) {
       return NextResponse.json(
-        {error: "First name, last name, start date and end date are required"},
+        {error: "First name, last name, gender, start date and end date are required"},
         {status: 400}
       );
     }
@@ -182,6 +187,7 @@ export async function POST(
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         team: team?.trim() || null,
+        gender: gender as "M" | "W" | "BOTH",
         startDate: startDate.trim(),
         endDate: endDate.trim(),
         whatsappPhone: whatsappPhone?.trim() || null,
