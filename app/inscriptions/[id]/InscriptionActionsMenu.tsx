@@ -371,7 +371,7 @@ export function InscriptionActionsMenu({
             {isEventMixed && (
               <div>
                 <label className="text-sm font-medium mb-2 block">Appliquer à :</label>
-                <RadioGroup value={selectedStatusScope} onValueChange={setSelectedStatusScope} className="flex flex-row space-x-6">
+                <RadioGroup value={selectedStatusScope} onValueChange={(value: "men" | "women" | "both") => setSelectedStatusScope(value)} className="flex flex-row space-x-6">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="men" id="men" />
                     <Label htmlFor="men" className="cursor-pointer">Hommes</Label>

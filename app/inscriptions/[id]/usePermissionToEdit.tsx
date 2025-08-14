@@ -21,7 +21,7 @@ export const usePermissionToEdit = (
 
   if (type === "manageCompetitorInscriptions" || type === "manageCoaches") {
     // Pour la gestion des compétiteurs et coaches, on vérifie aussi le statut par genre
-    const genderStatus = getGenderStatus(inscription, gender);
+    const genderStatus = getGenderStatus(inscription, gender || null);
     const hasUserPermission = !!user.user;
     const canEditBasedOnStatus = genderStatus.canEdit;
     

@@ -11,7 +11,7 @@ type StatusBadgesProps = {
 };
 
 const getStatusInfo = (status: Status | null) => {
-  const statusMap = {
+  const statusMap: Record<string, { label: string; className: string }> = {
     open: { label: "Ouverte", className: "bg-green-100 text-green-800 border-green-200" },
     validated: { label: "Clôturée", className: "bg-blue-100 text-blue-800 border-blue-200" },
     email_sent: { label: "Envoyée", className: "bg-orange-100 text-orange-800 border-orange-200" },
