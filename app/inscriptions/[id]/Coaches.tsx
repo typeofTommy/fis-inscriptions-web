@@ -376,7 +376,7 @@ export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
   const {mutate: deleteCoach, isPending: deleting} =
     useDeleteCoach(inscriptionId);
 
-  const permissionToEdit = usePermissionToEdit(inscription, "manageCoaches");
+  const permissionToEdit = usePermissionToEdit(inscription, "manageCoaches", null);
 
   if (isPending) {
     return (

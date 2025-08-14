@@ -71,6 +71,13 @@
       "when": 1755109300287,
       "tag": "0009_add_coach_gender",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1755168648834,
+      "tag": "0010_massive_white_queen",
+      "breakpoints": true
     }
   ]
 }

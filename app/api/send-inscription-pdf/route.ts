@@ -158,14 +158,43 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update inscription status to "email_sent" and set email sent timestamp
+    // Update inscription status based on gender
     try {
+      const currentTime = new Date();
+      const updateData: any = {};
+
+      if (gender === "M") {
+        updateData.menStatus = "email_sent";
+        updateData.menEmailSentAt = currentTime;
+      } else if (gender === "W") {
+        updateData.womenStatus = "email_sent";
+        updateData.womenEmailSentAt = currentTime;
+      } else {
+        // Fallback for non-gendered events
+        updateData.status = "email_sent";
+        updateData.emailSentAt = currentTime;
+      }
+
+      // Get current inscription to check if both genders are sent
+      const currentInscription = inscription[0];
+      
+      // If this is a mixed event and we're sending for a specific gender,
+      // check if the other gender has already been sent
+      if (gender && (gender === "M" || gender === "W")) {
+        const otherGenderStatus = gender === "M" ? currentInscription.womenStatus : currentInscription.menStatus;
+        const currentGenderStatus = gender === "M" ? currentInscription.menStatus : currentInscription.womenStatus;
+        
+        // If the other gender is already sent and we're sending this gender,
+        // mark the overall inscription as email_sent
+        if (otherGenderStatus === "email_sent" || currentGenderStatus === "email_sent") {
+          updateData.status = "email_sent";
+          updateData.emailSentAt = currentTime;
+        }
+      }
+
       await db
         .update(inscriptions)
-        .set({
-          status: "email_sent",
-          emailSentAt: new Date(),
-        })
+        .set(updateData)
         .where(eq(inscriptions.id, Number(inscriptionId)));
     } catch {
       // Don't fail the request if status update fails, email was sent successfully

@@ -15,13 +15,7 @@ import {
 } from "@/app/lib/colorMappers";
 import {Loader2} from "lucide-react";
 import {useQuery} from "@tanstack/react-query";
-
-const statusColors: Record<string, string> = {
-  open: "bg-green-100 text-green-800 border-green-200",
-  validated: "bg-blue-100 text-blue-800 border-blue-200",
-  email_sent: "bg-orange-100 text-orange-800 border-orange-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
+import {StatusBadges} from "@/components/ui/status-badges";
 
 const CompetitorCountCell = ({inscriptionId}: {inscriptionId: number}) => {
   const {data, isLoading, isError} = useQuery({
@@ -136,28 +130,12 @@ export function InscriptionCard({inscription}: {inscription: Inscription}) {
                   "dd/MM/yyyy"
                 )}
               </span>
-              <div className="flex flex-col gap-1">
-                <Badge
-                  className={
-                    statusColors[inscription.status] || "bg-gray-200 text-xs"
-                  }
-                >
-                  {inscription.status === "open"
-                    ? "Ouverte"
-                    : inscription.status === "validated"
-                      ? "Validée"
-                      : inscription.status === "email_sent"
-                        ? "Email envoyé"
-                        : inscription.status === "cancelled"
-                          ? "Course annulée"
-                          : inscription.status}
-                </Badge>
-                {inscription.status === "email_sent" && inscription.emailSentAt && (
-                  <span className="text-xs text-gray-500">
-                    {format(new Date(inscription.emailSentAt), "dd/MM/yyyy HH:mm")}
-                  </span>
-                )}
-              </div>
+              <StatusBadges 
+                inscription={inscription} 
+                size="sm"
+                showEmailSent={true}
+                showLabels={false}
+              />
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-600">
               <span className="font-medium truncate">

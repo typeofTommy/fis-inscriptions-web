@@ -42,7 +42,8 @@ export function CodexTabs({inscriptionId, genderFilter}: CodexTabsProps) {
   });
   const permissionToEdit = usePermissionToEdit(
     inscription,
-    "manageCompetitorInscriptions"
+    "manageCompetitorInscriptions",
+    genderFilter === "both" ? null : genderFilter
   );
 
   const competitionsFromInscription = inscription?.eventData.competitions;

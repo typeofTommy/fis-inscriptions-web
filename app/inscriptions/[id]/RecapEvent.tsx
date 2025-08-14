@@ -385,7 +385,8 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
 
   const permissionToEdit = usePermissionToEdit(
     inscription,
-    "manageCompetitorInscriptions"
+    "manageCompetitorInscriptions",
+    null
   );
 
   // Derived sorting state for the table, ensuring it's always valid with current filters

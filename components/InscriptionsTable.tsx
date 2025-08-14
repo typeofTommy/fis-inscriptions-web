@@ -43,13 +43,7 @@ import {
   getCurrentSeason,
   getSeasonsFromInscriptions,
 } from "@/app/lib/dates";
-
-const statusColors: Record<string, string> = {
-  open: "bg-green-100 text-green-800 border-green-200",
-  validated: "bg-blue-100 text-blue-800 border-blue-200",
-  email_sent: "bg-orange-100 text-orange-800 border-orange-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
+import {StatusBadges} from "@/components/ui/status-badges";
 
 // Composant pour afficher le nombre de compétiteurs pour une inscription
 const CompetitorCountCell = ({inscriptionId}: {inscriptionId: number}) => {
@@ -418,31 +412,12 @@ export function InscriptionsTable() {
       ),
       cell: ({row}) => {
         return (
-          <div className="flex flex-col gap-1">
-            <Badge
-              data-testid={`badge-status-${row.original.status}`}
-              className={statusColors[row.original.status] || "bg-gray-200"}
-            >
-              {row.original.status === "open"
-                ? "Ouverte"
-                : row.original.status === "validated"
-                  ? "Validée"
-                  : row.original.status === "email_sent"
-                    ? "Email envoyé"
-                    : row.original.status === "cancelled"
-                      ? "Course annulée"
-                      : row.original.status}
-            </Badge>
-            {row.original.status === "email_sent" &&
-              row.original.emailSentAt && (
-                <span className="text-xs text-gray-500">
-                  {format(
-                    new Date(row.original.emailSentAt),
-                    "dd/MM/yyyy HH:mm"
-                  )}
-                </span>
-              )}
-          </div>
+          <StatusBadges 
+            inscription={row.original} 
+            size="sm"
+            showEmailSent={false}
+            showLabels={false}
+          />
         );
       },
       filterFn: (row, id, value) => {

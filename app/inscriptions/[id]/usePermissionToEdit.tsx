@@ -1,12 +1,14 @@
 import {useRole} from "@/app/lib/useRole";
 import {Inscription} from "@/app/types";
 import {useUser} from "@clerk/nextjs";
+import {getGenderStatus} from "@/app/lib/genderStatus";
 
 type Type = "actionsBtn" | "manageCompetitorInscriptions" | "manageCoaches";
 
 export const usePermissionToEdit = (
   inscription: Inscription | undefined,
-  type: Type
+  type: Type,
+  gender?: "M" | "W" | null
 ) => {
   const role = useRole();
   const user = useUser();
@@ -18,7 +20,12 @@ export const usePermissionToEdit = (
   }
 
   if (type === "manageCompetitorInscriptions" || type === "manageCoaches") {
-    return !!user.user;
+    // Pour la gestion des compétiteurs et coaches, on vérifie aussi le statut par genre
+    const genderStatus = getGenderStatus(inscription, gender);
+    const hasUserPermission = !!user.user;
+    const canEditBasedOnStatus = genderStatus.canEdit;
+    
+    return hasUserPermission && canEditBasedOnStatus;
   }
 
   return role === "admin" || user.user?.id === inscription.createdBy;

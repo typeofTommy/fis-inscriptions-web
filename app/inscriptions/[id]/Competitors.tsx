@@ -136,7 +136,8 @@ export const Competitors = ({
 
   const permissionToEdit = usePermissionToEdit(
     inscription,
-    "manageCompetitorInscriptions"
+    "manageCompetitorInscriptions",
+    genderFilter === "both" ? null : genderFilter
   );
 
   if (isPending) {

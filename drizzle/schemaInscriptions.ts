@@ -22,9 +22,13 @@ export const inscriptions = inscriptionsSchema.table("inscriptions", {
   eventId: integer("event_id").notNull(),
   eventData: jsonb("event_data").$type<Competition>().notNull(),
   status: inscriptionStatus("status").default("open"),
+  menStatus: inscriptionStatus("men_status"),
+  womenStatus: inscriptionStatus("women_status"),
   createdBy: text("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   emailSentAt: timestamp("email_sent_at"),
+  menEmailSentAt: timestamp("men_email_sent_at"),
+  womenEmailSentAt: timestamp("women_email_sent_at"),
   deletedAt: timestamp("deleted_at"),
 });
 

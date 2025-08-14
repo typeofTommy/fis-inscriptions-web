@@ -28,9 +28,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import {Label} from "@/components/ui/label";
 import {Inscription} from "@/app/types";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import {UpdateEventDataModal} from "./UpdateEventDataModal";
+import {isMixedEvent} from "@/app/lib/genderStatus";
 
 interface InscriptionActionsMenuProps {
   inscription: Inscription;
@@ -47,19 +50,23 @@ export function InscriptionActionsMenu({
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedStatusScope, setSelectedStatusScope] = useState<"men" | "women" | "both">("both");
   const queryClient = useQueryClient();
   const router = useRouter();
 
   const statusMutation = useMutation({
-    mutationFn: async (status: "open" | "validated" | "email_sent" | "cancelled") => {
-      const res = await fetch(
-        `/api/inscriptions/${inscription.id}/status?status=${status}`,
-        {
-          method: "PATCH",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({status}),
-        }
-      );
+    mutationFn: async ({
+      status,
+      scope,
+    }: {
+      status: "open" | "validated" | "email_sent" | "cancelled";
+      scope?: "global" | "men" | "women" | "both";
+    }) => {
+      const res = await fetch(`/api/inscriptions/${inscription.id}/status`, {
+        method: "PATCH",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({status, scope}),
+      });
       if (!res.ok) throw new Error("Erreur lors du changement de statut");
       return res.json();
     },
@@ -110,16 +117,19 @@ export function InscriptionActionsMenu({
   });
 
   const handleStatusChange = () => {
-    if (!selectedStatus || selectedStatus === inscription.status) {
+    if (!selectedStatus) {
       setStatusDialogOpen(false);
       setSelectedStatus("");
+      setSelectedStatusScope("both");
       return;
     }
-    statusMutation.mutate(
-      selectedStatus as "open" | "validated" | "email_sent" | "cancelled"
-    );
+    statusMutation.mutate({
+      status: selectedStatus as "open" | "validated" | "email_sent" | "cancelled",
+      scope: selectedStatusScope,
+    });
     setStatusDialogOpen(false);
     setSelectedStatus("");
+    setSelectedStatusScope("both");
     setPopoverOpen(false);
   };
 
@@ -130,9 +140,7 @@ export function InscriptionActionsMenu({
     cancelled: "Course annulée",
   };
 
-  const isMixteEvent =
-    inscription.eventData.genderCodes &&
-    inscription.eventData.genderCodes.length > 1;
+  const isEventMixed = isMixedEvent(inscription.eventData);
 
   const hasNoMen = !competitors.some((c: {gender: string}) => c.gender === "M");
   const hasNoWomen = !competitors.some(
@@ -140,7 +148,7 @@ export function InscriptionActionsMenu({
   );
 
   const handleGeneratePDF = () => {
-    if (isMixteEvent) {
+    if (isEventMixed) {
       setGenderDialogOpen(true);
     } else {
       const gender = inscription.eventData.genderCodes[0];
@@ -334,34 +342,51 @@ export function InscriptionActionsMenu({
           <DialogHeader>
             <DialogTitle>Changer le statut de l&apos;inscription</DialogTitle>
             <DialogDescription>
-              Statut actuel :{" "}
-              <strong>
-                {statusLabels[inscription.status as keyof typeof statusLabels]}
-              </strong>
-              <br />
               Sélectionnez le nouveau statut souhaité.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="cursor-pointer">
-                <SelectValue placeholder="Choisir un statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="open" className="cursor-pointer">
-                  {statusLabels.open}
-                </SelectItem>
-                <SelectItem value="validated" className="cursor-pointer">
-                  {statusLabels.validated}
-                </SelectItem>
-                <SelectItem value="email_sent" className="cursor-pointer">
-                  {statusLabels.email_sent}
-                </SelectItem>
-                <SelectItem value="cancelled" className="cursor-pointer">
-                  {statusLabels.cancelled}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="py-4 space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Nouveau statut :</label>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="cursor-pointer">
+                  <SelectValue placeholder="Choisir un statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open" className="cursor-pointer">
+                    {statusLabels.open}
+                  </SelectItem>
+                  <SelectItem value="validated" className="cursor-pointer">
+                    {statusLabels.validated}
+                  </SelectItem>
+                  <SelectItem value="email_sent" className="cursor-pointer">
+                    {statusLabels.email_sent}
+                  </SelectItem>
+                  <SelectItem value="cancelled" className="cursor-pointer">
+                    {statusLabels.cancelled}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {isEventMixed && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">Appliquer à :</label>
+                <RadioGroup value={selectedStatusScope} onValueChange={setSelectedStatusScope} className="flex flex-row space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="men" id="men" />
+                    <Label htmlFor="men" className="cursor-pointer">Hommes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="women" id="women" />
+                    <Label htmlFor="women" className="cursor-pointer">Femmes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="both" id="both" />
+                    <Label htmlFor="both" className="cursor-pointer">Les deux</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -369,6 +394,7 @@ export function InscriptionActionsMenu({
               onClick={() => {
                 setStatusDialogOpen(false);
                 setSelectedStatus("");
+                setSelectedStatusScope("both");
               }}
               className="cursor-pointer"
             >
@@ -378,7 +404,22 @@ export function InscriptionActionsMenu({
               onClick={handleStatusChange}
               disabled={
                 !selectedStatus ||
-                selectedStatus === inscription.status ||
+                (() => {
+                  // Pour les événements mixtes, vérifier selon le scope
+                  if (isEventMixed) {
+                    if (selectedStatusScope === "men") {
+                      return selectedStatus === inscription.menStatus;
+                    } else if (selectedStatusScope === "women") {
+                      return selectedStatus === inscription.womenStatus;
+                    } else if (selectedStatusScope === "both") {
+                      return selectedStatus === inscription.menStatus && 
+                             selectedStatus === inscription.womenStatus &&
+                             selectedStatus === inscription.status;
+                    }
+                  }
+                  // Pour les événements non-mixtes, vérifier le statut global
+                  return selectedStatus === inscription.status;
+                })() ||
                 statusMutation.isPending
               }
               className="cursor-pointer"
