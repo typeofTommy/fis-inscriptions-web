@@ -6,7 +6,8 @@ import { and, desc, eq, gte, isNull } from "drizzle-orm";
 import { 
   inscriptions, 
   inscriptionCompetitors, 
-  inscriptionCoaches 
+  inscriptionCoaches,
+  competitors
 } from "@/drizzle/schemaInscriptions";
 
 const pool = new Pool({
@@ -65,9 +66,15 @@ export const GET = async (
         codexNumber: inscriptionCompetitors.codexNumber,
         createdAt: inscriptionCompetitors.createdAt,
         eventData: inscriptions.eventData,
+        // Infos du compétiteur
+        competitorFirstName: competitors.firstname,
+        competitorLastName: competitors.lastname,
+        competitorNation: competitors.nationcode,
+        competitorFisCode: competitors.fiscode,
       })
       .from(inscriptionCompetitors)
       .innerJoin(inscriptions, eq(inscriptions.id, inscriptionCompetitors.inscriptionId))
+      .innerJoin(competitors, eq(competitors.competitorid, inscriptionCompetitors.competitorId))
       .where(
         and(
           eq(inscriptionCompetitors.addedBy, targetUserId),

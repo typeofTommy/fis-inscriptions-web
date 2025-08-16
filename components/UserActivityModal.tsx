@@ -31,6 +31,10 @@ type ActivityItem = {
   inscriptionId?: number;
   competitorId?: number;
   codexNumber?: string;
+  competitorFirstName?: string;
+  competitorLastName?: string;
+  competitorNation?: string;
+  competitorFisCode?: string;
   // Pour les coaches
   firstName?: string;
   lastName?: string;
@@ -118,7 +122,12 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
       case "inscription":
         return `Inscription créée pour '${eventName}'`;
       case "competitor":
-        return `Compétiteur ajouté (${activity.codexNumber}) dans '${eventName}'`;
+        const competitorName = activity.competitorFirstName && activity.competitorLastName 
+          ? `${activity.competitorFirstName} ${activity.competitorLastName}`
+          : `Compétiteur #${activity.competitorId}`;
+        const nation = activity.competitorNation ? ` (${activity.competitorNation})` : '';
+        const codex = activity.codexNumber ? ` [${activity.codexNumber}]` : '';
+        return `Compétiteur ajouté : ${competitorName}${nation}${codex} dans '${eventName}'`;
       case "coach":
         return `Coach ajouté : ${activity.firstName} ${activity.lastName}${activity.team ? ` (${activity.team})` : ""} dans '${eventName}'`;
       default:
