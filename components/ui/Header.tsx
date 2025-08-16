@@ -1,17 +1,19 @@
 "use client";
 
 import React from "react";
-import {PlusCircle, Snowflake} from "lucide-react";
+import {PlusCircle, Snowflake, Users} from "lucide-react";
 import Link from "next/link";
 import {SignedIn, UserButton, useUser} from "@clerk/nextjs";
 import {Button} from "./button";
 import {usePathname} from "next/navigation";
+import {useRole} from "@/app/lib/useRole";
 
 
 export const Header = () => {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const {user, isLoaded} = useUser();
+  const role = useRole();
 
   return (
     <div className="relative z-10 py-4 md:py-8">
@@ -29,12 +31,22 @@ export const Header = () => {
         {/* Mobile: Stack vertical avec espacement réduit */}
         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6 w-full md:w-auto">
           <SignedIn>
-            <Link href="/inscriptions/new" className="w-full md:w-auto">
-              <Button className="w-full md:w-auto flex items-center justify-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
-                <PlusCircle className="mr-1 h-4 w-4" />
-                Nouvelle Demande
-              </Button>
-            </Link>
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+              <Link href="/inscriptions/new" className="w-full md:w-auto">
+                <Button className="w-full md:w-auto flex items-center justify-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
+                  <PlusCircle className="mr-1 h-4 w-4" />
+                  Nouvelle Demande
+                </Button>
+              </Link>
+              {role === "admin" && (
+                <Link href="/users" className="w-full md:w-auto">
+                  <Button className="w-full md:w-auto flex items-center justify-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
+                    <Users className="mr-1 h-4 w-4" />
+                    Utilisateurs
+                  </Button>
+                </Link>
+              )}
+            </div>
           </SignedIn>
           
           <div className="flex-shrink-0">
