@@ -447,7 +447,7 @@ export function InscriptionsTable() {
             inscription={row.original} 
             size="sm"
             showEmailSent={false}
-            showLabels={false}
+            showLabels={true}
           />
         );
       },

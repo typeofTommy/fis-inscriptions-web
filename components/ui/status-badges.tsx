@@ -105,7 +105,7 @@ export const StatusBadges: React.FC<StatusBadgesProps> = ({
     <div className={`flex items-center gap-2 flex-wrap ${className}`}>
       <StatusBadge
         status={menStatus.status}
-        label="Hommes"
+        label="H"
         size={size}
         emailSentAt={menStatus.emailSentAt}
         showEmailSent={showEmailSent}
@@ -113,7 +113,7 @@ export const StatusBadges: React.FC<StatusBadgesProps> = ({
       />
       <StatusBadge
         status={womenStatus.status}
-        label="Femmes"
+        label="F"
         size={size}
         emailSentAt={womenStatus.emailSentAt}
         showEmailSent={showEmailSent}
