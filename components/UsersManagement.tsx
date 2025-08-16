@@ -12,10 +12,10 @@ import {
   Shield, 
   ShieldCheck,
   RefreshCw,
-  Search,
-  Filter
+  Search
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { UserActivityModal } from "@/components/UserActivityModal";
 
 type User = {
   id: string;
@@ -145,7 +145,7 @@ export const UsersManagement = () => {
 
   // Filtrage et tri des utilisateurs
   const filteredAndSortedUsers = useMemo(() => {
-    let filtered = users.filter(user => {
+    const filtered = users.filter(user => {
       const email = user.emailAddresses[0]?.emailAddress || user.username || "";
       const displayName = user.firstName && user.lastName 
         ? `${user.firstName} ${user.lastName}` 
@@ -431,6 +431,10 @@ export const UsersManagement = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <UserActivityModal
+                        userId={user.id}
+                        userName={displayName}
+                      />
                       <Button
                         variant="outline"
                         size="sm"
