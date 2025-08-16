@@ -52,7 +52,7 @@ export const CodexField = ({
   useEffect(() => {
     onDuplicateChange(
       index,
-      !!(debouncedCodex && debouncedCodex.length >= 3 && codexCheck?.exists)
+      !!(debouncedCodex && debouncedCodex.length >= 3 && codexCheck !== undefined && codexCheck?.exists)
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedCodex, codexCheck, index]);
@@ -73,7 +73,7 @@ export const CodexField = ({
                     <span className="absolute right-2 top-1/2 -translate-y-1/2">
                       {codexChecking ? (
                         <Loader2 className="animate-spin text-gray-400 w-5 h-5" />
-                      ) : debouncedCodex && debouncedCodex.length >= 3 ? (
+                      ) : debouncedCodex && debouncedCodex.length >= 3 && codexCheck !== undefined ? (
                         codexCheck?.exists ? (
                           <XCircle className="text-red-500 w-5 h-5" />
                         ) : (
@@ -87,6 +87,7 @@ export const CodexField = ({
                 {/* Message d'erreur + lien si doublon */}
                 {debouncedCodex &&
                   debouncedCodex.length >= 3 &&
+                  codexCheck !== undefined &&
                   codexCheck?.exists &&
                   codexCheck.inscriptionId && (
                     <div className="text-red-600 text-xs mt-1">

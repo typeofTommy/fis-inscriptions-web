@@ -51,7 +51,7 @@ export const InscriptionFormWrapper = () => {
     event.categoryCodes.length === 1;
 
   const onSubmit = async () => {
-    if (!event || isTrainingEvent || !user || (codexCheck && codexCheck.exists))
+    if (!event || isTrainingEvent || !user || (codexCheck !== undefined && codexCheck.exists))
       return;
 
     const eventDataForDb = JSON.parse(JSON.stringify(event));
@@ -156,7 +156,7 @@ export const InscriptionFormWrapper = () => {
                     </div>
                     <FormMessage />
                     {searchedCodex &&
-                      codexCheck &&
+                      codexCheck !== undefined &&
                       codexCheck.exists &&
                       codexCheck.inscriptionId && (
                         <div className="mt-2 text-red-600">
@@ -193,10 +193,10 @@ export const InscriptionFormWrapper = () => {
           </p>
         )}
 
-        {event && !isTrainingEvent && !codexCheck?.exists && (
+        {event && !isTrainingEvent && codexCheck !== undefined && !codexCheck?.exists && (
           <EventDetails codex={Number(searchedCodex)} />
         )}
-        {event && !isTrainingEvent && !codexCheck?.exists && (
+        {event && !isTrainingEvent && codexCheck !== undefined && !codexCheck?.exists && (
           <div className="flex justify-center mt-6">
             <button
               type="button"
@@ -206,7 +206,7 @@ export const InscriptionFormWrapper = () => {
                 isLoading ||
                 !event ||
                 isTrainingEvent ||
-                (codexCheck && codexCheck.exists)
+                (codexCheck !== undefined && codexCheck.exists)
               }
             >
               Créer la compétition
