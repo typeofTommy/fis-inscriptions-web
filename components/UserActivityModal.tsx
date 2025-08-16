@@ -109,15 +109,18 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
   };
 
   const getActivityDescription = (activity: ActivityItem) => {
-    const eventName = activity.eventData?.eventName || `Événement ${activity.eventId}`;
+    const eventName = activity.eventData?.eventName || 
+                     (activity.eventData as any)?.eventTitle || 
+                     (activity.eventData as any)?.title || 
+                     `Événement #${activity.eventId || activity.inscriptionId}`;
     
     switch (activity.type) {
       case "inscription":
-        return `Inscription créée pour &quot;${eventName}&quot;`;
+        return `Inscription créée pour '${eventName}'`;
       case "competitor":
-        return `Compétiteur ajouté (${activity.codexNumber}) à &quot;${eventName}&quot;`;
+        return `Compétiteur ajouté (${activity.codexNumber}) dans '${eventName}'`;
       case "coach":
-        return `Coach ajouté: ${activity.firstName} ${activity.lastName} ${activity.team ? `(${activity.team})` : ""} à &quot;${eventName}&quot;`;
+        return `Coach ajouté : ${activity.firstName} ${activity.lastName}${activity.team ? ` (${activity.team})` : ""} dans '${eventName}'`;
       default:
         return "Activité inconnue";
     }
@@ -148,7 +151,7 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
           Activité
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
@@ -162,7 +165,7 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
         <div className="flex-1 overflow-auto space-y-4">
           {/* Statistiques */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2">
@@ -238,30 +241,32 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
                   Aucune activité trouvée dans les 30 derniers jours
                 </div>
               ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                   {activities.map((activity) => (
                     <div
                       key={`${activity.type}-${activity.id}`}
-                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className={`p-2 rounded-lg ${getActivityBadgeColor(activity.type)}`}>
+                      <div className={`p-3 rounded-lg flex-shrink-0 ${getActivityBadgeColor(activity.type)}`}>
                         {getActivityIcon(activity.type)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <p className="text-sm font-medium text-gray-900 leading-relaxed">
                           {getActivityDescription(activity)}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Clock className="h-3 w-3 text-gray-400" />
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
                           <p className="text-xs text-gray-500">
                             {formatDate(activity.createdAt)}
                           </p>
                         </div>
                       </div>
-                      <Badge className={getActivityBadgeColor(activity.type)}>
-                        {activity.type === "inscription" ? "Inscription" :
-                         activity.type === "competitor" ? "Compétiteur" : "Coach"}
-                      </Badge>
+                      <div className="flex-shrink-0">
+                        <Badge className={getActivityBadgeColor(activity.type)}>
+                          {activity.type === "inscription" ? "Inscription" :
+                           activity.type === "competitor" ? "Compétiteur" : "Coach"}
+                        </Badge>
+                      </div>
                     </div>
                   ))}
                 </div>
