@@ -12,8 +12,10 @@ import {
   UserPlus, 
   Trophy,
   RefreshCw,
-  Clock
+  Clock,
+  ExternalLink
 } from "lucide-react";
+import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 
 type ActivityItem = {
@@ -112,11 +114,27 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
     }
   };
 
+  const getEventDisplayName = (eventData: any, eventId?: number, inscriptionId?: number) => {
+    // Essayer de récupérer les données de l'événement comme dans les emails
+    const place = eventData?.place;
+    const startDate = eventData?.startDate;
+    const endDate = eventData?.endDate;
+    
+    if (place && startDate) {
+      const dateDisplay = startDate === endDate ? startDate : `${startDate} → ${endDate}`;
+      return `${place} (${dateDisplay})`;
+    }
+    
+    // Fallback sur d'autres propriétés possibles
+    const eventName = eventData?.eventName || eventData?.eventTitle || eventData?.title;
+    if (eventName) return eventName;
+    
+    // Fallback final
+    return `Événement #${eventId || inscriptionId}`;
+  };
+
   const getActivityDescription = (activity: ActivityItem) => {
-    const eventName = activity.eventData?.eventName || 
-                     (activity.eventData as any)?.eventTitle || 
-                     (activity.eventData as any)?.title || 
-                     `Événement #${activity.eventId || activity.inscriptionId}`;
+    const eventName = getEventDisplayName(activity.eventData, activity.eventId, activity.inscriptionId);
     
     switch (activity.type) {
       case "inscription":
@@ -133,6 +151,11 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
       default:
         return "Activité inconnue";
     }
+  };
+
+  const getInscriptionLink = (activity: ActivityItem) => {
+    const inscriptionId = activity.type === "inscription" ? activity.id : activity.inscriptionId;
+    return inscriptionId ? `/inscriptions/${inscriptionId}` : null;
   };
 
   const getActivityBadgeColor = (type: string) => {
@@ -268,9 +291,20 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
                         {getActivityIcon(activity.type)}
                       </div>
                       <div className="flex-1 min-w-0 space-y-3">
-                        <p className="text-base font-medium text-gray-900 leading-relaxed">
-                          {getActivityDescription(activity)}
-                        </p>
+                        <div className="flex items-start gap-3">
+                          <p className="text-base font-medium text-gray-900 leading-relaxed flex-1">
+                            {getActivityDescription(activity)}
+                          </p>
+                          {getInscriptionLink(activity) && (
+                            <Link 
+                              href={getInscriptionLink(activity)!}
+                              className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Voir
+                            </Link>
+                          )}
+                        </div>
                         <div className="flex items-center gap-3">
                           <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
                           <p className="text-sm text-gray-500">
