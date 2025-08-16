@@ -37,14 +37,13 @@ export const GET = async (
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     // Récupérer les inscriptions créées par cet utilisateur
-    const userInscriptions = await db
+    const userInscriptionsRaw = await db
       .select({
         id: inscriptions.id,
         eventId: inscriptions.eventId,
         eventData: inscriptions.eventData,
         status: inscriptions.status,
         createdAt: inscriptions.createdAt,
-        type: "inscription" as const,
       })
       .from(inscriptions)
       .where(
@@ -58,14 +57,13 @@ export const GET = async (
       .limit(20);
 
     // Récupérer les compétiteurs ajoutés par cet utilisateur
-    const addedCompetitors = await db
+    const addedCompetitorsRaw = await db
       .select({
         id: inscriptionCompetitors.id,
         inscriptionId: inscriptionCompetitors.inscriptionId,
         competitorId: inscriptionCompetitors.competitorId,
         codexNumber: inscriptionCompetitors.codexNumber,
         createdAt: inscriptionCompetitors.createdAt,
-        type: "competitor" as const,
         eventData: inscriptions.eventData,
       })
       .from(inscriptionCompetitors)
@@ -82,7 +80,7 @@ export const GET = async (
       .limit(20);
 
     // Récupérer les coaches ajoutés par cet utilisateur
-    const addedCoaches = await db
+    const addedCoachesRaw = await db
       .select({
         id: inscriptionCoaches.id,
         inscriptionId: inscriptionCoaches.inscriptionId,
@@ -91,7 +89,6 @@ export const GET = async (
         team: inscriptionCoaches.team,
         gender: inscriptionCoaches.gender,
         createdAt: inscriptionCoaches.createdAt,
-        type: "coach" as const,
         eventData: inscriptions.eventData,
       })
       .from(inscriptionCoaches)
@@ -106,6 +103,11 @@ export const GET = async (
       )
       .orderBy(desc(inscriptionCoaches.createdAt))
       .limit(20);
+
+    // Ajouter le type aux résultats
+    const userInscriptions = userInscriptionsRaw.map(item => ({ ...item, type: "inscription" as const }));
+    const addedCompetitors = addedCompetitorsRaw.map(item => ({ ...item, type: "competitor" as const }));
+    const addedCoaches = addedCoachesRaw.map(item => ({ ...item, type: "coach" as const }));
 
     // Combiner et trier toutes les activités par date
     const allActivities = [
