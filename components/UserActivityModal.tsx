@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +57,7 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
-  const fetchActivity = async () => {
+  const fetchActivity = useCallback(async () => {
     if (!isOpen) return;
     
     try {
@@ -77,13 +77,13 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [isOpen, userId, toast]);
 
   useEffect(() => {
     if (isOpen) {
       fetchActivity();
     }
-  }, [isOpen]);
+  }, [isOpen, fetchActivity]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fr-FR", {
@@ -231,7 +231,7 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
               {loading ? (
                 <div className="text-center py-8">
                   <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  Chargement de l'activité...
+                  Chargement de l&apos;activité...
                 </div>
               ) : activities.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
