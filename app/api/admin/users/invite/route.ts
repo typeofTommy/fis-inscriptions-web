@@ -25,7 +25,6 @@ export const POST = async (req: NextRequest) => {
     // Créer une invitation
     const invitation = await client.invitations.createInvitation({
       emailAddress: email,
-      redirectUrl: `${process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || `${req.nextUrl.origin}/sign-up`}`,
     });
 
     return NextResponse.json({ 
