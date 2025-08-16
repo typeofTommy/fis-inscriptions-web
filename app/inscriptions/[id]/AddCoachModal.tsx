@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface CoachData {
   firstName: string;
@@ -85,7 +86,7 @@ export default function AddCoachModal({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [team, setTeam] = useState("");
-  const [gender, setGender] = useState<"M" | "W" | "BOTH">("BOTH");
+  const [gender, setGender] = useState<"M" | "W" | "BOTH" | undefined>(undefined);
   const [startDate, setStartDate] = useState(eventStartDate || "");
   const [endDate, setEndDate] = useState(eventEndDate || "");
   const [whatsappPhone, setWhatsappPhone] = useState("");
@@ -99,7 +100,7 @@ export default function AddCoachModal({
       setFirstName("");
       setLastName("");
       setTeam("");
-      setGender("BOTH");
+      setGender(undefined);
       setWhatsappPhone("");
       return;
     }
@@ -111,13 +112,13 @@ export default function AddCoachModal({
       setFirstName(coach.firstName);
       setLastName(coach.lastName);
       setTeam(coach.team || "");
-      setGender("BOTH"); // Par défaut car les anciens coaches n'ont pas de genre
+      setGender(undefined); // Par défaut car les anciens coaches n'ont pas de genre
       setWhatsappPhone(coach.whatsappPhone || "");
     }
   };
 
   const isFormValid = useCallback(() => {
-    if (!firstName.trim() || !lastName.trim() || !startDate || !endDate) {
+    if (!firstName.trim() || !lastName.trim() || !startDate || !endDate || !gender) {
       return false;
     }
 
@@ -135,7 +136,7 @@ export default function AddCoachModal({
     }
 
     return true;
-  }, [firstName, lastName, startDate, endDate, eventStartDate, eventEndDate]);
+  }, [firstName, lastName, startDate, endDate, eventStartDate, eventEndDate, gender]);
 
   const getDateError = () => {
     if (!startDate || !endDate) return "Les dates sont obligatoires";
@@ -155,7 +156,7 @@ export default function AddCoachModal({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         team: team.trim() || undefined,
-        gender: gender,
+        gender: gender!,
         startDate: startDate,
         endDate: endDate,
         whatsappPhone: whatsappPhone.trim() || undefined,
@@ -165,7 +166,7 @@ export default function AddCoachModal({
           setFirstName("");
           setLastName("");
           setTeam("");
-          setGender("BOTH");
+          setGender(undefined);
           setStartDate(eventStartDate || "");
           setEndDate(eventEndDate || "");
           setWhatsappPhone("");
@@ -193,7 +194,7 @@ export default function AddCoachModal({
           setFirstName("");
           setLastName("");
           setTeam("");
-          setGender("BOTH");
+          setGender(undefined);
           setStartDate(eventStartDate || "");
           setEndDate(eventEndDate || "");
           setWhatsappPhone("");
@@ -233,7 +234,7 @@ export default function AddCoachModal({
                       value={`${coach.firstName}-${coach.lastName}`}
                       className="cursor-pointer"
                     >
-                      {coach.firstName} {coach.lastName}{coach.team ? ` (${coach.team})` : ""}
+                      {coach.lastName} {coach.firstName}{coach.team ? ` (${coach.team})` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -277,17 +278,28 @@ export default function AddCoachModal({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="coach-gender">Genre *</Label>
-            <Select value={gender} onValueChange={(value: "M" | "W" | "BOTH") => setGender(value)}>
-              <SelectTrigger className="cursor-pointer">
-                <SelectValue placeholder="Choisir le genre" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="M" className="cursor-pointer">Hommes uniquement</SelectItem>
-                <SelectItem value="W" className="cursor-pointer">Femmes uniquement</SelectItem>
-                <SelectItem value="BOTH" className="cursor-pointer">Hommes et femmes</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Genre *</Label>
+            <RadioGroup
+              value={gender}
+              onValueChange={(value: "M" | "W" | "BOTH") => setGender(value)}
+              className="flex flex-col space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="M" id="gender-m" />
+                <Label htmlFor="gender-m" className="cursor-pointer">Homme</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="W" id="gender-w" />
+                <Label htmlFor="gender-w" className="cursor-pointer">Femme</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="BOTH" id="gender-both" />
+                <Label htmlFor="gender-both" className="cursor-pointer">Homme et femme</Label>
+              </div>
+            </RadioGroup>
+            {(!gender && firstName && lastName) && (
+              <div className="text-sm text-red-600">Veuillez sélectionner un genre</div>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="coach-whatsapp">

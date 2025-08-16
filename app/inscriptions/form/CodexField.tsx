@@ -16,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {Button} from "@/components/ui/button";
 import {useCodexCheck} from "./api";
 
@@ -107,20 +109,22 @@ export const CodexField = ({
             name={`codexNumbers.${index}.sex`}
             render={({field: sexField}) => (
               <FormItem className="flex-1">
-                <FormLabel>Sexe</FormLabel>
+                <FormLabel>Sexe *</FormLabel>
                 <FormControl>
-                  <Select
+                  <RadioGroup
                     onValueChange={sexField.onChange}
                     value={sexField.value}
+                    className="flex flex-row gap-6"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sexe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">M</SelectItem>
-                      <SelectItem value="F">F</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="M" id={`sex-m-${index}`} />
+                      <Label htmlFor={`sex-m-${index}`}>Homme</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="F" id={`sex-f-${index}`} />
+                      <Label htmlFor={`sex-f-${index}`}>Femme</Label>
+                    </div>
+                  </RadioGroup>
                 </FormControl>
                 <FormMessage className="text-red-500 text-sm" />
               </FormItem>
