@@ -74,6 +74,7 @@ const alpha3ToAlpha2Map: Record<string, string> = {
   ISL: "IS",
   IRL: "IE",
   BLR: "BY",
+  CHI: "CL", // Chili
   // Ajoute d'autres si besoin
 };
 

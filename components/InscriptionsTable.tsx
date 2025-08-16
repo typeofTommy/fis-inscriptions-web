@@ -160,13 +160,29 @@ export function InscriptionsTable() {
   }, [stableData]);
 
   const disciplineOptions = useMemo(() => {
-    return Array.from(
+    const disciplineOrder = ["DH", "SG", "GS", "SL", "AC"]; // Ordre logique des disciplines
+    const allDisciplines = Array.from(
       new Set(
         stableData.flatMap((row) =>
           (row.eventData.competitions ?? []).map((c) => c.eventCode)
         )
       )
-    ).sort((a, b) => String(a).localeCompare(String(b)));
+    );
+    
+    return allDisciplines.sort((a, b) => {
+      const indexA = disciplineOrder.indexOf(a);
+      const indexB = disciplineOrder.indexOf(b);
+      
+      // Si les deux sont dans l'ordre prédéfini, on utilise cet ordre
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      // Si un seul est dans l'ordre prédéfini, il vient en premier
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      // Sinon, ordre alphabétique
+      return String(a).localeCompare(String(b));
+    });
   }, [stableData]);
 
   const raceLevelOptions = useMemo(() => {
@@ -335,14 +351,29 @@ export function InscriptionsTable() {
       enableColumnFilter: true,
       accessorFn: (row) => row,
       cell: ({row}) => {
+        const disciplineOrder = ["DH", "SG", "GS", "SL", "AC"]; // Même ordre que les options
         const disciplines = Array.from(
           new Set(
             (row.original.eventData.competitions ?? []).map((c) => c.eventCode)
           )
         ).filter(Boolean);
+        
+        // Applique l'ordre cohérent aux badges
+        const sortedDisciplines = disciplines.sort((a, b) => {
+          const indexA = disciplineOrder.indexOf(a);
+          const indexB = disciplineOrder.indexOf(b);
+          
+          if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+          }
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return String(a).localeCompare(String(b));
+        });
+        
         return (
           <div className="flex gap-2 flex-wrap">
-            {disciplines.map((discipline: string) => (
+            {sortedDisciplines.map((discipline: string) => (
               <Badge
                 key={discipline}
                 className={colorBadgePerDiscipline[discipline] || "bg-gray-300"}

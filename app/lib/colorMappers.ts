@@ -15,15 +15,17 @@ export const pdfHeaderColorPerDiscipline: Record<string, string> = {
 };
 
 export const colorBadgePerRaceLevel: Record<string, string> = {
-  FIS: "bg-black",
-  CIT: "bg-orange-500",
-  NJR: "bg-yellow-500",
-  NJC: "bg-red-500",
-  NC: "bg-red-500",
-  SAC: "bg-black",
-  ANC: "bg-gray-500",
-  ENL: "bg-purple-500",
-  WC: "bg-yellow-700",
+  FIS: "bg-black text-white",
+  CIT: "bg-orange-500 text-white",
+  NJR: "bg-yellow-500 text-black",
+  NJC: "bg-red-500 text-white",
+  NC: "bg-red-500 text-white",
+  SAC: "bg-indigo-600 text-white",
+  ANC: "bg-gray-500 text-white",
+  ENL: "bg-purple-500 text-white",
+  WC: "bg-yellow-700 text-white",
+  SACK: "bg-green-600 text-white", // Ajout de SACK
+  FIZZ: "bg-cyan-600 text-white",  // Ajout de FIZZ (qui pourrait être une variante)
 };
 
 export const colorBadgePerGender: Record<"M" | "W", string> = {
