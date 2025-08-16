@@ -160,7 +160,7 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
           Activité
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="!max-w-none !w-[85vw] max-h-[90vh] overflow-hidden flex flex-col" style={{ width: '85vw', maxWidth: 'none' }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
