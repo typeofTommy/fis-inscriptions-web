@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,14 +38,14 @@ export const UsersManagement = () => {
   const [inviting, setInviting] = useState(false);
   const { toast } = useToast();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/admin/users");
       if (!response.ok) throw new Error("Erreur lors du chargement des utilisateurs");
       const data = await response.json();
       setUsers(data);
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Impossible de charger la liste des utilisateurs",
@@ -54,7 +54,7 @@ export const UsersManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const inviteUser = async () => {
     if (!inviteEmail.trim()) return;
@@ -76,7 +76,7 @@ export const UsersManagement = () => {
       });
       
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Impossible d'envoyer l'invitation",
@@ -105,7 +105,7 @@ export const UsersManagement = () => {
       });
       
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Impossible de modifier le rôle",
@@ -130,7 +130,7 @@ export const UsersManagement = () => {
       });
       
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Impossible de supprimer l'utilisateur",
@@ -141,7 +141,7 @@ export const UsersManagement = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("fr-FR", {
