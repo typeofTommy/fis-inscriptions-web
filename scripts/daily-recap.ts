@@ -217,6 +217,7 @@ const main = async () => {
       ...deletedEvents.map((e) => e.created_by).filter(Boolean),
       ...coaches.map((c) => c.added_by).filter(Boolean),
       ...deletedCoaches.map((c) => c.added_by).filter(Boolean),
+      ...upcomingEventsWithoutEmail.map((e) => e.created_by).filter(Boolean),
     ])
   );
   const userIdToEmail: Record<string, string> = {};
@@ -452,7 +453,15 @@ const main = async () => {
                   {locale: fr}
                 );
                 
-                const daysUntilDeadline = parseInt(evt.days_until_deadline);
+                // Calcul manuel plus fiable des jours restants
+                const eventDate = new Date(evt.event_start_date);
+                const deadlineDate = new Date(eventDate);
+                deadlineDate.setDate(eventDate.getDate() - 3); // J-3
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                deadlineDate.setHours(0, 0, 0, 0);
+                const diffTime = deadlineDate.getTime() - today.getTime();
+                const daysUntilDeadline = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 
                 // Logique de couleur et texte comme dans la colonne "Rappel"
                 let urgencyColor = '#16a34a'; // Vert par défaut
