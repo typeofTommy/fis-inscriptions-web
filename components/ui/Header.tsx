@@ -5,13 +5,10 @@ import {PlusCircle, Snowflake, Users} from "lucide-react";
 import Link from "next/link";
 import {SignedIn, UserButton, useUser} from "@clerk/nextjs";
 import {Button} from "./button";
-import {usePathname} from "next/navigation";
 import {useRole} from "@/app/lib/useRole";
 
 
 export const Header = () => {
-  const pathname = usePathname();
-  const isHome = pathname === "/";
   const {user, isLoaded} = useUser();
   const role = useRole();
 
