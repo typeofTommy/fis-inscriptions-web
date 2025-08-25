@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
 
 export default withPWA({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  disable: true, // Temporairement désactivé pour accélérer les builds
   register: true,
   skipWaiting: true,
 })(nextConfig as any);
