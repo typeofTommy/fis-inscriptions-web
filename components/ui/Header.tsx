@@ -14,9 +14,6 @@ export const Header = () => {
   const isHome = pathname === "/";
   const {user, isLoaded} = useUser();
   const role = useRole();
-  
-  // Debug temporaire
-  console.log('Header debug:', { isLoaded, user: !!user, pathname });
 
   return (
     <div className="relative z-10 py-4 md:py-8">
