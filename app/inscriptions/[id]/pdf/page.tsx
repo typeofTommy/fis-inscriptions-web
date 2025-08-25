@@ -157,7 +157,12 @@ export default async function PdfPage({
     allUserIdsToFetch.push(currentClerkUserId);
   }
 
+  // Filter modifier IDs based on filtered competitors (by gender)
   const modifierClerkIds = rawCompetitors
+    .filter((row) => 
+      // Only include rows where the competitor is in the filtered list
+      filteredCompetitors.some(fc => fc.competitorid === row.competitors.competitorid)
+    )
     .map((row) => row.inscriptionCompetitors.addedBy)
     .filter((id): id is string => !!id); // Ensure ids are strings and not null/undefined
 

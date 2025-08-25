@@ -121,7 +121,7 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
                   )}
                 </div>
               </div>
-              <Coaches inscriptionId={params.id} />
+              <Coaches inscriptionId={params.id} genderFilter={genderFilter} />
             </div>
           </TabsContent>
         </Tabs>

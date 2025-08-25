@@ -360,7 +360,13 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
   );
 };
 
-export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
+export const Coaches = ({
+  inscriptionId,
+  genderFilter,
+}: {
+  inscriptionId: string;
+  genderFilter?: "both" | "M" | "W";
+}) => {
   const {
     data: coaches = [],
     isPending,
@@ -378,6 +384,22 @@ export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
 
   const permissionToEdit = usePermissionToEdit(inscription, "manageCoaches", null);
 
+  // Filtrer les coaches selon le filtre de genre
+  const filteredCoaches = React.useMemo(() => {
+    if (!genderFilter || genderFilter === "both") {
+      return coaches;
+    }
+    
+    return coaches.filter((coach) => {
+      // Si le coach est assigné à "BOTH", il apparaît dans tous les filtres
+      if (coach.gender === "BOTH") {
+        return true;
+      }
+      // Sinon, le coach n'apparaît que si son genre correspond au filtre
+      return coach.gender === genderFilter;
+    });
+  }, [coaches, genderFilter]);
+
   if (isPending) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
@@ -391,7 +413,12 @@ export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
     return <div>Erreur lors du chargement des coaches.</div>;
   }
 
-  if (!coaches?.length && !isPending) {
+  if (!filteredCoaches?.length && !isPending) {
+    const hasCoaches = coaches?.length > 0;
+    const messageText = hasCoaches 
+      ? `Aucun coach pour ${genderFilter === "M" ? "les hommes" : genderFilter === "W" ? "les femmes" : "ce filtre"}`
+      : "Aucun coach ajouté pour le moment";
+    
     return (
       <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
         {inscription?.status !== "open" && (
@@ -400,7 +427,7 @@ export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
             lorsque l&apos;inscription est <b>ouverte</b>.
           </div>
         )}
-        <p>Aucun coach ajouté pour le moment</p>
+        <p>{messageText}</p>
       </div>
     );
   }
@@ -432,7 +459,7 @@ export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {coaches.map((coach) => (
+            {filteredCoaches.map((coach) => (
               <TableRow key={coach.id}>
                 <TableCell className="font-medium">{coach.firstName}</TableCell>
                 <TableCell className="font-medium">{coach.lastName}</TableCell>
@@ -505,7 +532,7 @@ export const Coaches = ({inscriptionId}: {inscriptionId: string}) => {
 
       {/* Vue mobile - cartes */}
       <div className="md:hidden space-y-3">
-        {coaches.map((coach) => (
+        {filteredCoaches.map((coach) => (
           <div
             key={coach.id}
             className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
