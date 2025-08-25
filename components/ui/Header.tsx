@@ -50,21 +50,15 @@ export const Header = () => {
           </SignedIn>
           
           <div className="flex-shrink-0">
-            {isHome ? (
-              isLoaded && !user ? (
-                <Link href="/sign-in">
-                  <Button className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
-                    Connexion
-                  </Button>
-                </Link>
-              ) : isLoaded && user ? (
-                <UserButton />
-              ) : null
-            ) : (
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-            )}
+            {isLoaded && !user ? (
+              <Link href="/sign-in">
+                <Button className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
+                  Connexion
+                </Button>
+              </Link>
+            ) : isLoaded && user ? (
+              <UserButton />
+            ) : null}
           </div>
         </div>
       </div>
