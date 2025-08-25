@@ -14,6 +14,9 @@ export const Header = () => {
   const isHome = pathname === "/";
   const {user, isLoaded} = useUser();
   const role = useRole();
+  
+  // Debug temporaire
+  console.log('Header debug:', { isLoaded, user: !!user, pathname });
 
   return (
     <div className="relative z-10 py-4 md:py-8">
@@ -58,7 +61,14 @@ export const Header = () => {
               </Link>
             ) : isLoaded && user ? (
               <UserButton />
-            ) : null}
+            ) : (
+              // Fallback: afficher bouton de connexion si Clerk n'est pas chargé
+              <Link href="/sign-in">
+                <Button className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
+                  Connexion
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
