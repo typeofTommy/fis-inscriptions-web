@@ -179,14 +179,13 @@ export async function POST(request: Request) {
       const currentInscription = inscription[0];
       
       // If this is a mixed event and we're sending for a specific gender,
-      // check if the other gender has already been sent
+      // check if after this update, both genders will be sent
       if (gender && (gender === "M" || gender === "W")) {
         const otherGenderStatus = gender === "M" ? currentInscription.womenStatus : currentInscription.menStatus;
-        const currentGenderStatus = gender === "M" ? currentInscription.menStatus : currentInscription.womenStatus;
         
-        // If the other gender is already sent and we're sending this gender,
-        // mark the overall inscription as email_sent
-        if (otherGenderStatus === "email_sent" || currentGenderStatus === "email_sent") {
+        // After this update, check if both genders will be email_sent
+        // (the current gender will be set to email_sent, so we only need to check the other)
+        if (otherGenderStatus === "email_sent") {
           updateData.status = "email_sent";
           updateData.emailSentAt = currentTime;
         }

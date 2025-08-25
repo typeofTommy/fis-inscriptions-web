@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
               ? "Ouverte" 
               : inscription.status === "cancelled" 
                 ? "Course annulée" 
-                : "Clôturée"
+                : "Validée"
           }</p>
           <p><strong>Lien :</strong> <a href="${eventUrl}" style="color: #2563eb;">Voir l'inscription</a></p>
         </div>

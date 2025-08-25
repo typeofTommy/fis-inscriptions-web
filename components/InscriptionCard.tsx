@@ -13,7 +13,7 @@ import {
   colorBadgePerRaceLevel,
   colorBadgePerGender,
 } from "@/app/lib/colorMappers";
-import {Loader2} from "lucide-react";
+import {Loader2, Mail} from "lucide-react";
 import {useQuery} from "@tanstack/react-query";
 import {StatusBadges} from "@/components/ui/status-badges";
 
@@ -136,6 +136,55 @@ export function InscriptionCard({inscription}: {inscription: Inscription}) {
                 showEmailSent={true}
                 showLabels={false}
               />
+              {/* Badge Rappel */}
+              {(() => {
+                const eventDate = new Date(inscription.eventData.startDate);
+                const deadlineDate = new Date(eventDate);
+                deadlineDate.setDate(eventDate.getDate() - 3); // J-3
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                deadlineDate.setHours(0, 0, 0, 0);
+                const diffTime = deadlineDate.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // Si l'email a déjà été envoyé, on n'affiche rien (ou une petite coche)
+                if (inscription.status === "email_sent") {
+                  return (
+                    <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-1 py-0 flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      ✓
+                    </Badge>
+                  );
+                }
+                
+                // Sinon on affiche le compte à rebours avec les couleurs appropriées
+                let badgeClass = "";
+                let text = "";
+                
+                if (diffDays < 0) {
+                  badgeClass = "bg-gray-100 text-gray-800 border-gray-200";
+                  text = "Passé";
+                } else if (diffDays === 0) {
+                  badgeClass = "bg-red-100 text-red-800 border-red-200";
+                  text = "J-0";
+                } else if (diffDays === 1) {
+                  badgeClass = "bg-orange-100 text-orange-800 border-orange-200";
+                  text = "J-1";
+                } else if (diffDays === 2) {
+                  badgeClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
+                  text = "J-2";
+                } else {
+                  badgeClass = "bg-green-100 text-green-800 border-green-200";
+                  text = `J-${diffDays}`;
+                }
+                
+                return (
+                  <Badge className={`${badgeClass} text-xs px-1 py-0 flex items-center gap-1`}>
+                    <Mail className="w-3 h-3" />
+                    {text}
+                  </Badge>
+                );
+              })()}
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-600">
               <span className="font-medium truncate">

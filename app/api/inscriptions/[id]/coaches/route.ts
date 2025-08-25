@@ -54,10 +54,14 @@ export async function GET(
         if (!safeUserId || safeUserId === "Unknown") return;
         try {
           const user = await clerkClient.users.getUser(safeUserId);
-          userEmailMap[safeUserId] =
-            user?.emailAddresses?.[0]?.emailAddress || safeUserId;
-        } catch {
-          userEmailMap[safeUserId] = safeUserId;
+          const email = user?.emailAddresses?.[0]?.emailAddress;
+          if (email) {
+            userEmailMap[safeUserId] = email;
+          }
+          // Si pas d'email, on ne met rien dans le map, le fallback s'occupera du reste
+        } catch (error) {
+          console.warn(`Failed to fetch user ${safeUserId} from Clerk:`, error);
+          // On ne met rien dans le map en cas d'erreur, le fallback affichera "-"
         }
       })
     );

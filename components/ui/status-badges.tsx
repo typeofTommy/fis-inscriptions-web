@@ -13,7 +13,7 @@ type StatusBadgesProps = {
 const getStatusInfo = (status: Status | null) => {
   const statusMap: Record<string, { label: string; className: string }> = {
     open: { label: "Ouverte", className: "bg-green-100 text-green-800 border-green-200" },
-    validated: { label: "Clôturée", className: "bg-blue-100 text-blue-800 border-blue-200" },
+    validated: { label: "Validée", className: "bg-blue-100 text-blue-800 border-blue-200" },
     email_sent: { label: "Envoyée", className: "bg-orange-100 text-orange-800 border-orange-200" },
     cancelled: { label: "Annulée", className: "bg-red-100 text-red-800 border-red-200" },
   };
@@ -60,7 +60,7 @@ export const StatusBadges: React.FC<StatusBadgesProps> = ({
   const isEventMixed = isMixedEvent(inscription.eventData);
 
   if (!isEventMixed) {
-    // Événement non-mixte : affichage classique
+    // Événement non-mixte : affichage sans label "Statut:"
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <StatusBadge
@@ -69,7 +69,7 @@ export const StatusBadges: React.FC<StatusBadgesProps> = ({
           size={size}
           emailSentAt={inscription.emailSentAt}
           showEmailSent={showEmailSent}
-          showLabel={showLabels}
+          showLabel={false}
         />
       </div>
     );
@@ -85,7 +85,7 @@ export const StatusBadges: React.FC<StatusBadgesProps> = ({
     womenStatus.status !== inscription.status;
 
   if (!hasDifferentStatuses) {
-    // Tous les statuts sont identiques : affichage simplifié
+    // Tous les statuts sont identiques : affichage sans label "Statut:"
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <StatusBadge
@@ -94,7 +94,7 @@ export const StatusBadges: React.FC<StatusBadgesProps> = ({
           size={size}
           emailSentAt={inscription.emailSentAt}
           showEmailSent={showEmailSent}
-          showLabel={showLabels}
+          showLabel={false}
         />
       </div>
     );

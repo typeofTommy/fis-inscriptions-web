@@ -15,7 +15,7 @@ import {TableBody, TableCell, TableHead} from "@/components/ui/table";
 import {Table, TableHeader, TableRow} from "@/components/ui/table";
 import {useState, useMemo} from "react";
 import {Button} from "@/components/ui/button";
-import {Loader2} from "lucide-react";
+import {Loader2, Mail} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {
   Select,
@@ -255,6 +255,74 @@ export function InscriptionsTable() {
         return row.original.eventData.startDate.includes(filterValue);
       },
       sortingFn: "datetime",
+    },
+    {
+      id: "reminder",
+      header: "Rappel",
+      accessorFn: (row) => {
+        const eventDate = new Date(row.eventData.startDate);
+        const deadlineDate = new Date(eventDate);
+        deadlineDate.setDate(eventDate.getDate() - 3); // J-3
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        deadlineDate.setHours(0, 0, 0, 0);
+        const diffTime = deadlineDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+      },
+      cell: ({row}) => {
+        const eventDate = new Date(row.original.eventData.startDate);
+        const deadlineDate = new Date(eventDate);
+        deadlineDate.setDate(eventDate.getDate() - 3); // J-3
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        deadlineDate.setHours(0, 0, 0, 0);
+        const diffTime = deadlineDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // Si l'email a déjà été envoyé, on affiche une coche verte
+        if (row.original.status === "email_sent") {
+          return (
+            <Badge className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1">
+              <Mail className="w-3 h-3" />
+              ✓ Envoyé
+            </Badge>
+          );
+        }
+        
+        // Sinon on affiche le compte à rebours avec les couleurs appropriées
+        let badgeClass = "";
+        let text = "";
+        
+        if (diffDays < 0) {
+          badgeClass = "bg-gray-100 text-gray-800 border-gray-200";
+          text = `Passé (${Math.abs(diffDays)}j)`;
+        } else if (diffDays === 0) {
+          badgeClass = "bg-red-100 text-red-800 border-red-200";
+          text = "J-0 ⚠️";
+        } else if (diffDays === 1) {
+          badgeClass = "bg-orange-100 text-orange-800 border-orange-200";
+          text = "J-1";
+        } else if (diffDays === 2) {
+          badgeClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
+          text = "J-2";
+        } else {
+          badgeClass = "bg-green-100 text-green-800 border-green-200";
+          text = `J-${diffDays}`;
+        }
+        
+        return (
+          <Badge className={`${badgeClass} flex items-center gap-1`}>
+            <Mail className="w-3 h-3" />
+            {text}
+          </Badge>
+        );
+      },
+      sortingFn: (rowA, rowB) => {
+        const daysA = rowA.getValue("reminder") as number;
+        const daysB = rowB.getValue("reminder") as number;
+        return daysA - daysB;
+      },
     },
     {
       accessorKey: "location",
@@ -868,7 +936,7 @@ export function InscriptionsTable() {
               <SelectContent>
                 <SelectItem value="all">Tous</SelectItem>
                 <SelectItem value="open">Ouverte</SelectItem>
-                <SelectItem value="validated">Clôturée</SelectItem>
+                <SelectItem value="validated">Validée</SelectItem>
                 <SelectItem value="email_sent">Email envoyé</SelectItem>
                 <SelectItem value="cancelled">Course annulée</SelectItem>
               </SelectContent>
