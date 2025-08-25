@@ -153,7 +153,7 @@ const main = async () => {
     ORDER BY ic.deleted_at ASC;
   `);
 
-  // Récupère les événements qui arrivent dans les 7 prochains jours et dont l'email/PDF n'a pas encore été envoyé
+  // Récupère les événements dont la date limite d'envoi (J-3) est dans les 7 prochains jours et dont l'email/PDF n'a pas encore été envoyé
   const {rows: upcomingEventsWithoutEmail} = await client.query(`
     SELECT
       id,
@@ -163,13 +163,21 @@ const main = async () => {
       event_data->>'endDate' AS event_end_date,
       status,
       created_by,
-      created_at
+      created_at,
+      -- Calcul de la date limite (J-3)
+      ((event_data->>'startDate')::date - INTERVAL '3 days') AS deadline_date,
+      -- Calcul des jours restants jusqu'à la date limite
+      ((event_data->>'startDate')::date - INTERVAL '3 days') - CURRENT_DATE AS days_until_deadline
     FROM "inscriptionsDB".inscriptions
     WHERE deleted_at IS NULL
       AND status NOT IN ('email_sent', 'cancelled')
       AND email_sent_at IS NULL
-      AND (event_data->>'startDate')::date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
-    ORDER BY (event_data->>'startDate')::date ASC;
+      AND ((event_data->>'startDate')::date - INTERVAL '3 days') BETWEEN CURRENT_DATE - INTERVAL '3 days' AND CURRENT_DATE + INTERVAL '7 days'
+    ORDER BY 
+      -- Tri par urgence: les plus urgents en premier (J-0, J-1, J-2...)
+      ((event_data->>'startDate')::date - INTERVAL '3 days') - CURRENT_DATE ASC,
+      -- Puis par date de course pour départager
+      (event_data->>'startDate')::date ASC;
   `);
 
   await client.end();
@@ -426,10 +434,10 @@ const main = async () => {
       }
     </div>
     <div style="margin-bottom:32px;">
-      <h3 style="color:#f59e0b;">Événements à venir sans email/PDF envoyé</h3>
+      <h3 style="color:#f59e0b;">📧 Rappels d'envoi PDF - Événements urgents</h3>
       ${
         upcomingEventsWithoutEmail.length === 0
-          ? `<i style='color:#6b7280;'>Aucun événement à venir sans email/PDF dans les 7 prochains jours.</i>`
+          ? `<i style='color:#6b7280;'>Aucun événement nécessitant un envoi d'email/PDF urgent.</i>`
           : upcomingEventsWithoutEmail
               .map((evt) => {
                 const email = userIdToEmail[evt.created_by] || evt.created_by;
@@ -443,14 +451,41 @@ const main = async () => {
                   "dd MMMM yyyy",
                   {locale: fr}
                 );
-                const daysUntilStart = Math.ceil((new Date(evt.event_start_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                const urgencyColor = daysUntilStart <= 2 ? '#dc2626' : daysUntilStart <= 5 ? '#f59e0b' : '#16a34a';
-                return `<div style='margin-bottom:16px;border-left:4px solid ${urgencyColor};padding-left:12px;'>
+                
+                const daysUntilDeadline = parseInt(evt.days_until_deadline);
+                
+                // Logique de couleur et texte comme dans la colonne "Rappel"
+                let urgencyColor = '#16a34a'; // Vert par défaut
+                let urgencyText = '';
+                let emailIcon = '📧';
+                
+                if (daysUntilDeadline < 0) {
+                  urgencyColor = '#6b7280'; // Gris pour passé
+                  urgencyText = `Date limite passée de ${Math.abs(daysUntilDeadline)} jour${Math.abs(daysUntilDeadline) > 1 ? 's' : ''}`;
+                  emailIcon = '🚨';
+                } else if (daysUntilDeadline === 0) {
+                  urgencyColor = '#dc2626'; // Rouge pour J-0
+                  urgencyText = 'Date limite AUJOURD\'HUI ⚠️';
+                  emailIcon = '🚨';
+                } else if (daysUntilDeadline === 1) {
+                  urgencyColor = '#f97316'; // Orange pour J-1
+                  urgencyText = 'Date limite DEMAIN';
+                  emailIcon = '⚠️';
+                } else if (daysUntilDeadline === 2) {
+                  urgencyColor = '#eab308'; // Jaune pour J-2
+                  urgencyText = `Date limite dans ${daysUntilDeadline} jours`;
+                  emailIcon = '⚠️';
+                } else {
+                  urgencyColor = '#16a34a'; // Vert pour J-3+
+                  urgencyText = `Date limite dans ${daysUntilDeadline} jours`;
+                  emailIcon = '📧';
+                }
+                
+                return `<div style='margin-bottom:16px;border-left:4px solid ${urgencyColor};padding-left:12px;background-color:${urgencyColor}10;padding:12px;'>
               <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location}</a><br>
-              <span style='color:#374151;'>📅 ${startDate === endDate ? startDate : `${startDate} → ${endDate}`}</span><br>
-              <span style='color:${urgencyColor};font-weight:500;'>⚠️ Dans ${daysUntilStart} jour${daysUntilStart > 1 ? 's' : ''}</span> | 
-              <span style='color:#6b7280;'>Statut: ${evt.status}</span> | 
-              <span style='color:#6b7280;'>Créé par: ${email}</span>
+              <span style='color:#374151;'>📅 Course: ${startDate === endDate ? startDate : `${startDate} → ${endDate}`}</span><br>
+              <span style='color:${urgencyColor};font-weight:bold;font-size:14px;'>${emailIcon} ${urgencyText}</span><br>
+              <span style='color:#6b7280;font-size:13px;'>Statut: ${evt.status} | Créé par: ${email}</span>
             </div>`;
               })
               .join("")
