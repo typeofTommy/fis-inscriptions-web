@@ -237,269 +237,247 @@ const main = async () => {
     }
   }
 
+  // Construction conditionnelle des blocs HTML
+  const eventsCreatedHtml = Object.keys(eventsById).length > 0 ? `
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#111827;">Événements créés</h3>
+      ${Object.values(eventsById)
+        .map((evts) => {
+          const evt = evts[0];
+          const email = userIdToEmail[evt.created_by] || evt.created_by;
+          const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
+          const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
+          return `<div style='margin-bottom:16px;'>
+            <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a><br>
+            <span style='color:#6b7280;'>Créé par ${email}</span>
+          </div>`;
+        })
+        .join("")}
+    </div>` : '';
+
+  const eventsDeletedHtml = Object.keys(deletedEventsById).length > 0 ? `
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#dc2626;">Événements supprimés</h3>
+      ${Object.values(deletedEventsById)
+        .map((evts) => {
+          const evt = evts[0];
+          const email = userIdToEmail[evt.created_by] || evt.created_by;
+          const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
+          const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
+          return `<div style='margin-bottom:16px;'>
+            <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</span><br>
+            <span style='color:#6b7280;'>Supprimé par ${email}</span>
+          </div>`;
+        })
+        .join("")}
+    </div>` : '';
+
+  const competitorsAddedHtml = Object.keys(competitorsByEvent).length > 0 ? `
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#111827;">Ajouts de coureurs</h3>
+      ${Object.values(competitorsByEvent)
+        .map((comps) => {
+          const evt = comps[0];
+          const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
+          const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
+          return `<div style='margin-bottom:24px;'>
+            <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a>
+            <ul style='margin:8px 0 0 16px;padding:0;'>
+              ${(() => {
+                const byCodex = groupBy(comps, "codex_number");
+                return Object.entries(byCodex)
+                  .map(
+                    ([codex, runners]) => `
+                  <li style='margin-bottom:8px;'>
+                    <span style='color:#111827;font-weight:500;'>Codex ${codex}</span>
+                    <ul style='margin:4px 0 0 16px;padding:0;'>
+                      ${runners
+                        .map((runner) => {
+                          const email =
+                            userIdToEmail[runner.added_by] || runner.added_by;
+                          return `<li style='color:#374151;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(ajouté par ${email})</span></li>`;
+                        })
+                        .join("")}
+                    </ul>
+                  </li>
+                `
+                  )
+                  .join("");
+              })()}
+            </ul>
+          </div>`;
+        })
+        .join("")}
+    </div>` : '';
+
+  const coachesAddedHtml = Object.keys(coachesByEvent).length > 0 ? `
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#111827;">Ajouts de coachs/staff</h3>
+      ${Object.values(coachesByEvent)
+        .map((coachList) => {
+          const evt = coachList[0];
+          const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
+          const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
+          return `<div style='margin-bottom:24px;'>
+            <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a>
+            <ul style='margin:8px 0 0 16px;padding:0;'>
+              ${coachList
+                .map((coach) => {
+                  const email = userIdToEmail[coach.added_by] || coach.added_by;
+                  const teamInfo = coach.team ? ` (${coach.team})` : "";
+                  const startDate = format(new Date(coach.start_date), 'dd/MM/yyyy');
+                  const endDate = format(new Date(coach.end_date), 'dd/MM/yyyy');
+                  const period = startDate === endDate 
+                    ? startDate 
+                    : `${startDate} → ${endDate}`;
+                  return `<li style='color:#374151;margin-bottom:4px;'>${coach.first_name} ${coach.last_name}${teamInfo} <span style='color:#16a34a;'>[${period}]</span> <span style='color:#6b7280;'>(ajouté par ${email})</span></li>`;
+                })
+                .join("")}
+            </ul>
+          </div>`;
+        })
+        .join("")}
+    </div>` : '';
+
+  const coachesDeletedHtml = Object.keys(deletedCoachesByEvent).length > 0 ? `
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#dc2626;">Suppressions de coachs/staff</h3>
+      ${Object.values(deletedCoachesByEvent)
+        .map((coachList) => {
+          const evt = coachList[0];
+          const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
+          const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
+          return `<div style='margin-bottom:24px;'>
+            <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</span>
+            <ul style='margin:8px 0 0 16px;padding:0;'>
+              ${coachList
+                .map((coach) => {
+                  const email = userIdToEmail[coach.added_by] || coach.added_by;
+                  const teamInfo = coach.team ? ` (${coach.team})` : "";
+                  const startDate = format(new Date(coach.start_date), 'dd/MM/yyyy');
+                  const endDate = format(new Date(coach.end_date), 'dd/MM/yyyy');
+                  const period = startDate === endDate 
+                    ? startDate 
+                    : `${startDate} → ${endDate}`;
+                  return `<li style='color:#dc2626;margin-bottom:4px;'>${coach.first_name} ${coach.last_name}${teamInfo} <span style='color:#16a34a;'>[${period}]</span> <span style='color:#6b7280;'>(supprimé par ${email})</span></li>`;
+                })
+                .join("")}
+            </ul>
+          </div>`;
+        })
+        .join("")}
+    </div>` : '';
+
+  const competitorsDeletedHtml = Object.keys(deletedCompetitorsByEvent).length > 0 ? `
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#dc2626;">Suppressions de coureurs</h3>
+      ${Object.values(deletedCompetitorsByEvent)
+        .map((comps) => {
+          const evt = comps[0];
+          const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
+          const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
+          return `<div style='margin-bottom:24px;'>
+            <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</span>
+            <ul style='margin:8px 0 0 16px;padding:0;'>
+              ${(() => {
+                const byCodex = groupBy(comps, "codex_number");
+                return Object.entries(byCodex)
+                  .map(
+                    ([codex, runners]) => `
+                  <li style='margin-bottom:8px;'>
+                    <span style='color:#dc2626;font-weight:500;'>Codex ${codex}</span>
+                    <ul style='margin:4px 0 0 16px;padding:0;'>
+                      ${runners
+                        .map((runner) => {
+                          const email =
+                            userIdToEmail[runner.added_by] || runner.added_by;
+                          return `<li style='color:#dc2626;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(supprimé par ${email})</span></li>`;
+                        })
+                        .join("")}
+                    </ul>
+                  </li>
+                `
+                  )
+                  .join("");
+              })()}
+            </ul>
+          </div>`;
+        })
+        .join("")}
+    </div>` : '';
+
+  const upcomingEventsHtml = upcomingEventsWithoutEmail.length > 0 ? `
+    <div style="margin-bottom:32px;">
+      <h3 style="color:#f59e0b;">📧 Rappels d'envoi PDF - Événements urgents</h3>
+      ${upcomingEventsWithoutEmail
+        .map((evt) => {
+          const email = userIdToEmail[evt.created_by] || evt.created_by;
+          const startDate = format(
+            new Date(evt.event_start_date),
+            "dd/MM/yyyy"
+          );
+          const endDate = format(
+            new Date(evt.event_end_date),
+            "dd/MM/yyyy"
+          );
+          
+          // Calcul manuel plus fiable des jours restants
+          const eventDate = new Date(evt.event_start_date);
+          const deadlineDate = new Date(eventDate);
+          deadlineDate.setDate(eventDate.getDate() - 3); // J-3
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          deadlineDate.setHours(0, 0, 0, 0);
+          const diffTime = deadlineDate.getTime() - today.getTime();
+          const daysUntilDeadline = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          // Logique de couleur et texte comme dans la colonne "Rappel"
+          let urgencyColor = '#16a34a'; // Vert par défaut
+          let urgencyText = '';
+          let emailIcon = '📧';
+          
+          if (daysUntilDeadline < 0) {
+            urgencyColor = '#6b7280'; // Gris pour passé
+            urgencyText = `Date limite passée de ${Math.abs(daysUntilDeadline)} jour${Math.abs(daysUntilDeadline) > 1 ? 's' : ''}`;
+            emailIcon = '🚨';
+          } else if (daysUntilDeadline === 0) {
+            urgencyColor = '#dc2626'; // Rouge pour J-0
+            urgencyText = 'Date limite AUJOURD\'HUI ⚠️';
+            emailIcon = '🚨';
+          } else if (daysUntilDeadline === 1) {
+            urgencyColor = '#f97316'; // Orange pour J-1
+            urgencyText = 'Date limite DEMAIN';
+            emailIcon = '⚠️';
+          } else if (daysUntilDeadline === 2) {
+            urgencyColor = '#eab308'; // Jaune pour J-2
+            urgencyText = `Date limite dans ${daysUntilDeadline} jours`;
+            emailIcon = '⚠️';
+          } else {
+            urgencyColor = '#16a34a'; // Vert pour J-3+
+            urgencyText = `Date limite dans ${daysUntilDeadline} jours`;
+            emailIcon = '📧';
+          }
+          
+          return `<div style='margin-bottom:16px;border-left:4px solid ${urgencyColor};padding-left:12px;background-color:${urgencyColor}10;padding:12px;'>
+            <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location}</a><br>
+            <span style='color:#374151;'>📅 Course: ${startDate === endDate ? startDate : `${startDate} → ${endDate}`}</span><br>
+            <span style='color:${urgencyColor};font-weight:bold;font-size:14px;'>${emailIcon} ${urgencyText}</span><br>
+            <span style='color:#6b7280;font-size:13px;'>Statut: ${evt.status} | Créé par: ${email}</span>
+          </div>`;
+        })
+        .join("")}
+    </div>` : '';
+
   const html = `
   <div style="font-family:Segoe UI,Arial,sans-serif;background:#f9fafb;padding:32px;">
     <h2 style="color:#2563eb;">Récapitulatif quotidien des inscriptions</h2>
-    <div style="margin-bottom:32px;">
-      <h3 style="color:#111827;">Événements créés</h3>
-      ${
-        Object.keys(eventsById).length === 0
-          ? `<i style='color:#6b7280;'>Aucun événement créé aujourd'hui.</i>`
-          : Object.values(eventsById)
-              .map((evts) => {
-                const evt = evts[0];
-                const formattedDate = format(
-                  new Date(evt.created_at),
-                  "dd MMMM yyyy 'à' HH:mm",
-                  {locale: fr}
-                );
-                const email = userIdToEmail[evt.created_by] || evt.created_by;
-                return `<div style='margin-bottom:16px;'>
-              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a><br>
-              <span style='color:#6b7280;'>Créé le : ${formattedDate} par ${email}</span>
-            </div>`;
-              })
-              .join("")
-      }
-    </div>
-    <div style="margin-bottom:32px;">
-      <h3 style="color:#dc2626;">Événements supprimés</h3>
-      ${
-        Object.keys(deletedEventsById).length === 0
-          ? `<i style='color:#6b7280;'>Aucun événement supprimé aujourd'hui.</i>`
-          : Object.values(deletedEventsById)
-              .map((evts) => {
-                const evt = evts[0];
-                const formattedDate = format(
-                  new Date(evt.deleted_at),
-                  "dd MMMM yyyy 'à' HH:mm",
-                  {locale: fr}
-                );
-                const email = userIdToEmail[evt.created_by] || evt.created_by;
-                return `<div style='margin-bottom:16px;'>
-              <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</span><br>
-              <span style='color:#6b7280;'>Supprimé le : ${formattedDate} par ${email}</span>
-            </div>`;
-              })
-              .join("")
-      }
-    </div>
-    <div style="margin-bottom:32px;">
-      <h3 style="color:#111827;">Ajouts de coureurs</h3>
-      ${
-        Object.keys(competitorsByEvent).length === 0
-          ? `<i style='color:#6b7280;'>Aucun ajout de coureur aujourd'hui.</i>`
-          : Object.values(competitorsByEvent)
-              .map((comps) => {
-                const evt = comps[0];
-                return `<div style='margin-bottom:24px;'>
-              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a>
-              <ul style='margin:8px 0 0 16px;padding:0;'>
-                ${(() => {
-                  const byCodex = groupBy(comps, "codex_number");
-                  return Object.entries(byCodex)
-                    .map(
-                      ([codex, runners]) => `
-                    <li style='margin-bottom:8px;'>
-                      <span style='color:#111827;font-weight:500;'>Codex ${codex}</span>
-                      <ul style='margin:4px 0 0 16px;padding:0;'>
-                        ${runners
-                          .map((runner) => {
-                            const email =
-                              userIdToEmail[runner.added_by] || runner.added_by;
-                            const formattedDate = format(
-                              new Date(runner.created_at),
-                              "dd MMMM yyyy 'à' HH:mm",
-                              {locale: fr}
-                            );
-                            return `<li style='color:#374151;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(ajouté le ${formattedDate} par ${email})</span></li>`;
-                          })
-                          .join("")}
-                      </ul>
-                    </li>
-                  `
-                    )
-                    .join("");
-                })()}
-              </ul>
-            </div>`;
-              })
-              .join("")
-      }
-    </div>
-    <div style="margin-bottom:32px;">
-      <h3 style="color:#111827;">Ajouts de coachs/staff</h3>
-      ${
-        Object.keys(coachesByEvent).length === 0
-          ? `<i style='color:#6b7280;'>Aucun ajout de coach/staff aujourd'hui.</i>`
-          : Object.values(coachesByEvent)
-              .map((coachList) => {
-                const evt = coachList[0];
-                return `<div style='margin-bottom:24px;'>
-              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</a>
-              <ul style='margin:8px 0 0 16px;padding:0;'>
-                ${coachList
-                  .map((coach) => {
-                    const email = userIdToEmail[coach.added_by] || coach.added_by;
-                    const formattedDate = format(
-                      new Date(coach.created_at),
-                      "dd MMMM yyyy 'à' HH:mm",
-                      {locale: fr}
-                    );
-                    const teamInfo = coach.team ? ` (${coach.team})` : "";
-                    const period = coach.start_date === coach.end_date 
-                      ? coach.start_date 
-                      : `${coach.start_date} → ${coach.end_date}`;
-                    return `<li style='color:#374151;margin-bottom:4px;'>${coach.first_name} ${coach.last_name}${teamInfo} <span style='color:#16a34a;'>[${period}]</span> <span style='color:#6b7280;'>(ajouté le ${formattedDate} par ${email})</span></li>`;
-                  })
-                  .join("")}
-              </ul>
-            </div>`;
-              })
-              .join("")
-      }
-    </div>
-    <div style="margin-bottom:32px;">
-      <h3 style="color:#dc2626;">Suppressions de coachs/staff</h3>
-      ${
-        Object.keys(deletedCoachesByEvent).length === 0
-          ? `<i style='color:#6b7280;'>Aucune suppression de coach/staff aujourd'hui.</i>`
-          : Object.values(deletedCoachesByEvent)
-              .map((coachList) => {
-                const evt = coachList[0];
-                return `<div style='margin-bottom:24px;'>
-              <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</span>
-              <ul style='margin:8px 0 0 16px;padding:0;'>
-                ${coachList
-                  .map((coach) => {
-                    const email = userIdToEmail[coach.added_by] || coach.added_by;
-                    const formattedDate = format(
-                      new Date(coach.deleted_at),
-                      "dd MMMM yyyy 'à' HH:mm",
-                      {locale: fr}
-                    );
-                    const teamInfo = coach.team ? ` (${coach.team})` : "";
-                    const period = coach.start_date === coach.end_date 
-                      ? coach.start_date 
-                      : `${coach.start_date} → ${coach.end_date}`;
-                    return `<li style='color:#dc2626;margin-bottom:4px;'>${coach.first_name} ${coach.last_name}${teamInfo} <span style='color:#16a34a;'>[${period}]</span> <span style='color:#6b7280;'>(supprimé le ${formattedDate} par ${email})</span></li>`;
-                  })
-                  .join("")}
-              </ul>
-            </div>`;
-              })
-              .join("")
-      }
-    </div>
-    <div>
-      <h3 style="color:#dc2626;">Suppressions de coureurs</h3>
-      ${
-        Object.keys(deletedCompetitorsByEvent).length === 0
-          ? `<i style='color:#6b7280;'>Aucune suppression de coureur aujourd'hui.</i>`
-          : Object.values(deletedCompetitorsByEvent)
-              .map((comps) => {
-                const evt = comps[0];
-                return `<div style='margin-bottom:24px;'>
-              <span style="color:#dc2626;font-weight:bold;">${evt.event_location} (${evt.event_start_date} → ${evt.event_end_date})</span>
-              <ul style='margin:8px 0 0 16px;padding:0;'>
-                ${(() => {
-                  const byCodex = groupBy(comps, "codex_number");
-                  return Object.entries(byCodex)
-                    .map(
-                      ([codex, runners]) => `
-                    <li style='margin-bottom:8px;'>
-                      <span style='color:#dc2626;font-weight:500;'>Codex ${codex}</span>
-                      <ul style='margin:4px 0 0 16px;padding:0;'>
-                        ${runners
-                          .map((runner) => {
-                            const email =
-                              userIdToEmail[runner.added_by] || runner.added_by;
-                            const formattedDate = format(
-                              new Date(runner.deleted_at),
-                              "dd MMMM yyyy 'à' HH:mm",
-                              {locale: fr}
-                            );
-                            return `<li style='color:#dc2626;'>${runner.firstname} ${runner.lastname} <span style='color:#6b7280;'>(supprimé le ${formattedDate} par ${email})</span></li>`;
-                          })
-                          .join("")}
-                      </ul>
-                    </li>
-                  `
-                    )
-                    .join("");
-                })()}
-              </ul>
-            </div>`;
-              })
-              .join("")
-      }
-    </div>
-    <div style="margin-bottom:32px;">
-      <h3 style="color:#f59e0b;">📧 Rappels d'envoi PDF - Événements urgents</h3>
-      ${
-        upcomingEventsWithoutEmail.length === 0
-          ? `<i style='color:#6b7280;'>Aucun événement nécessitant un envoi d'email/PDF urgent.</i>`
-          : upcomingEventsWithoutEmail
-              .map((evt) => {
-                const email = userIdToEmail[evt.created_by] || evt.created_by;
-                const startDate = format(
-                  new Date(evt.event_start_date),
-                  "dd MMMM yyyy",
-                  {locale: fr}
-                );
-                const endDate = format(
-                  new Date(evt.event_end_date),
-                  "dd MMMM yyyy",
-                  {locale: fr}
-                );
-                
-                // Calcul manuel plus fiable des jours restants
-                const eventDate = new Date(evt.event_start_date);
-                const deadlineDate = new Date(eventDate);
-                deadlineDate.setDate(eventDate.getDate() - 3); // J-3
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                deadlineDate.setHours(0, 0, 0, 0);
-                const diffTime = deadlineDate.getTime() - today.getTime();
-                const daysUntilDeadline = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                // Logique de couleur et texte comme dans la colonne "Rappel"
-                let urgencyColor = '#16a34a'; // Vert par défaut
-                let urgencyText = '';
-                let emailIcon = '📧';
-                
-                if (daysUntilDeadline < 0) {
-                  urgencyColor = '#6b7280'; // Gris pour passé
-                  urgencyText = `Date limite passée de ${Math.abs(daysUntilDeadline)} jour${Math.abs(daysUntilDeadline) > 1 ? 's' : ''}`;
-                  emailIcon = '🚨';
-                } else if (daysUntilDeadline === 0) {
-                  urgencyColor = '#dc2626'; // Rouge pour J-0
-                  urgencyText = 'Date limite AUJOURD\'HUI ⚠️';
-                  emailIcon = '🚨';
-                } else if (daysUntilDeadline === 1) {
-                  urgencyColor = '#f97316'; // Orange pour J-1
-                  urgencyText = 'Date limite DEMAIN';
-                  emailIcon = '⚠️';
-                } else if (daysUntilDeadline === 2) {
-                  urgencyColor = '#eab308'; // Jaune pour J-2
-                  urgencyText = `Date limite dans ${daysUntilDeadline} jours`;
-                  emailIcon = '⚠️';
-                } else {
-                  urgencyColor = '#16a34a'; // Vert pour J-3+
-                  urgencyText = `Date limite dans ${daysUntilDeadline} jours`;
-                  emailIcon = '📧';
-                }
-                
-                return `<div style='margin-bottom:16px;border-left:4px solid ${urgencyColor};padding-left:12px;background-color:${urgencyColor}10;padding:12px;'>
-              <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location}</a><br>
-              <span style='color:#374151;'>📅 Course: ${startDate === endDate ? startDate : `${startDate} → ${endDate}`}</span><br>
-              <span style='color:${urgencyColor};font-weight:bold;font-size:14px;'>${emailIcon} ${urgencyText}</span><br>
-              <span style='color:#6b7280;font-size:13px;'>Statut: ${evt.status} | Créé par: ${email}</span>
-            </div>`;
-              })
-              .join("")
-      }
-    </div>
+    ${eventsCreatedHtml}
+    ${eventsDeletedHtml}
+    ${competitorsAddedHtml}
+    ${coachesAddedHtml}
+    ${coachesDeletedHtml}
+    ${competitorsDeletedHtml}
+    ${upcomingEventsHtml}
   </div>`;
 
   // Envoi du mail via Resend
