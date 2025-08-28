@@ -408,7 +408,7 @@ const main = async () => {
 
   const upcomingEventsHtml = upcomingEventsWithoutEmail.length > 0 ? `
     <div style="margin-bottom:32px;">
-      <h3 style="color:#f59e0b;">📧 Rappels d'envoi PDF - Événements urgents</h3>
+      <h3 style="color:#f59e0b;">📧 Rappels d'envoi PDF - Événements prochains</h3>
       ${upcomingEventsWithoutEmail
         .map((evt) => {
           const email = userIdToEmail[evt.created_by] || evt.created_by;
@@ -458,9 +458,9 @@ const main = async () => {
             emailIcon = '📧';
           }
           
-          return `<div style='margin-bottom:16px;border-left:4px solid ${urgencyColor};padding-left:12px;background-color:${urgencyColor}10;padding:12px;'>
+          return `<div style='margin-bottom:16px;border-left:4px solid ${urgencyColor};padding-left:12px;background-color:#f9fafb;border-radius:4px;padding:12px;'>
             <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location}</a><br>
-            <span style='color:#374151;'>📅 Course: ${startDate === endDate ? startDate : `${startDate} → ${endDate}`}</span><br>
+            <span style='color:#111827;font-weight:500;'>📅 Course: ${startDate === endDate ? startDate : `${startDate} → ${endDate}`}</span><br>
             <span style='color:${urgencyColor};font-weight:bold;font-size:14px;'>${emailIcon} ${urgencyText}</span><br>
             <span style='color:#6b7280;font-size:13px;'>Statut: ${evt.status} | Créé par: ${email}</span>
           </div>`;
