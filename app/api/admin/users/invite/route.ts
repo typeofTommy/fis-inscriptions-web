@@ -35,6 +35,13 @@ export const POST = async (req: NextRequest) => {
   } catch (error) {
     console.error("Error creating invitation:", error);
     
+    // Log détaillé des erreurs Clerk
+    if (error && typeof error === 'object' && 'errors' in error) {
+      console.error("Clerk error details:", (error as any).errors);
+      console.error("Clerk trace ID:", (error as any).clerkTraceId);
+      console.error("Status:", (error as any).status);
+    }
+    
     // Gestion des erreurs spécifiques de Clerk
     if (error instanceof Error) {
       if (error.message.includes("already exists")) {
@@ -45,6 +52,21 @@ export const POST = async (req: NextRequest) => {
       if (error.message.includes("invalid email")) {
         return NextResponse.json({ 
           error: "Format d'email invalide" 
+        }, { status: 400 });
+      }
+    }
+    
+    // Vérifier si c'est une erreur Clerk avec des détails
+    if (error && typeof error === 'object' && 'errors' in error) {
+      const clerkErrors = (error as any).errors;
+      if (Array.isArray(clerkErrors) && clerkErrors.length > 0) {
+        const firstError = clerkErrors[0];
+        console.error("First Clerk error:", firstError);
+        
+        // Retourner une erreur plus spécifique basée sur le code d'erreur Clerk
+        return NextResponse.json({ 
+          error: `Erreur d'invitation: ${firstError.message || firstError.code || 'Erreur inconnue'}`,
+          clerkTraceId: (error as any).clerkTraceId
         }, { status: 400 });
       }
     }
