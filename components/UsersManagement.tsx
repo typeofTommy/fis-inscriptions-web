@@ -71,7 +71,10 @@ export const UsersManagement = () => {
         body: JSON.stringify({ email: inviteEmail }),
       });
       
-      if (!response.ok) throw new Error("Erreur lors de l'invitation");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de l'invitation");
+      }
       
       setInviteEmail("");
       toast({
@@ -80,10 +83,10 @@ export const UsersManagement = () => {
       });
       
       fetchUsers();
-    } catch {
+    } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible d'envoyer l'invitation",
+        description: error instanceof Error ? error.message : "Impossible d'envoyer l'invitation",
         variant: "destructive",
       });
     } finally {

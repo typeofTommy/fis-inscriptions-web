@@ -22,9 +22,31 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    // Créer une invitation
+    // Vérifier s'il existe déjà des invitations pour cet email
+    const existingInvitations = await client.invitations.getInvitationList({
+      status: ['pending', 'expired']
+    });
+    
+    const existingInvitation = existingInvitations.data.find(
+      inv => inv.emailAddress.toLowerCase() === email.toLowerCase()
+    );
+
+    if (existingInvitation) {
+      // Si l'invitation est expirée, la révoquer et créer une nouvelle
+      if (existingInvitation.status === 'expired') {
+        console.log(`Revoking expired invitation ${existingInvitation.id} for ${email}`);
+        await client.invitations.revokeInvitation(existingInvitation.id);
+      } else if (existingInvitation.status === 'pending') {
+        return NextResponse.json({ 
+          error: `Une invitation est déjà en attente pour ${email}. Vérifiez la boîte mail ou contactez l'administrateur pour révoquer l'ancienne invitation.` 
+        }, { status: 400 });
+      }
+    }
+
+    // Créer une invitation avec ignoreExisting pour gérer les cas edge
     const invitation = await client.invitations.createInvitation({
       emailAddress: email,
+      ignoreExisting: true
     });
 
     return NextResponse.json({ 
