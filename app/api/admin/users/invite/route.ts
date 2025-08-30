@@ -23,12 +23,12 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Vérifier s'il existe déjà des invitations pour cet email
-    const existingInvitations = await client.invitations.getInvitationList({
-      status: ['pending', 'expired']
-    });
+    // Récupérer toutes les invitations pour filtrer manuellement par email et statut
+    const allInvitations = await client.invitations.getInvitationList();
     
-    const existingInvitation = existingInvitations.data.find(
-      inv => inv.emailAddress.toLowerCase() === email.toLowerCase()
+    const existingInvitation = allInvitations.data.find(
+      inv => inv.emailAddress.toLowerCase() === email.toLowerCase() && 
+             (inv.status === 'pending' || inv.status === 'expired')
     );
 
     if (existingInvitation) {
