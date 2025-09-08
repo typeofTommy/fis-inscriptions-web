@@ -108,7 +108,7 @@ const CountrySelectItem = ({countryCode}: {countryCode: string}) => {
 
 export function InscriptionsTable() {
   const [sorting, setSorting] = useState<SortingState>([
-    {id: "startDate", desc: false},
+    {id: "startDate", desc: true},
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
     {id: "status", value: "open"},
