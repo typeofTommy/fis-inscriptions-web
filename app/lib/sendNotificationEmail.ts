@@ -7,12 +7,14 @@ export const sendNotificationEmail = async ({
   html,
   userId,
   cc,
+  fromEmail,
 }: {
   to: string[];
   subject: string;
   html: string;
   userId?: string;
   cc?: string[];
+  fromEmail?: string;
 }) => {
   let userDisplay = userId;
   if (userId) {
@@ -26,9 +28,7 @@ export const sendNotificationEmail = async ({
   }
   const resend = new Resend(process.env.RESEND_API_KEY);
   await resend.emails.send({
-    from:
-      process.env.RESEND_FROM_EMAIL ||
-      "Inscriptions FIS Etranger <noreply@inscriptions-fis-etranger.fr>",
+    from: fromEmail || process.env.RESEND_FROM_EMAIL || "Inscriptions FIS Etranger <noreply@inscriptions-fis-etranger.fr>",
     to,
     subject,
     html: html.replace(/__USER__/g, userDisplay || "-"),

@@ -1,14 +1,16 @@
 import Image from "next/image";
 import React from "react";
+import {useOrganization} from "@/hooks/useOrganization";
 
 export const NationalAssociationBlock = () => {
+  const {data: organization} = useOrganization();
   return (
     <div className="w-1/2 p-2">
       <div className="flex">
         <div className="w-16 mr-4">
           <Image
-            src="/pdf/ffs-logo.png"
-            alt="FFS Logo"
+            src={organization?.logo || "/pdf/ffs-logo.png"}
+            alt={`${organization?.name || "FFS"} Logo`}
             width={60}
             height={60}
           />
@@ -18,9 +20,8 @@ export const NationalAssociationBlock = () => {
           <div className="text-xs italic">
             / Fédération nationale / Nationaler Verband
           </div>
-          <div className="font-semibold mt-1">FEDERATION FRANCAISE DE SKI</div>
-          <div>2 rue René Dumond- Meythet</div>
-          <div>74960 ANNECY</div>
+          <div className="font-semibold mt-1">{organization?.name || "FEDERATION FRANCAISE DE SKI"}</div>
+          <div>{organization?.contacts.responsible_for_entry.address || "2 rue René Dumond- Meythet"}</div>
         </div>
       </div>
     </div>

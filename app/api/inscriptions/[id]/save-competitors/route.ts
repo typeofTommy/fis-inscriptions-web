@@ -1,12 +1,13 @@
 import {NextRequest, NextResponse} from "next/server";
 import {db} from "@/app/db/inscriptionsDB";
-import {inscriptionCompetitors} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {getAuth} from "@clerk/nextjs/server";
 
 export async function POST(
   req: NextRequest,
   {params}: {params: Promise<{id: string}>}
 ) {
+  const { inscriptionCompetitors } = getDbTables();
   const {userId} = getAuth(req);
   if (!userId) {
     return NextResponse.json({error: "Unauthorized"}, {status: 401});

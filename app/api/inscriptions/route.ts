@@ -1,10 +1,11 @@
 import {NextResponse} from "next/server";
 import * as z from "zod";
 import {db} from "@/app/db/inscriptionsDB";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {Resend} from "resend";
 import {clerkClient} from "@clerk/clerk-sdk-node";
-import {isNull} from "drizzle-orm";
+import {isNull, eq} from "drizzle-orm";
+import {getUserOrganizationCode} from "@/app/lib/getUserOrganization";
 
 // Define the schema for the request body (matching the form schema)
 const inscriptionSchema = z.object({
@@ -26,6 +27,10 @@ export async function POST(request: Request) {
     }
 
     const newInscription = body.data;
+
+    // Get organization config dynamically
+    const organizationCode = await getUserOrganizationCode();
+    const { inscriptions, organizations } = getDbTables();
 
     const result = await db
       .insert(inscriptions)
@@ -71,17 +76,28 @@ export async function POST(request: Request) {
       else if (eventData.genderCodes.includes("M")) gender = "Hommes";
       else if (eventData.genderCodes.includes("W")) gender = "Femmes";
     }
+
+    // Get organization configuration
+    const org = await db.select().from(organizations).where(eq(organizations.code, organizationCode)).limit(1);
+
+    if (!org[0]) {
+      return NextResponse.json({error: "Organization not found"}, {status: 404});
+    }
+
+    const baseUrl = org[0].baseUrl;
+    const fromEmail = org[0].fromEmail;
+    const emailTemplates = org[0].emailTemplates;
+    const recipients = emailTemplates?.new_inscription?.recipients || ["pmartin@ffs.fr"]; // fallback for compatibility
+
     // Lien vers l'événement
-    const eventUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.inscriptions-fis-etranger.fr"}/inscriptions/${result[0].id}`;
+    const eventUrl = `${baseUrl}/inscriptions/${result[0].id}`;
 
     // Envoi de l'email de notification via Resend
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from:
-          process.env.RESEND_FROM_EMAIL ||
-          "Inscriptions FIS Etranger <noreply@inscriptions-fis-etranger.fr>",
-        to: ["pmartin@ffs.fr"],
+        from: fromEmail,
+        to: recipients,
         subject: `Nouvelle inscription créée (eventId: ${newInscription.eventId})`,
         html: `
           <div style='font-family: Arial, sans-serif; max-width:600px; margin:0 auto; background:#f9f9f9; padding:24px; border-radius:8px;'>
@@ -116,6 +132,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  const { inscriptions } = getDbTables();
   const inscripList = await db
     .select()
     .from(inscriptions)

@@ -1,7 +1,8 @@
 import {NextResponse} from "next/server";
 import {eq, or, and, ilike} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
-import {competitors} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
+import {getUserOrganizationCode} from "@/app/lib/getUserOrganization";
 
 export async function GET(request: Request) {
   try {
@@ -16,13 +17,20 @@ export async function GET(request: Request) {
       return new NextResponse("Genre invalide", {status: 400});
     }
 
+    const { competitors, organizations } = getDbTables();
+
+    // Get organization config dynamically based on user
+    const organizationCode = await getUserOrganizationCode();
+    const org = await db.select().from(organizations).where(eq(organizations.code, organizationCode)).limit(1);
+    const country = org[0]?.country || "FRA";
+
     const where = and(
       or(
         ilike(competitors.lastname, `%${search}%`),
         ilike(competitors.firstname, `%${search}%`)
       ),
       eq(competitors.gender, gender),
-      eq(competitors.nationcode, "FRA")
+      eq(competitors.nationcode, country)
     );
 
     const c = await db.select().from(competitors).where(where);

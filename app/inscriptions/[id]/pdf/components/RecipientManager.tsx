@@ -4,6 +4,7 @@ import React, {useState, useEffect, useMemo} from "react";
 import {toast} from "@/components/ui/use-toast";
 import {useQueryClient} from "@tanstack/react-query";
 import {BrowserWarning, detectBrowser} from "./BrowserWarning";
+import {useOrganization} from "@/hooks/useOrganization";
 
 export type Recipient = {
   email: string;
@@ -32,37 +33,7 @@ type RecipientManagerProps = {
   eventData: any; // Competition type
 };
 
-// Email constants for predefined recipients
-const PREDEFINED_EMAILS = {
-  ALL_RACES: [
-    {email: "pmartin@ffs.fr", name: "P. Martin", reason: "Automatique FFS"},
-    {
-      email: "jmagnellet@orange.fr",
-      name: "J.M Agnellet",
-      reason: "Automatique FFS",
-    },
-    {email: "dchastan@ffs.fr", name: "D. Chastan", reason: "Automatique FFS"},
-    {
-      email: "mbeauregard@ffs.fr",
-      name: "M. Beauregard",
-      reason: "Automatique FFS",
-    },
-  ],
-  WOMEN: [
-    {
-      email: "lionelpellicier@gmail.com",
-      name: "L. Pellicier",
-      reason: "Courses Femmes",
-    },
-  ],
-  MEN: [
-    {
-      email: "perrin.frederic3@gmail.com",
-      name: "F. Perrin",
-      reason: "Courses Hommes",
-    },
-  ],
-};
+// Email constants will be loaded dynamically from organization config
 
 const getBadgeClassForReason = (reason: string): string => {
   const baseClasses =
@@ -174,9 +145,15 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     }
   }, [eventData, gender, emailSentAt]);
 
+  const {data: organization} = useOrganization();
+
   const predefinedRecipients = useMemo(() => {
+    if (!organization) return [];
+
     const processedEmails: DisplayRecipient[] = [];
-    PREDEFINED_EMAILS.ALL_RACES.forEach(({email, name, reason}) => {
+
+    // Add all_races emails
+    organization.emails.all_races.forEach(({email, name, reason}) => {
       processedEmails.push({
         id: `predefined-${email}`,
         email,
@@ -186,8 +163,10 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         isResolvable: true,
       });
     });
+
+    // Add gender-specific emails
     if (gender === "W") {
-      PREDEFINED_EMAILS.WOMEN.forEach(({email, name, reason}) => {
+      organization.emails.women.forEach(({email, name, reason}) => {
         processedEmails.push({
           id: `predefined-${email}`,
           email,
@@ -198,7 +177,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         });
       });
     } else if (gender === "M") {
-      PREDEFINED_EMAILS.MEN.forEach(({email, name, reason}) => {
+      organization.emails.men.forEach(({email, name, reason}) => {
         processedEmails.push({
           id: `predefined-${email}`,
           email,
@@ -209,8 +188,9 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         });
       });
     }
+
     return processedEmails;
-  }, [gender]);
+  }, [organization, gender]);
 
   const displayRecipients = useMemo(() => {
     const processedMap = new Map<string, DisplayRecipient>();

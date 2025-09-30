@@ -1,12 +1,13 @@
 import {NextResponse} from "next/server";
 import {db} from "@/app/db/inscriptionsDB";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {isNull} from "drizzle-orm";
 import type {Competition} from "@/app/types";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const { inscriptions } = getDbTables();
   const {searchParams} = new URL(req.url);
   const number = searchParams.get("number");
   const excludeId = searchParams.get("excludeId");

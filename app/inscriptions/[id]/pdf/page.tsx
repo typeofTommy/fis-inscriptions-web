@@ -10,12 +10,7 @@ import {Footer} from "./components/Footer";
 import {CompetitorsTable} from "./components/CompetitorsTable/CompetitorsTable";
 import {CoachesBlock} from "./components/CoachesBlock";
 import {format} from "date-fns";
-import {
-  inscriptionCompetitors,
-  inscriptions,
-  competitors as competitorsTable,
-  inscriptionCoaches,
-} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {db} from "@/app/db/inscriptionsDB";
 import {eq} from "drizzle-orm";
 import {selectNotDeleted} from "@/lib/soft-delete";
@@ -37,6 +32,7 @@ export default async function PdfPage({
   params: Promise<{id: string}>;
   searchParams: Promise<{gender?: "M" | "W"}>;
 }) {
+  const { inscriptions, inscriptionCoaches, inscriptionCompetitors, competitors: competitorsTable } = getDbTables();
   const {id} = await params;
   const {gender: selectedGender} = await searchParams;
 

@@ -1,10 +1,11 @@
 import {NextResponse} from "next/server";
 import {Resend} from "resend";
 import {db} from "@/app/db/inscriptionsDB";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {eq} from "drizzle-orm";
 // Removed date-fns import - using native JS instead
 import {selectNotDeleted} from "@/lib/soft-delete";
+import {getUserOrganizationCode} from "@/app/lib/getUserOrganization";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ function getResendClient() {
 
 export async function POST(request: Request) {
   try {
+    const { inscriptions, organizations } = getDbTables();
     // On attend un formData (multipart)
     const formData = await request.formData();
     const pdfFile = formData.get("pdf");
@@ -62,13 +64,22 @@ export async function POST(request: Request) {
 
     const eventData = inscription[0].eventData;
 
+    // Get organization config dynamically
+    const organizationCode = await getUserOrganizationCode();
+    const org = await db.select().from(organizations).where(eq(organizations.code, organizationCode)).limit(1);
+
+    if (!org.length) {
+      return NextResponse.json({error: "Organization not found"}, {status: 404});
+    }
+
+    const organizationData = org[0];
+    const baseUrl = organizationData.baseUrl;
+    const fromEmail = organizationData.fromEmail;
+    const emailTemplates = organizationData.emailTemplates;
+
     // pdfFile est un Blob (File)
     const arrayBuffer = await (pdfFile as Blob).arrayBuffer();
     const pdfAsBuffer = Buffer.from(arrayBuffer);
-
-    const fromAddress =
-      process.env.RESEND_FROM_EMAIL ||
-      "Inscriptions FIS Etranger <noreply@inscriptions-fis-etranger.fr>";
 
     // Use the subject provided by the frontend
     const subjectLine = subject;
@@ -111,20 +122,30 @@ export async function POST(request: Request) {
       ? `(${eventData.placeNationCode})`
       : "";
 
+    // Get email template data or fallback to hardcoded values for backwards compatibility
+    const inscriptionPdfTemplate = emailTemplates?.inscription_pdf;
+    const subjectPrefix = inscriptionPdfTemplate?.subject_prefix || "French 🇫🇷";
+    const contactEmail = isWomen
+      ? (inscriptionPdfTemplate?.contact_email?.women || "jmagnellet@orange.fr")
+      : (inscriptionPdfTemplate?.contact_email?.men || "pmartin@ffs.fr");
+    const signatureUrl = isWomen
+      ? (inscriptionPdfTemplate?.signature_urls?.women || "https://i.imgur.com/ISeoDQp.jpeg")
+      : (inscriptionPdfTemplate?.signature_urls?.men || "https://i.imgur.com/tSwmL0f.png");
+
     const resend = getResendClient();
     const {data, error: emailError} = await resend.emails.send({
-      from: fromAddress,
+      from: fromEmail,
       to: to,
       subject: subjectLine,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f5f6f7; padding: 24px; color: #222;">
           <p style="font-size: 18px; margin-bottom: 18px;">Dear Ski Friend,</p>
           <p style="font-size: 16px; margin-bottom: 18px;">
-            Please find attached the French 🇫🇷 <b><i>${subjectGender}</i></b> Team entries for the following races:
+            Please find attached the ${subjectPrefix} <b><i>${subjectGender}</i></b> Team entries for the following races:
           </p>
           <ul style="margin-bottom: 18px;">
             <li style="font-size: 16px;">
-              <a style="color: #1976d2; text-decoration: underline;" href="https://www.inscriptions-fis-etranger.fr/inscriptions/${inscriptionId}">${shortDate}</a>
+              <a style="color: #1976d2; text-decoration: underline;" href="${baseUrl}/inscriptions/${inscriptionId}">${shortDate}</a>
               ➞ ${place} ${nation}-FIS
             </li>
           </ul>
@@ -132,11 +153,11 @@ export async function POST(request: Request) {
             We kindly ask you to <b><a style="color: #1976d2; text-decoration: underline;" href="mailto:${to.join(",")}?subject=Re:%20${encodeURIComponent(subjectLine)}">reply to all</a></b> to confirm receipt, or if you need to provide us with any information or the program.
           </p>
           <p style="font-size: 16px; margin-bottom: 18px;">
-            We wish you great races, and please feel free to contact me at <a href="mailto:${isWomen ? "jmagnellet@orange.fr" : "pmartin@ffs.fr"}" style="color: #1976d2; text-decoration: underline;">${isWomen ? "jmagnellet@orange.fr" : "pmartin@ffs.fr"}</a> if you have any questions.
+            We wish you great races, and please feel free to contact me at <a href="mailto:${contactEmail}" style="color: #1976d2; text-decoration: underline;">${contactEmail}</a> if you have any questions.
           </p>
           <p style="font-size: 16px;">Best regards.</p>
           <div style="text-align: center; margin-top: 32px;">
-            <img src="${isWomen ? "https://i.imgur.com/ISeoDQp.jpeg" : "https://i.imgur.com/tSwmL0f.png"}" alt="French Team Email Signature" style="max-width: 300px; width: 100%; height: auto; display: inline-block;" />
+            <img src="${signatureUrl}" alt="${organizationData.name} Team Email Signature" style="max-width: 300px; width: 100%; height: auto; display: inline-block;" />
           </div>
         </div>
       `,

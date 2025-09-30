@@ -78,6 +78,34 @@
       "when": 1755168648834,
       "tag": "0010_massive_white_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1759140840000,
+      "tag": "0011_add_organizations_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1759147680000,
+      "tag": "0012_add_email_templates_to_organizations",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1759231260000,
+      "tag": "0013_add_base_url_and_from_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1759315320000,
+      "tag": "0014_update_contacts_structure",
+      "breakpoints": true
     }
   ]
 }

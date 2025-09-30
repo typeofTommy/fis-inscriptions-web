@@ -5,14 +5,44 @@ import {fr} from "date-fns/locale";
 import {clerkClient} from "@clerk/clerk-sdk-node";
 
 const dbUrl = process.env.NEON_DATABASE_URL!;
-const emailTo = process.env.RECAP_EMAIL_TO!.split(",");
-const emailCc = process.env.RECAP_EMAIL_CC
+// Fallback email configuration for backwards compatibility
+const fallbackEmailTo = process.env.RECAP_EMAIL_TO?.split(",") || ["pmartin@ffs.fr", "dchastan@ffs.fr"];
+const fallbackEmailCc = process.env.RECAP_EMAIL_CC
   ? process.env.RECAP_EMAIL_CC.split(",")
-  : undefined;
+  : [];
 
 const main = async () => {
   const client = new Client({connectionString: dbUrl});
   await client.connect();
+
+  // Get organization configuration (default to FFS for now)
+  // TODO Phase 2: Make this dynamic (multi-org support in cron) - See MULTI_COUNTRY_PLAN.md
+  const organizationCode = "FFS"; // Currently hardcoded for compatibility
+  let emailTo = fallbackEmailTo;
+  let emailCc = fallbackEmailCc;
+  let baseUrl = "https://www.inscriptions-fis-etranger.fr"; // Fallback
+  let fromEmail: string | undefined;
+
+  try {
+    const {rows: orgRows} = await client.query(
+      'SELECT email_templates, base_url, from_email FROM organizations WHERE code = $1',
+      [organizationCode]
+    );
+
+    if (orgRows.length > 0) {
+      const org = orgRows[0];
+      baseUrl = org.base_url || baseUrl;
+      fromEmail = org.from_email;
+
+      if (org.email_templates?.daily_recap) {
+        const dailyRecapConfig = org.email_templates.daily_recap;
+        emailTo = dailyRecapConfig.recipients || fallbackEmailTo;
+        emailCc = dailyRecapConfig.cc || fallbackEmailCc;
+      }
+    }
+  } catch (error) {
+    console.warn('Could not fetch organization config, using fallback:', error);
+  }
 
   // Récupère les ajouts de compétiteurs du jour
   const {rows: competitors} = await client.query(`
@@ -248,7 +278,7 @@ const main = async () => {
           const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
           const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
           return `<div style='margin-bottom:16px;'>
-            <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a><br>
+            <a href="${baseUrl}/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a><br>
             <span style='color:#6b7280;'>Créé par ${email}</span>
           </div>`;
         })
@@ -281,7 +311,7 @@ const main = async () => {
           const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
           const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
           return `<div style='margin-bottom:24px;'>
-            <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a>
+            <a href="${baseUrl}/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a>
             <ul style='margin:8px 0 0 16px;padding:0;'>
               ${(() => {
                 const byCodex = groupBy(comps, "codex_number");
@@ -319,7 +349,7 @@ const main = async () => {
           const startDate = format(new Date(evt.event_start_date), 'dd/MM/yyyy');
           const endDate = format(new Date(evt.event_end_date), 'dd/MM/yyyy');
           return `<div style='margin-bottom:24px;'>
-            <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a>
+            <a href="${baseUrl}/inscriptions/${evt.inscription_id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location} (${startDate} → ${endDate})</a>
             <ul style='margin:8px 0 0 16px;padding:0;'>
               ${coachList
                 .map((coach) => {
@@ -459,7 +489,7 @@ const main = async () => {
           }
           
           return `<div style='margin-bottom:16px;border-left:4px solid ${urgencyColor};padding-left:12px;background-color:#f9fafb;border-radius:4px;padding:12px;'>
-            <a href="https://www.inscriptions-fis-etranger.fr/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location}</a><br>
+            <a href="${baseUrl}/inscriptions/${evt.id}" style="color:#2563eb;text-decoration:underline;font-weight:bold;">${evt.event_location}</a><br>
             <span style='color:#111827;font-weight:500;'>📅 Course: ${startDate === endDate ? startDate : `${startDate} → ${endDate}`}</span><br>
             <span style='color:${urgencyColor};font-weight:bold;font-size:14px;'>${emailIcon} ${urgencyText}</span><br>
             <span style='color:#6b7280;font-size:13px;'>Statut: ${evt.status} | Créé par: ${email}</span>
@@ -486,6 +516,7 @@ const main = async () => {
     subject: "Récapitulatif quotidien des inscriptions",
     html,
     cc: emailCc,
+    fromEmail,
   });
 
   console.log("Récapitulatif envoyé !");

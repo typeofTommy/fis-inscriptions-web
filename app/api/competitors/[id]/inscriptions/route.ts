@@ -1,15 +1,13 @@
 import {NextResponse} from "next/server";
 import {db} from "@/app/db/inscriptionsDB";
-import {
-  inscriptions,
-  inscriptionCompetitors,
-} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {eq, inArray, isNull, and} from "drizzle-orm";
 
 export async function GET(
   _request: Request,
   {params}: {params: Promise<{id: string}>}
 ) {
+  const { inscriptions, inscriptionCompetitors } = getDbTables();
   const competitorId = Number((await params).id);
   if (!competitorId) {
     return NextResponse.json({error: "Missing competitor id"}, {status: 400});

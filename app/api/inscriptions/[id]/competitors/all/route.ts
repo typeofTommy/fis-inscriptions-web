@@ -1,16 +1,14 @@
 import {NextRequest, NextResponse} from "next/server";
 import {and, eq, inArray, isNull} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
-import {
-  competitors,
-  inscriptionCompetitors,
-} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {clerkClient} from "@clerk/nextjs/server";
 
 export const GET = async (
   req: NextRequest,
   {params}: {params: Promise<{id: string}>}
 ) => {
+  const { competitors, inscriptionCompetitors } = getDbTables();
   const {id} = await params;
   const inscriptionId = Number(id);
   if (!inscriptionId) {

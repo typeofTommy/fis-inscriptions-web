@@ -1,10 +1,7 @@
 import {NextRequest, NextResponse} from "next/server";
 import {eq} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
-import {
-  inscriptions,
-  inscriptionCompetitors,
-} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {selectNotDeleted, softDelete} from "@/lib/soft-delete";
 
 export async function GET(
@@ -12,6 +9,7 @@ export async function GET(
   {params}: {params: Promise<{id: string}>}
 ) {
   try {
+    const { inscriptions } = getDbTables();
     const {id} = await params;
     const idNum = Number(id);
     if (isNaN(idNum)) {
@@ -45,6 +43,7 @@ export async function DELETE(
   {params}: {params: Promise<{id: string}>}
 ) {
   try {
+    const { inscriptions, inscriptionCompetitors } = getDbTables();
     const {id} = await params;
     const inscriptionId = Number(id);
 

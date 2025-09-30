@@ -4,7 +4,8 @@ import {currentUser} from "@clerk/nextjs/server";
 import {sendNotificationEmail} from "@/app/lib/sendNotificationEmail";
 import {db} from "@/app/db/inscriptionsDB";
 import {eq} from "drizzle-orm";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
+import {getUserOrganizationCode} from "@/app/lib/getUserOrganization";
 
 const contactSchema = z.object({
   inscriptionId: z.string(),
@@ -14,6 +15,7 @@ const contactSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const { inscriptions, organizations } = getDbTables();
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({error: "Non autorisé"}, {status: 401});
@@ -38,6 +40,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get organization configuration
+    const organizationCode = await getUserOrganizationCode();
+    const org = await db.select().from(organizations).where(eq(organizations.code, organizationCode)).limit(1);
+
+    if (!org[0]) {
+      return NextResponse.json({error: "Organization not found"}, {status: 404});
+    }
+
+    const baseUrl = org[0].baseUrl;
+    const fromEmail = org[0].fromEmail;
+
     // Préparer l'email
     const userEmail = user.emailAddresses?.[0]?.emailAddress;
     const userName =
@@ -45,7 +58,7 @@ export async function POST(request: NextRequest) {
         ? `${user.firstName} ${user.lastName}`
         : user.username || userEmail || "Utilisateur";
 
-    const eventUrl = `https://www.inscriptions-fis-etranger.fr/inscriptions/${inscription.id}`;
+    const eventUrl = `${baseUrl}/inscriptions/${inscription.id}`;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -93,6 +106,7 @@ export async function POST(request: NextRequest) {
       subject: `[Contact Inscription] ${validatedData.subject}`,
       html: htmlContent,
       userId: user.id,
+      fromEmail,
     });
 
     return NextResponse.json({success: true});

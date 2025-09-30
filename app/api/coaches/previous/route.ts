@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {db} from "@/app/db/inscriptionsDB";
-import {inscriptionCoaches} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {desc} from "drizzle-orm";
 import {selectNotDeleted} from "@/lib/soft-delete";
 import {InscriptionCoach} from "@/app/types";
@@ -12,6 +12,7 @@ const formatName = (name: string) => {
 
 export const GET = async () => {
   try {
+    const { inscriptionCoaches } = getDbTables();
     const coaches = await db
       .select({
         firstName: inscriptionCoaches.firstName,

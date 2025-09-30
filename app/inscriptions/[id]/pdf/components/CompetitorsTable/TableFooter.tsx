@@ -1,11 +1,13 @@
 import React from "react";
 import Image from "next/image";
+import {useOrganization} from "@/hooks/useOrganization";
 
 type TableFooterProps = {
   gender: "M" | "W";
 };
 
 export const TableFooter = ({gender}: TableFooterProps) => {
+  const {data: organization} = useOrganization();
   return (
     // Main container with top border separating from the new totals row in CompetitorsTable
     <div className="border-t border-black">
@@ -13,8 +15,17 @@ export const TableFooter = ({gender}: TableFooterProps) => {
       <div className="flex h-24">
         {/* Single cell spanning the entire width */}
         <div className="w-full p-2 flex items-center justify-center gap-32">
-          <span className="font-bold">SIGNATURE</span>
+          <div className="text-center">
+            <div className="font-bold">SIGNATURE</div>
+            {organization && (
+              <div className="text-sm mt-2">
+                <div>{organization.contacts.signature.name}</div>
+                <div>{organization.contacts.signature.title}</div>
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-4">
+            {/* For now keep existing signatures - TODO: make dynamic when we have multiple orgs */}
             {gender === "M" ? (
               <Image
                 src="/pdf/pm-signature.jpg"

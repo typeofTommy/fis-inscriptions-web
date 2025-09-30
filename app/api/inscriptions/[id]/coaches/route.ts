@@ -1,7 +1,7 @@
 import {NextRequest, NextResponse} from "next/server";
 import {eq, and} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
-import {inscriptionCoaches, inscriptions} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {clerkClient} from "@clerk/clerk-sdk-node";
 import {getAuth} from "@clerk/nextjs/server";
 import {selectNotDeleted, softDelete} from "@/lib/soft-delete";
@@ -11,6 +11,7 @@ export async function GET(
   {params}: {params: Promise<{id: string}>}
 ) {
   try {
+    const { inscriptionCoaches } = getDbTables();
     const {id} = await params;
     const inscriptionId = Number(id);
 
@@ -87,6 +88,7 @@ export async function POST(
   {params}: {params: Promise<{id: string}>}
 ) {
   try {
+    const { inscriptions, inscriptionCoaches } = getDbTables();
     const {userId} = getAuth(req);
     const {id} = await params;
     const inscriptionId = Number(id);
@@ -211,6 +213,7 @@ export async function DELETE(
   {params}: {params: Promise<{id: string}>}
 ) {
   try {
+    const { inscriptionCoaches } = getDbTables();
     const {id} = await params;
     const inscriptionId = Number(id);
 

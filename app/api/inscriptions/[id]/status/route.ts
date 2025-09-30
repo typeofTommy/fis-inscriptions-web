@@ -1,6 +1,6 @@
 import {db} from "@/app/db/inscriptionsDB";
 import {Status} from "@/app/types";
-import {inscriptions} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {eq} from "drizzle-orm";
 import {NextRequest, NextResponse} from "next/server";
 import {selectNotDeleted} from "@/lib/soft-delete";
@@ -10,6 +10,7 @@ export async function PATCH(
   {params}: {params: Promise<{id: string}>}
 ) {
   try {
+    const { inscriptions } = getDbTables();
     const {id} = await params;
     const body = await req.json();
     const status = body.status as Status;

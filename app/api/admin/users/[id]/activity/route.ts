@@ -3,12 +3,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { and, desc, eq, gte, isNull } from "drizzle-orm";
-import { 
-  inscriptions, 
-  inscriptionCompetitors, 
-  inscriptionCoaches,
-  competitors
-} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 
 const pool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL,
@@ -21,6 +16,7 @@ export const GET = async (
   { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
+    const { inscriptions, inscriptionCompetitors, inscriptionCoaches, competitors } = getDbTables();
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

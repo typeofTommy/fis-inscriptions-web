@@ -1,15 +1,12 @@
 import {NextResponse} from "next/server";
 import {eq, and, isNull} from "drizzle-orm";
 import {db} from "@/app/db/inscriptionsDB";
-import {
-  competitors,
-  inscriptionCompetitors,
-  inscriptions,
-} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {Competitor} from "@/app/types";
 
 export async function GET(request: Request) {
   try {
+    const { competitors, inscriptionCompetitors, inscriptions } = getDbTables();
     const url = new URL(request.url);
     const gender = url.searchParams.get("gender");
     if (gender !== "M" && gender !== "W") {

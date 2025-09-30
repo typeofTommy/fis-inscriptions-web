@@ -1,12 +1,13 @@
 import {NextResponse} from "next/server";
 import {db} from "@/app/db/inscriptionsDB";
-import {competitors} from "@/drizzle/schemaInscriptions";
+import {getDbTables} from "@/app/lib/getDbTables";
 import {eq} from "drizzle-orm";
 
 export async function GET(
   _request: Request,
   {params}: {params: Promise<{id: string}>}
 ) {
+  const { competitors } = getDbTables();
   const id = (await params).id;
   const idNum = Number(id);
   if (!id || isNaN(idNum) || !Number.isInteger(idNum) || idNum <= 0) {

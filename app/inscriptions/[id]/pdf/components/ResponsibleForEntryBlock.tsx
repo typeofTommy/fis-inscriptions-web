@@ -1,4 +1,5 @@
 import React from "react";
+import {useOrganization} from "@/hooks/useOrganization";
 
 type ResponsibleForEntryBlockProps = {
   gender: "M" | "W";
@@ -7,23 +8,21 @@ type ResponsibleForEntryBlockProps = {
 export const ResponsibleForEntryBlock = ({
   gender,
 }: ResponsibleForEntryBlockProps) => {
+  const {data: organization} = useOrganization();
+
+  const contact = organization?.contacts?.responsible_for_entry?.[gender === "M" ? "men" : "women"];
+
   return (
     <div className="w-1/2 p-2 border-r border-black">
       <div className="text-sm font-bold">Responsible for Entry</div>
       <div className="text-xs italic">
         / Responsable de l&apos;inscription / Verantwortlich
       </div>
-      {gender === "M" ? (
+      {contact && (
         <>
-          <div className="text-center font-bold mt-2">Philippe MARTIN</div>
-          <div className="text-center mt-1">Mobile :+33 666 49 28 99</div>
-          <div className="text-center">Mail : pmartin@ffs.fr</div>
-        </>
-      ) : (
-        <>
-          <div className="text-center font-bold mt-2">Jean-Michel Agnellet</div>
-          <div className="text-center mt-1">Mobile :+33 788 04 56 50</div>
-          <div className="text-center">Mail : jmagnellet@orange.fr</div>
+          <div className="text-center font-bold mt-2">{contact.name}</div>
+          <div className="text-center mt-1">Mobile : {contact.phone}</div>
+          <div className="text-center">Mail : {contact.email}</div>
         </>
       )}
     </div>
