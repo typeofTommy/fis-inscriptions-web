@@ -1113,15 +1113,27 @@ describe("Schema isolation", () => {
 **Finaliser le remplacement des valeurs hardcodées FRA/FFS :**
 - [x] `RecipientManager.tsx` - Emails dynamiques depuis organization
 - [x] `app/api/competitors/route.ts` - Code pays dynamique depuis organization
-- [x] `ResponsibleForEntryBlock.tsx` - Contact responsable depuis organization
+- [x] `ResponsibleForEntryBlock.tsx` - Contact responsable depuis organization (+ migration 0014 pour contacts gender-specific)
 - [x] `NationalAssociationBlock.tsx` - Logo et nom depuis organization
 - [x] `TableFooter.tsx` - Signature depuis organization
-- [ ] Templates email dans `send-inscription-pdf/route.ts`
+- [x] `send-inscription-pdf/route.ts` - baseUrl et fromEmail depuis organization
+- [x] `app/api/inscriptions/route.ts` - baseUrl et fromEmail depuis organization
+- [x] `app/api/contact-inscription/route.ts` - baseUrl et fromEmail depuis organization
+- [x] `scripts/daily-recap.ts` - baseUrl et fromEmail depuis organization
 
-**Tests que tout fonctionne** avec les valeurs dynamiques
+**État actuel :**
+- ✅ Migration 0014 : Restructuration contacts pour supporter hommes/femmes séparément
+- ✅ Schema `organizations` mis à jour avec `baseUrl`, `fromEmail` et structure contacts gender-specific
+- ✅ Toutes les URLs et emails hardcodés remplacés par valeurs dynamiques
+- ✅ TypeScript compile sans erreurs
+
+**Prochaines étapes avant déploiement :**
+- [ ] Tests manuels complets (création inscription, envoi PDF, emails)
+- [ ] Review complète du code avant push en production
 
 **Plus tard :**
 1. Créer schema `ffs` et basculer `getDbTables()` (1 ligne à changer)
+2. i18n (next-intl)
 
 ---
 
@@ -1142,6 +1154,7 @@ describe("Schema isolation", () => {
 - `drizzle/inscriptions/0011_add_organizations_table.sql` - Seed FFS seulement
 - `drizzle/inscriptions/0012_add_email_templates_to_organizations.sql` - Config FFS seulement
 - `drizzle/inscriptions/0013_add_base_url_and_from_email.sql` - Config FFS seulement
+- `drizzle/inscriptions/0014_update_contacts_structure.sql` - Restructuration contacts pour gender-specific (hommes/femmes)
 
 **Note Phase 2:** Quand on ajoutera l'Espagne, il faudra :
 1. Ajouter seed RFEDI dans une nouvelle migration
@@ -1152,4 +1165,4 @@ describe("Schema isolation", () => {
 
 **Document créé le:** 2025-09-27
 **Dernière mise à jour:** 2025-09-30
-**Version:** 3.2 (Étape 1 Phase 1 complétée : URLs dynamiques)
+**Version:** 3.3 (Migration 0014 : contacts gender-specific + toutes URLs/emails dynamiques)

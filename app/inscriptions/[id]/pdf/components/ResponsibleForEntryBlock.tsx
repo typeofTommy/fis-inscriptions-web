@@ -10,7 +10,23 @@ export const ResponsibleForEntryBlock = ({
 }: ResponsibleForEntryBlockProps) => {
   const {data: organization} = useOrganization();
 
-  const contact = organization?.contacts?.responsible_for_entry?.[gender === "M" ? "men" : "women"];
+  type Person = { name: string; phone: string; email: string };
+  type MenWomen = { men: Person; women: Person };
+
+  const isRecord = (v: unknown): v is Record<string, unknown> =>
+    !!v && typeof v === "object";
+  const isMenWomen = (v: unknown): v is MenWomen =>
+    isRecord(v) && "men" in v && "women" in v;
+  const isPerson = (v: unknown): v is Person =>
+    isRecord(v) && "name" in v && "phone" in v && "email" in v;
+
+  const rfeUnknown: unknown = organization?.contacts?.responsible_for_entry;
+  let contact: Person | undefined;
+  if (isMenWomen(rfeUnknown)) {
+    contact = gender === "M" ? rfeUnknown.men : rfeUnknown.women;
+  } else if (isPerson(rfeUnknown)) {
+    contact = rfeUnknown;
+  }
 
   return (
     <div className="w-1/2 p-2 border-r border-black">
