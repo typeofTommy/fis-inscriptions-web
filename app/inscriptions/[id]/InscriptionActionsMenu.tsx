@@ -34,6 +34,7 @@ import {Inscription} from "@/app/types";
 import {colorBadgePerGender} from "@/app/lib/colorMappers";
 import {UpdateEventDataModal} from "./UpdateEventDataModal";
 import {isMixedEvent} from "@/app/lib/genderStatus";
+import {useTranslations} from "next-intl";
 
 interface InscriptionActionsMenuProps {
   inscription: Inscription;
@@ -44,6 +45,12 @@ export function InscriptionActionsMenu({
   inscription,
   readonly,
 }: InscriptionActionsMenuProps) {
+  const t = useTranslations("inscriptionDetail.actionsMenu");
+  const tStatus = useTranslations("inscriptionDetail.actionsMenu.statusLabels");
+  const tStatusDialog = useTranslations("inscriptionDetail.actionsMenu.statusDialog");
+  const tGenderDialog = useTranslations("inscriptionDetail.actionsMenu.genderDialog");
+  const tDeleteDialog = useTranslations("inscriptionDetail.actionsMenu.deleteDialog");
+
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [genderDialogOpen, setGenderDialogOpen] = useState(false);
@@ -67,7 +74,7 @@ export function InscriptionActionsMenu({
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({status, scope}),
       });
-      if (!res.ok) throw new Error("Erreur lors du changement de statut");
+      if (!res.ok) throw new Error(t("errors.statusChange"));
       return res.json();
     },
     onSuccess: () => {
@@ -83,7 +90,7 @@ export function InscriptionActionsMenu({
       const res = await fetch(`/api/inscriptions/${inscription.id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Erreur lors de la suppression");
+      if (!res.ok) throw new Error(t("errors.delete"));
       return res.json();
     },
     onSuccess: () => {
@@ -95,7 +102,7 @@ export function InscriptionActionsMenu({
       router.push("/");
     },
     onError: (error) => {
-      alert(`Erreur: ${error.message}`);
+      alert(`${t("errors.delete")}: ${error.message}`);
       setPopoverOpen(false);
     },
   });
@@ -111,7 +118,7 @@ export function InscriptionActionsMenu({
         `/api/inscriptions/${inscription.id}/competitors/all`
       );
       if (!res.ok)
-        throw new Error("Erreur lors du chargement des compétiteurs");
+        throw new Error(t("errors.loadCompetitors"));
       return res.json();
     },
   });
@@ -133,12 +140,6 @@ export function InscriptionActionsMenu({
     setPopoverOpen(false);
   };
 
-  const statusLabels = {
-    open: "En cours (ouvert)",
-    validated: "Clôturé (validé)",
-    email_sent: "Email envoyé",
-    cancelled: "Course annulée",
-  };
 
   const isEventMixed = isMixedEvent(inscription.eventData);
 
@@ -170,11 +171,7 @@ export function InscriptionActionsMenu({
   };
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        "Êtes-vous sûr de vouloir supprimer cette inscription ? Cette action est irréversible."
-      )
-    ) {
+    if (window.confirm(tDeleteDialog("confirm"))) {
       deleteMutation.mutate();
     } else {
       setPopoverOpen(false);
@@ -197,7 +194,7 @@ export function InscriptionActionsMenu({
           className="bg-emerald-600 hover:bg-emerald-700 text-white hover:text-white shadow-md flex items-center gap-2 w-24 cursor-pointer"
         >
           <Zap className="w-4 h-4" />
-          Actions
+          {t("button")}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-2 flex flex-col gap-1 items-start text-left">
@@ -211,7 +208,7 @@ export function InscriptionActionsMenu({
           }}
           disabled={statusMutation.isPending || readonly}
         >
-          Changer le statut
+          {t("changeStatus")}
         </Button>
         <Button
           variant="ghost"
@@ -224,7 +221,7 @@ export function InscriptionActionsMenu({
           {isLoadingCompetitors && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
-          Générer PDF
+          {t("generatePdf")}
         </Button>
 
         {!readonly && (
@@ -237,17 +234,16 @@ export function InscriptionActionsMenu({
             }}
           >
             <RefreshCw className="w-4 h-4" />
-            Mettre à jour les données
+            {t("updateData")}
           </Button>
         )}
 
         <Dialog open={genderDialogOpen} onOpenChange={setGenderDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Sélectionner le genre pour le PDF</DialogTitle>
+              <DialogTitle>{tGenderDialog("title")}</DialogTitle>
               <DialogDescription>
-                Cet événement est mixte. Veuillez choisir le genre pour lequel
-                vous souhaitez générer le PDF.
+                {tGenderDialog("description")}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 sm:justify-center">
@@ -261,12 +257,12 @@ export function InscriptionActionsMenu({
                           disabled
                           style={{pointerEvents: "none"}}
                         >
-                          Hommes
+                          {tGenderDialog("men")}
                         </Button>
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Aucun homme inscrit. PDF non générable.</p>
+                      <p>{tGenderDialog("noMen")}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -275,7 +271,7 @@ export function InscriptionActionsMenu({
                   onClick={() => handleGenderSelectedAndGeneratePDF("M")}
                   className={`cursor-pointer ${colorBadgePerGender.M} hover:${colorBadgePerGender.M}/90 text-white`}
                 >
-                  Hommes
+                  {tGenderDialog("men")}
                 </Button>
               )}
               {hasNoWomen ? (
@@ -288,12 +284,12 @@ export function InscriptionActionsMenu({
                           disabled
                           style={{pointerEvents: "none"}}
                         >
-                          Femmes
+                          {tGenderDialog("women")}
                         </Button>
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Aucune femme inscrite. PDF non générable.</p>
+                      <p>{tGenderDialog("noWomen")}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -302,7 +298,7 @@ export function InscriptionActionsMenu({
                   onClick={() => handleGenderSelectedAndGeneratePDF("W")}
                   className={`cursor-pointer ${colorBadgePerGender.W} hover:${colorBadgePerGender.W}/90 text-white`}
                 >
-                  Femmes
+                  {tGenderDialog("women")}
                 </Button>
               )}
             </DialogFooter>
@@ -315,7 +311,7 @@ export function InscriptionActionsMenu({
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Modifier l&apos;inscription</DialogTitle>
+                  <DialogTitle>{t("edit")}</DialogTitle>
                 </DialogHeader>
               </DialogContent>
             </Dialog>
@@ -325,7 +321,7 @@ export function InscriptionActionsMenu({
               onClick={handleDelete}
               disabled={readonly || deleteMutation.isPending}
             >
-              Supprimer
+              {t("delete")}
             </Button>
           </>
         )}
@@ -340,49 +336,49 @@ export function InscriptionActionsMenu({
       <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Changer le statut de l&apos;inscription</DialogTitle>
+            <DialogTitle>{tStatusDialog("title")}</DialogTitle>
             <DialogDescription>
-              Sélectionnez le nouveau statut souhaité.
+              {tStatusDialog("description")}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Nouveau statut :</label>
+              <label className="text-sm font-medium mb-2 block">{tStatusDialog("newStatus")}</label>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger className="cursor-pointer">
-                  <SelectValue placeholder="Choisir un statut" />
+                  <SelectValue placeholder={tStatusDialog("choosePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="open" className="cursor-pointer">
-                    {statusLabels.open}
+                    {tStatus("open")}
                   </SelectItem>
                   <SelectItem value="validated" className="cursor-pointer">
-                    {statusLabels.validated}
+                    {tStatus("validated")}
                   </SelectItem>
                   <SelectItem value="email_sent" className="cursor-pointer">
-                    {statusLabels.email_sent}
+                    {tStatus("email_sent")}
                   </SelectItem>
                   <SelectItem value="cancelled" className="cursor-pointer">
-                    {statusLabels.cancelled}
+                    {tStatus("cancelled")}
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {isEventMixed && (
               <div>
-                <label className="text-sm font-medium mb-2 block">Appliquer à :</label>
+                <label className="text-sm font-medium mb-2 block">{tStatusDialog("applyTo")}</label>
                 <RadioGroup value={selectedStatusScope} onValueChange={(value: "men" | "women" | "both") => setSelectedStatusScope(value)} className="flex flex-row space-x-6">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="men" id="men" />
-                    <Label htmlFor="men" className="cursor-pointer">Hommes</Label>
+                    <Label htmlFor="men" className="cursor-pointer">{tStatusDialog("men")}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="women" id="women" />
-                    <Label htmlFor="women" className="cursor-pointer">Femmes</Label>
+                    <Label htmlFor="women" className="cursor-pointer">{tStatusDialog("women")}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="both" id="both" />
-                    <Label htmlFor="both" className="cursor-pointer">Les deux</Label>
+                    <Label htmlFor="both" className="cursor-pointer">{tStatusDialog("both")}</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -398,7 +394,7 @@ export function InscriptionActionsMenu({
               }}
               className="cursor-pointer"
             >
-              Annuler
+              {tStatusDialog("cancel")}
             </Button>
             <Button
               onClick={handleStatusChange}
@@ -412,7 +408,7 @@ export function InscriptionActionsMenu({
                     } else if (selectedStatusScope === "women") {
                       return selectedStatus === inscription.womenStatus;
                     } else if (selectedStatusScope === "both") {
-                      return selectedStatus === inscription.menStatus && 
+                      return selectedStatus === inscription.menStatus &&
                              selectedStatus === inscription.womenStatus &&
                              selectedStatus === inscription.status;
                     }
@@ -427,7 +423,7 @@ export function InscriptionActionsMenu({
               {statusMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Confirmer
+              {tStatusDialog("confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

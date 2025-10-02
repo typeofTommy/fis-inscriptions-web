@@ -5,9 +5,10 @@ import {Snowflake} from "lucide-react";
 import {Header} from "@/components/ui/Header";
 import {ClerkProvider} from "@clerk/nextjs";
 import {NetworkStatus} from "@/components/ui/NetworkStatus";
-import {PWAInstallButton} from "@/components/ui/PWAInstallButton";
 import "./globals.css";
 import {frFR} from "@clerk/localizations";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
 
 // Component to always provide ClerkProvider with fallback key for build
 function ConditionalClerkProvider({ children }: { children: React.ReactNode }) {
@@ -61,64 +62,67 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const messages = await getMessages();
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ConditionalClerkProvider>
-          <div className="min-h-screen bg-gradient-to-b from-[#e0f0ff] to-white pb-10">
-            {/* Header avec effet de neige */}
-            <div className="relative bg-[#3d7cf2] text-white">
-              <div className="absolute inset-0 overflow-hidden">
-                {Array.from({length: 50}).map((_, i) => {
-                  const initialOpacity = Math.random() * 0.5 + 0.5;
-                  const scale = Math.random() * 0.6 + 0.4;
-                  const duration = Math.random() * 10 + 10;
-                  const delay = Math.random() * -20;
-                  const xAmplitude =
-                    (Math.random() * 90 + 30) * (Math.random() > 0.5 ? 1 : -1); // entre -120px et 120px
-                  const rotation =
-                    (Math.random() * 540 + 180) *
-                    (Math.random() > 0.5 ? 1 : -1); // entre -720deg et 720deg
+          <NextIntlClientProvider messages={messages}>
+            <div className="min-h-screen bg-gradient-to-b from-[#e0f0ff] to-white pb-10">
+              {/* Header avec effet de neige */}
+              <div className="relative bg-[#3d7cf2] text-white">
+                <div className="absolute inset-0 overflow-hidden">
+                  {Array.from({length: 50}).map((_, i) => {
+                    const initialOpacity = Math.random() * 0.5 + 0.5;
+                    const scale = Math.random() * 0.6 + 0.4;
+                    const duration = Math.random() * 10 + 10;
+                    const delay = Math.random() * -20;
+                    const xAmplitude =
+                      (Math.random() * 90 + 30) * (Math.random() > 0.5 ? 1 : -1); // entre -120px et 120px
+                    const rotation =
+                      (Math.random() * 540 + 180) *
+                      (Math.random() > 0.5 ? 1 : -1); // entre -720deg et 720deg
 
-                  return (
-                    <Snowflake
-                      key={i}
-                      className="absolute text-white animate-snowfall"
-                      style={
-                        {
-                          top: "-10%",
-                          left: `${Math.random() * 100}%`,
-                          "--opacity": initialOpacity,
-                          "--scale": scale,
-                          opacity: initialOpacity,
-                          transform: `scale(${scale})`,
-                          animationDuration: `${duration}s`,
-                          animationDelay: `${delay}s`,
-                          "--x-amplitude": `${xAmplitude}px`,
-                          "--rotation": `${rotation}deg`,
-                        } as React.CSSProperties
-                      }
-                    />
-                  );
-                })}
+                    return (
+                      <Snowflake
+                        key={i}
+                        className="absolute text-white animate-snowfall"
+                        style={
+                          {
+                            top: "-10%",
+                            left: `${Math.random() * 100}%`,
+                            "--opacity": initialOpacity,
+                            "--scale": scale,
+                            opacity: initialOpacity,
+                            transform: `scale(${scale})`,
+                            animationDuration: `${duration}s`,
+                            animationDelay: `${delay}s`,
+                            "--x-amplitude": `${xAmplitude}px`,
+                            "--rotation": `${rotation}deg`,
+                          } as React.CSSProperties
+                        }
+                      />
+                    );
+                  })}
+                </div>
+                <Header />
               </div>
-              <Header />
-            </div>
-            <div className="flex justify-center py-8 px-4">
-              <div className="w-full max-w-8xl">
-                <Providers>{children}</Providers>
+              <div className="flex justify-center py-8 px-4">
+                <div className="w-full max-w-8xl">
+                  <Providers>{children}</Providers>
+                </div>
               </div>
             </div>
-          </div>
-          <NetworkStatus />
-          <PWAInstallButton />
+            <NetworkStatus />
+          </NextIntlClientProvider>
         </ConditionalClerkProvider>
       </body>
     </html>

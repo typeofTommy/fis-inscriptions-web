@@ -19,6 +19,7 @@ import {clerkClient, auth} from "@clerk/nextjs/server";
 import type {User} from "@clerk/nextjs/server";
 import type {Competition, CompetitionItem} from "@/app/types";
 import {getGenderStatus} from "@/app/lib/genderStatus";
+import {getTranslations} from "next-intl/server";
 
 // Define more specific types based on common Clerk structures
 // You should ideally import these or more accurate types from Clerk packages
@@ -32,6 +33,8 @@ export default async function PdfPage({
   params: Promise<{id: string}>;
   searchParams: Promise<{gender?: "M" | "W"}>;
 }) {
+  const t = await getTranslations("inscriptionDetail.pdf.recipientManager");
+  const tInscription = await getTranslations("inscriptionDetail");
   const { inscriptions, inscriptionCoaches, inscriptionCompetitors, competitors: competitorsTable } = getDbTables();
   const {id} = await params;
   const {gender: selectedGender} = await searchParams;
@@ -44,10 +47,10 @@ export default async function PdfPage({
 
   // Ensure inscription and eventData exist
   if (!inscription) {
-    return <p>Inscription non trouvée.</p>;
+    return <p>{tInscription("inscriptionNotFound")}</p>;
   }
   if (!inscription.eventData) {
-    return <p>Données d&apos;événement non trouvées pour cette inscription.</p>;
+    return <p>{tInscription("eventDataNotFound")}</p>;
   }
   const eventData = inscription.eventData as Competition;
 
@@ -191,9 +194,9 @@ export default async function PdfPage({
   ): Recipient => {
     if (!clerkId) {
       return {
-        name: "Utilisateur inconnu",
+        name: t("reasons.unknownUser"),
         surname: "",
-        email: "ID non fourni",
+        email: t("reasons.noId"),
         reason,
         isResolvable: false,
       };
@@ -201,7 +204,7 @@ export default async function PdfPage({
     const user = clerkUsersMap.get(clerkId);
     if (!user) {
       return {
-        name: "Utilisateur inconnu",
+        name: t("reasons.unknownUser"),
         surname: "",
         email: `ID: ${clerkId}`,
         reason,
@@ -209,7 +212,7 @@ export default async function PdfPage({
       };
     }
 
-    let primaryEmail = "Email inconnu";
+    let primaryEmail = t("unknownEmail");
     let hasValidEmail = false;
     if (
       user.emailAddresses &&
@@ -226,14 +229,14 @@ export default async function PdfPage({
         primaryEmail = foundEmail;
         hasValidEmail = true;
       } else {
-        primaryEmail = "Email non principal introuvable";
+        primaryEmail = t("notPrimaryEmail");
       }
     }
 
     const firstName = user.firstName || "";
     const lastName = user.lastName || "";
     const fullName = `${firstName} ${lastName}`.trim();
-    const displayName = fullName || user.username || "Nom inconnu";
+    const displayName = fullName || user.username || t("unknownName");
 
     return {
       name: displayName,
@@ -248,15 +251,15 @@ export default async function PdfPage({
   if (inscription.createdBy) {
     const creatorDetails = getUserDetails(
       inscription.createdBy,
-      "Créateur de l'événement"
+      t("reasons.eventCreator")
     );
     recipients.push(creatorDetails);
   } else {
     recipients.push({
-      name: "Utilisateur inconnu",
+      name: t("reasons.unknownUser"),
       surname: "",
-      email: "ID non fourni",
-      reason: "Créateur de l'événement",
+      email: t("reasons.noId"),
+      reason: t("reasons.eventCreator"),
       isResolvable: false,
     });
   }
@@ -265,7 +268,7 @@ export default async function PdfPage({
   if (currentClerkUserId) {
     const currentUserDetails = getUserDetails(
       currentClerkUserId,
-      "Utilisateur actuel de la page"
+      t("reasons.currentUser")
     );
     // Avoid adding if already added as creator (check by ID if possible, or by resolved email if IDs were different)
     const creatorId = inscription.createdBy;
@@ -281,10 +284,10 @@ export default async function PdfPage({
   } else {
     // No current user, but we expect a slot for it, make it unresolvable
     recipients.push({
-      name: "Utilisateur inconnu",
+      name: t("reasons.unknownUser"),
       surname: "",
-      email: "Non connecté",
-      reason: "Utilisateur actuel de la page",
+      email: t("notConnected"),
+      reason: t("reasons.currentUser"),
       isResolvable: false,
     });
   }
@@ -294,7 +297,7 @@ export default async function PdfPage({
   uniqueModifierClerkIds.forEach((clerkId) => {
     const modifierDetails = getUserDetails(
       clerkId,
-      "A ajouté des compétiteurs"
+      t("reasons.addedCompetitors")
     );
     // Avoid adding duplicates - check if this clerkId was already added as creator or current user
     const creatorId = inscription.createdBy;
@@ -309,7 +312,7 @@ export default async function PdfPage({
       isCreator &&
       !recipients.find(
         (r) =>
-          r.reason === "Créateur de l'événement" &&
+          r.reason === t("reasons.eventCreator") &&
           r.email === modifierDetails.email
       )
     ) {
@@ -318,7 +321,7 @@ export default async function PdfPage({
       isCurrentUser &&
       !recipients.find(
         (r) =>
-          r.reason === "Utilisateur actuel de la page" &&
+          r.reason === t("reasons.currentUser") &&
           r.email === modifierDetails.email
       )
     ) {
@@ -348,10 +351,10 @@ export default async function PdfPage({
     );
     if (!alreadyPresent) {
       recipients.push({
-        name: "Contact compétition",
+        name: t("reasons.competitionContact"),
         surname: "",
         email: eventContactEmail,
-        reason: "Contact spécifique à l'événement",
+        reason: t("reasons.eventContact"),
         isResolvable: true,
       });
     }

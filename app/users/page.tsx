@@ -3,8 +3,10 @@
 import { useRole } from "@/app/lib/useRole";
 import { redirect } from "next/navigation";
 import { UsersManagement } from "@/components/UsersManagement";
+import { useTranslations } from "next-intl";
 
 const UsersPage = () => {
+  const t = useTranslations("users");
   const role = useRole();
 
   if (role !== "admin") {
@@ -13,7 +15,7 @@ const UsersPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">Gestion des utilisateurs</h1>
+      <h1 className="text-3xl font-bold mb-8">{t("title")}</h1>
       <UsersManagement />
     </div>
   );

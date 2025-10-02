@@ -8,6 +8,7 @@ import {RecapEvent} from "./RecapEvent";
 import {Coaches} from "./Coaches";
 import AddCoachModal from "./AddCoachModal";
 import {useInscription} from "@/app/inscriptions/form/api";
+import {useTranslations} from "next-intl";
 
 export const dynamic = "force-dynamic";
 import {Loader2} from "lucide-react";
@@ -19,6 +20,7 @@ interface PageProps {
 }
 
 export default function InscriptionPage({params: paramsPromise}: PageProps) {
+  const t = useTranslations("inscriptionDetail");
   const params = React.use(paramsPromise);
 
   const {data: inscription, isLoading, error} = useInscription(params.id);
@@ -39,8 +41,7 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
   if (error) {
     return (
       <div className="container mx-auto py-8 text-center text-red-600">
-        Erreur lors du chargement des détails de l&apos;inscription:{" "}
-        {error.message}
+        {t("error")} {error.message}
       </div>
     );
   }
@@ -48,7 +49,7 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
   if (!inscription) {
     return (
       <div className="container mx-auto py-8 text-center text-slate-500">
-        Aucune donnée d&apos;inscription trouvée.
+        {t("noData")}
       </div>
     );
   }
@@ -73,22 +74,22 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
               value="recap"
               className="px-4 md:px-7 py-2 text-sm md:text-base font-bold transition-colors duration-150 border-none rounded-l-md data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
             >
-              <span className="md:hidden">Récap</span>
-              <span className="hidden md:inline">Récapitulatif</span>
+              <span className="md:hidden">{t("tabs.recap")}</span>
+              <span className="hidden md:inline">{t("tabs.recapFull")}</span>
             </TabsTrigger>
             <TabsTrigger
               value="details_competitors"
               className="px-4 md:px-7 py-2 text-sm md:text-base font-bold transition-colors duration-150 border-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
             >
-              <span className="md:hidden">Codex</span>
-              <span className="hidden md:inline">Par codex</span>
+              <span className="md:hidden">{t("tabs.codex")}</span>
+              <span className="hidden md:inline">{t("tabs.codexFull")}</span>
             </TabsTrigger>
             <TabsTrigger
               value="coaches"
               className="px-4 md:px-7 py-2 text-sm md:text-base font-bold transition-colors duration-150 border-none rounded-r-md data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 data-[state=inactive]:bg-transparent data-[state=inactive]:text-slate-400 data-[state=inactive]:shadow-none cursor-pointer"
             >
-              <span className="md:hidden">Coachs/Staff</span>
-              <span className="hidden md:inline">Coachs/Staff</span>
+              <span className="md:hidden">{t("tabs.coaches")}</span>
+              <span className="hidden md:inline">{t("tabs.coachesFull")}</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="recap">
@@ -102,10 +103,10 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Coachs/Staff
+                    {t("coaches.title")}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Liste des entraîneurs accompagnant la délégation
+                    {t("coaches.description")}
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
@@ -113,8 +114,8 @@ export default function InscriptionPage({params: paramsPromise}: PageProps) {
                   {inscription?.status === "open" && (
                     <AddCoachModal
                       inscriptionId={params.id}
-                      triggerText="Ajouter un entraîneur"
-                      triggerTextMobile="+ Coach"
+                      triggerText={t("coaches.add")}
+                      triggerTextMobile={t("coaches.addShort")}
                       eventStartDate={inscription?.eventData?.startDate}
                       eventEndDate={inscription?.eventData?.endDate}
                     />

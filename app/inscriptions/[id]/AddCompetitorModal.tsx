@@ -14,6 +14,7 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {CompetitionItem, Competitor} from "@/app/types";
+import {useTranslations} from "next-intl";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -104,6 +105,9 @@ export default function AddCompetitorModal({
   triggerText?: string;
   triggerTextMobile?: string;
 }) {
+  const t = useTranslations("modals.addCompetitor");
+  const tCommon = useTranslations("common");
+
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
@@ -164,19 +168,19 @@ export default function AddCompetitorModal({
           className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-xs md:text-base px-2 md:px-4 py-2"
           disabled={!selectedCodex}
         >
-          <span className="md:hidden">{triggerTextMobile || triggerText || "+"}</span>
-          <span className="hidden md:inline">{triggerText || "Inscrire un compétiteur"}</span>
+          <span className="md:hidden">{triggerTextMobile || triggerText || t("titleShort")}</span>
+          <span className="hidden md:inline">{triggerText || t("title")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Inscrire un compétiteur</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Search input for competitors */}
           <input
             className="w-full px-3 py-2 border rounded"
-            placeholder="Nom ou prénom (7 caractères min)"
+            placeholder={t("search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -189,10 +193,10 @@ export default function AddCompetitorModal({
           >
             <option value="" disabled>
               {loading
-                ? "Chargement..."
+                ? tCommon("loading")
                 : results.length === 0
-                ? "Aucun compétiteur trouvé"
-                : "Sélectionner un compétiteur"}
+                ? t("noResults")
+                : t("selected")}
             </option>
             {results.map((c) => (
               <option key={c.competitorid} value={c.competitorid}>
@@ -201,7 +205,7 @@ export default function AddCompetitorModal({
             ))}
           </select>
           <div className="mb-2 font-medium">
-            Pour quels codex ? (courses {gender === "W" ? "F" : "M"})
+            {t("forWhichCodex", {gender: gender === "W" ? "F" : "M"})}
           </div>
           <div className="flex flex-wrap gap-2">
             {codexData
@@ -234,13 +238,13 @@ export default function AddCompetitorModal({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Annuler</Button>
+            <Button variant="ghost">{tCommon("actions.cancel")}</Button>
           </DialogClose>
           <Button
             onClick={handleSave}
             disabled={!selectedId || selectedCodex.length === 0 || saving}
           >
-            {saving ? "Ajout..." : "OK"}
+            {saving ? t("saving") : "OK"}
           </Button>
         </DialogFooter>
       </DialogContent>

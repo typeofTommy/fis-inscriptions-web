@@ -27,6 +27,7 @@ import {
   DialogClose,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {useTranslations} from "next-intl";
 
 export const useInscriptionCoaches = (inscriptionId: string) => {
   return useQuery<InscriptionCoach[]>({
@@ -61,6 +62,7 @@ function useDeleteCoach(inscriptionId: string) {
 
 // Composant bouton WhatsApp séparé
 const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
+  const t = useTranslations("inscriptionDetail.coaches.whatsapp");
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const {data: coaches = []} = useInscriptionCoaches(inscriptionId);
   const {data: inscription} = useQuery({
@@ -77,8 +79,8 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
 
       if (coachesWithWhatsApp.length === 0) {
         toast({
-          title: "Aucun numéro WhatsApp",
-          description: "Aucun coach n'a renseigné son numéro WhatsApp.",
+          title: t("toasts.noWhatsApp"),
+          description: t("toasts.noWhatsAppDescription"),
           variant: "destructive",
         });
         return;
@@ -87,8 +89,8 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
       setShowWhatsAppModal(true);
     } catch {
       toast({
-        title: "Erreur",
-        description: "Impossible de préparer le groupe WhatsApp.",
+        title: t("toasts.prepareError"),
+        description: t("toasts.prepareErrorDescription"),
         variant: "destructive",
       });
     }
@@ -110,13 +112,13 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
       const formattedNumber = formatPhoneNumber(phoneNumber);
       await navigator.clipboard.writeText(formattedNumber);
       toast({
-        title: "Numéro copié !",
-        description: `${formattedNumber} (${coachName}) copié dans le presse-papiers.`,
+        title: t("toasts.numberCopied"),
+        description: t("toasts.numberCopiedDescription", {number: formattedNumber, name: coachName}),
       });
     } catch {
       toast({
-        title: "Erreur",
-        description: "Impossible de copier le numéro.",
+        title: t("toasts.numberCopyError"),
+        description: t("toasts.numberCopyErrorDescription"),
         variant: "destructive",
       });
     }
@@ -124,7 +126,7 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
 
   const copyGroupName = async () => {
     const eventData = inscription?.eventData;
-    const eventName = eventData?.name || "Événement FIS";
+    const eventName = eventData?.name || t("defaultEventName");
     const place = eventData?.place || "";
     const startDate = eventData?.startDate
       ? new Date(eventData.startDate).toLocaleDateString("fr-FR", {
@@ -139,26 +141,26 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
         })
       : "";
 
-    let groupName = `Coachs ${eventName}`;
+    let groupName = `${t("groupNamePrefix")} ${eventName}`;
     if (place) groupName += ` - ${place}`;
     if (startDate && endDate) {
       if (startDate === endDate) {
         groupName += ` - ${startDate}`;
       } else {
-        groupName += ` - ${startDate} au ${endDate}`;
+        groupName += ` - ${startDate} ${t("dateSeparator")} ${endDate}`;
       }
     }
 
     try {
       await navigator.clipboard.writeText(groupName);
       toast({
-        title: "Nom du groupe copié !",
-        description: "Vous pouvez maintenant le coller dans WhatsApp.",
+        title: t("toasts.nameCopied"),
+        description: t("toasts.nameCopiedDescription"),
       });
     } catch {
       toast({
-        title: "Erreur",
-        description: "Impossible de copier le nom du groupe.",
+        title: t("toasts.nameCopyError"),
+        description: t("toasts.nameCopyErrorDescription"),
         variant: "destructive",
       });
     }
@@ -181,8 +183,8 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488" />
         </svg>
-        <span className="hidden sm:inline">Groupe WhatsApp</span>
-        <span className="sm:hidden">WhatsApp</span>
+        <span className="hidden sm:inline">{t("button")}</span>
+        <span className="sm:hidden">{t("buttonShort")}</span>
       </button>
 
       {/* Modale WhatsApp */}
@@ -197,14 +199,14 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
               >
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488" />
               </svg>
-              Créer un groupe WhatsApp
+              {t("modalTitle")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
             <div className="text-center">
               <div className="text-sm text-gray-600">
-                Suivez ces étapes pour créer votre groupe de coachs
+                {t("instructions")}
               </div>
             </div>
 
@@ -215,7 +217,7 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
                   1
                 </div>
                 <h3 className="font-medium">
-                  Ouvrez WhatsApp et créez un nouveau groupe
+                  {t("step1")}
                 </h3>
               </div>
             </div>
@@ -226,13 +228,12 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
                 <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                   2
                 </div>
-                <h3 className="font-medium">Ajoutez les coachs un par un</h3>
+                <h3 className="font-medium">{t("step2")}</h3>
               </div>
 
               <div className="bg-green-50 rounded-lg p-4">
                 <div className="text-sm text-gray-700 mb-3">
-                  Cliquez sur &quot;Copier&quot; pour chaque numéro, puis
-                  collez-le dans la recherche WhatsApp :
+                  {t("step2Description")}
                 </div>
 
                 <div className="space-y-2">
@@ -273,7 +274,7 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
                             d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                           />
                         </svg>
-                        Copier
+                        {t("copy")}
                       </Button>
                     </div>
                   ))}
@@ -287,18 +288,18 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
                 <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                   3
                 </div>
-                <h3 className="font-medium">Nommez votre groupe</h3>
+                <h3 className="font-medium">{t("step3")}</h3>
               </div>
 
               <div className="bg-purple-50 rounded-lg p-4">
                 <div className="text-sm text-gray-700 mb-2">
-                  Nom suggéré pour le groupe :
+                  {t("suggestedName")}
                 </div>
                 <div className="flex items-center justify-between bg-white rounded p-2">
                   <div className="font-medium text-sm">
                     {(() => {
                       const eventData = inscription?.eventData;
-                      const eventName = eventData?.name || "Événement FIS";
+                      const eventName = eventData?.name || t("defaultEventName");
                       const place = eventData?.place || "";
                       const startDate = eventData?.startDate
                         ? new Date(eventData.startDate).toLocaleDateString(
@@ -313,13 +314,13 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
                           )
                         : "";
 
-                      let groupName = `Coachs ${eventName}`;
+                      let groupName = `${t("groupNamePrefix")} ${eventName}`;
                       if (place) groupName += ` - ${place}`;
                       if (startDate && endDate) {
                         if (startDate === endDate) {
                           groupName += ` - ${startDate}`;
                         } else {
-                          groupName += ` - ${startDate} au ${endDate}`;
+                          groupName += ` - ${startDate} ${t("dateSeparator")} ${endDate}`;
                         }
                       }
                       return groupName;
@@ -339,7 +340,7 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
                         d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                       />
                     </svg>
-                    Copier
+                    {t("copy")}
                   </Button>
                 </div>
               </div>
@@ -351,7 +352,7 @@ const WhatsAppButton = ({inscriptionId}: {inscriptionId: string}) => {
               variant="outline"
               onClick={() => setShowWhatsAppModal(false)}
             >
-              Fermer
+              {t("close")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -367,6 +368,7 @@ export const Coaches = ({
   inscriptionId: string;
   genderFilter?: "both" | "M" | "W";
 }) => {
+  const t = useTranslations("inscriptionDetail.coaches");
   const {
     data: coaches = [],
     isPending,
@@ -404,28 +406,26 @@ export const Coaches = ({
     return (
       <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
         <Loader2 className="w-4 h-4 animate-spin" />
-        <p>Chargement des coaches...</p>
+        <p>{t("loading")}</p>
       </div>
     );
   }
 
   if (error) {
-    return <div>Erreur lors du chargement des coaches.</div>;
+    return <div>{t("loadError")}</div>;
   }
 
   if (!filteredCoaches?.length && !isPending) {
     const hasCoaches = coaches?.length > 0;
-    const messageText = hasCoaches 
-      ? `Aucun coach pour ${genderFilter === "M" ? "les hommes" : genderFilter === "W" ? "les femmes" : "ce filtre"}`
-      : "Aucun coach ajouté pour le moment";
-    
+    const filter = genderFilter === "M" ? t("filterMen") : genderFilter === "W" ? t("filterWomen") : t("filterOther");
+    const messageText = hasCoaches
+      ? t("noCoachesFiltered", {filter})
+      : t("noCoaches");
+
     return (
       <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
         {inscription?.status !== "open" && (
-          <div className="text-xs text-slate-400 italic select-none">
-            L&apos;ajout / suppression de coaches n&apos;est possible que
-            lorsque l&apos;inscription est <b>ouverte</b>.
-          </div>
+          <div className="text-xs text-slate-400 italic select-none" dangerouslySetInnerHTML={{__html: t("editRestriction")}} />
         )}
         <p>{messageText}</p>
       </div>
@@ -435,10 +435,7 @@ export const Coaches = ({
   return (
     <div className="space-y-6">
       {inscription?.status !== "open" && (
-        <div className="text-xs text-slate-400 italic select-none">
-          L&apos;ajout / suppression de coaches n&apos;est possible que lorsque
-          l&apos;inscription est <b>ouverte</b>.
-        </div>
+        <div className="text-xs text-slate-400 italic select-none" dangerouslySetInnerHTML={{__html: t("editRestriction")}} />
       )}
 
       {/* Vue desktop - table */}
@@ -446,16 +443,16 @@ export const Coaches = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Prénom</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Équipe</TableHead>
-              <TableHead>Genre</TableHead>
-              <TableHead>WhatsApp</TableHead>
-              <TableHead>Premier jour</TableHead>
-              <TableHead>Dernier jour</TableHead>
-              <TableHead>Ajouté par</TableHead>
-              <TableHead>Date d&apos;ajout</TableHead>
-              {permissionToEdit && <TableHead>Action</TableHead>}
+              <TableHead>{t("table.firstName")}</TableHead>
+              <TableHead>{t("table.lastName")}</TableHead>
+              <TableHead>{t("table.team")}</TableHead>
+              <TableHead>{t("table.gender")}</TableHead>
+              <TableHead>{t("table.whatsapp")}</TableHead>
+              <TableHead>{t("table.firstDay")}</TableHead>
+              <TableHead>{t("table.lastDay")}</TableHead>
+              <TableHead>{t("table.addedBy")}</TableHead>
+              <TableHead>{t("table.addedAt")}</TableHead>
+              {permissionToEdit && <TableHead>{t("table.action")}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -465,7 +462,7 @@ export const Coaches = ({
                 <TableCell className="font-medium">{coach.lastName}</TableCell>
                 <TableCell>{coach.team || "-"}</TableCell>
                 <TableCell>
-                  {coach.gender === "M" ? "Hommes" : coach.gender === "W" ? "Femmes" : "Hommes et femmes"}
+                  {coach.gender === "M" ? t("gender.men") : coach.gender === "W" ? t("gender.women") : t("gender.both")}
                 </TableCell>
                 <TableCell>{coach.whatsappPhone || "-"}</TableCell>
                 <TableCell>
@@ -500,24 +497,18 @@ export const Coaches = ({
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Supprimer le coach</DialogTitle>
-                          <DialogDescription>
-                            Êtes-vous sûr de vouloir supprimer le coach{" "}
-                            <strong>
-                              {coach.firstName} {coach.lastName}
-                            </strong>{" "}
-                            ? Cette action est irréversible.
-                          </DialogDescription>
+                          <DialogTitle>{t("delete.title")}</DialogTitle>
+                          <DialogDescription dangerouslySetInnerHTML={{__html: t("delete.description", {firstName: coach.firstName, lastName: coach.lastName})}} />
                         </DialogHeader>
                         <DialogFooter>
                           <DialogClose asChild>
-                            <Button variant="ghost">Annuler</Button>
+                            <Button variant="ghost">{t("delete.cancel")}</Button>
                           </DialogClose>
                           <Button
                             onClick={() => deleteCoach({coachId: coach.id})}
                             className="bg-red-600 hover:bg-red-700 cursor-pointer"
                           >
-                            Supprimer
+                            {t("delete.confirm")}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -544,17 +535,17 @@ export const Coaches = ({
                 </h3>
                 {coach.team && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Équipe: {coach.team}
+                    {t("mobile.team")}: {coach.team}
                   </p>
                 )}
                 {coach.whatsappPhone && (
                   <p className="text-sm text-gray-600 mt-1">
-                    WhatsApp: {coach.whatsappPhone}
+                    {t("mobile.whatsapp")}: {coach.whatsappPhone}
                   </p>
                 )}
                 {(coach.startDate || coach.endDate) && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Période:{" "}
+                    {t("mobile.period")}:{" "}
                     {coach.startDate
                       ? format(new Date(coach.startDate), "dd/MM/yyyy")
                       : "?"}{" "}
@@ -565,10 +556,10 @@ export const Coaches = ({
                   </p>
                 )}
                 <p className="text-sm text-gray-500 mt-1">
-                  Ajouté par: {coach.addedByEmail || "-"}
+                  {t("mobile.addedBy")}: {coach.addedByEmail || "-"}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Le:{" "}
+                  {t("mobile.addedOn")}:{" "}
                   {coach.createdAt
                     ? format(new Date(coach.createdAt), "dd/MM/yyyy à HH:mm")
                     : "-"}
@@ -588,24 +579,18 @@ export const Coaches = ({
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Supprimer le coach</DialogTitle>
-                      <DialogDescription>
-                        Êtes-vous sûr de vouloir supprimer le coach{" "}
-                        <strong>
-                          {coach.firstName} {coach.lastName}
-                        </strong>{" "}
-                        ? Cette action est irréversible.
-                      </DialogDescription>
+                      <DialogTitle>{t("delete.title")}</DialogTitle>
+                      <DialogDescription dangerouslySetInnerHTML={{__html: t("delete.description", {firstName: coach.firstName, lastName: coach.lastName})}} />
                     </DialogHeader>
                     <DialogFooter>
                       <DialogClose asChild>
-                        <Button variant="ghost">Annuler</Button>
+                        <Button variant="ghost">{t("delete.cancel")}</Button>
                       </DialogClose>
                       <Button
                         onClick={() => deleteCoach({coachId: coach.id})}
                         className="bg-red-600 hover:bg-red-700 cursor-pointer"
                       >
-                        Supprimer
+                        {t("delete.confirm")}
                       </Button>
                     </DialogFooter>
                   </DialogContent>

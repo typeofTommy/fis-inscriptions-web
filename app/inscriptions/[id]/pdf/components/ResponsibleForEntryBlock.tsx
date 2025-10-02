@@ -10,8 +10,8 @@ export const ResponsibleForEntryBlock = ({
 }: ResponsibleForEntryBlockProps) => {
   const {data: organization} = useOrganization();
 
-  type Person = { name: string; phone: string; email: string };
-  type MenWomen = { men: Person; women: Person };
+  type Person = {name: string; phone: string; email: string};
+  type MenWomen = {men: Person; women: Person};
 
   const isRecord = (v: unknown): v is Record<string, unknown> =>
     !!v && typeof v === "object";

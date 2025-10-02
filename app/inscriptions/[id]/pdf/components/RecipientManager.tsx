@@ -5,6 +5,7 @@ import {toast} from "@/components/ui/use-toast";
 import {useQueryClient} from "@tanstack/react-query";
 import {BrowserWarning, detectBrowser} from "./BrowserWarning";
 import {useOrganization} from "@/hooks/useOrganization";
+import {useTranslations} from "next-intl";
 
 export type Recipient = {
   email: string;
@@ -72,6 +73,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   emailSentAt,
   eventData,
 }) => {
+  const t = useTranslations("inscriptionDetail.pdf.recipientManager");
   const queryClient = useQueryClient();
   const [selectedRecipients, setSelectedRecipients] = useState<
     Record<string, boolean>
@@ -202,7 +204,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         }
         if (rec.isResolvable && !existing.isResolvable) {
           existing.isResolvable = true;
-          if (rec.name !== "Utilisateur inconnu") {
+          if (rec.name !== t("reasons.unknownUser")) {
             existing.name = rec.name;
             existing.surname = rec.surname;
           }
@@ -268,23 +270,23 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
 
   const addCustomEmail = () => {
     if (!newEmail.trim()) {
-      setEmailError("Veuillez entrer une adresse email");
+      setEmailError(t("errors.enterEmail"));
       return;
     }
     if (!validateEmail(newEmail)) {
-      setEmailError("Veuillez entrer une adresse email valide");
+      setEmailError(t("errors.validEmail"));
       return;
     }
     if (allRecipients.some((recipient) => recipient.email === newEmail)) {
-      setEmailError("Cette adresse email est déjà ajoutée");
+      setEmailError(t("errors.emailExists"));
       return;
     }
     const customRecipient: DisplayRecipient = {
       id: `custom-${newEmail}`,
       email: newEmail,
-      name: "Email personnalisé",
+      name: t("reasons.customEmail"),
       surname: "",
-      reasons: ["Email ajouté manuellement"],
+      reasons: [t("reasons.manuallyAdded")],
       isResolvable: true,
     };
     setCustomEmails((prev) => [...prev, customRecipient]);
@@ -306,8 +308,8 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
     if (!element) return;
 
     const toastInstance = toast({
-      title: "Envoi de l'email en cours...",
-      description: "Le PDF est en cours d'envoi aux destinataires.",
+      title: t("toasts.sending"),
+      description: t("toasts.sendingDescription"),
       open: true,
       duration: 1000000, // très long
     });
@@ -364,7 +366,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         .map(([email]) => email);
       if (selectedEmails.length === 0) {
         setSendStatus({
-          message: "Veuillez sélectionner au moins un destinataire.",
+          message: t("errors.selectRecipient"),
           type: "error",
         });
         setIsSending(false);
@@ -383,12 +385,11 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       const result = await response.json();
       if (!response.ok) {
         throw new Error(
-          result.details || result.error || "Erreur lors de l'envoi de l'email"
+          result.details || result.error || t("errors.sendError")
         );
       }
       setSendStatus({
-        message:
-          "PDF envoyé avec succès ! Email ID: " + (result.emailId || "N/A"),
+        message: t("toasts.success", { emailId: result.emailId || "N/A" }),
         type: "success",
       });
 
@@ -404,8 +405,8 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       if (toastInstance && toastInstance.update) {
         toastInstance.update({
           id: toastId,
-          title: "Email envoyé !",
-          description: "Le PDF a bien été envoyé aux destinataires.",
+          title: t("toasts.sent"),
+          description: t("toasts.sentDescription"),
           open: true,
           duration: 1000000,
           variant: "default",
@@ -416,18 +417,18 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         message:
           error instanceof Error
             ? error.message
-            : "Une erreur est survenue lors de l'envoi.",
+            : t("errors.unknownError"),
         type: "error",
       });
       // Met à jour le toast en erreur
       if (toastInstance && toastInstance.update) {
         toastInstance.update({
           id: toastId,
-          title: "Erreur lors de l'envoi",
+          title: t("toasts.error"),
           description:
             error instanceof Error
               ? error.message
-              : "Une erreur est survenue lors de l'envoi.",
+              : t("errors.unknownError"),
           open: true,
           duration: 1000000,
           variant: "destructive",
@@ -445,7 +446,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
   return (
     <div className="mt-6 p-4 border-t border-gray-200 print:hidden">
       <h3 className="text-lg font-semibold mb-3">
-        Gérer les destinataires et envoyer le PDF
+        {t("title")}
       </h3>
 
       {/* Display API Call Status */}
@@ -473,7 +474,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
             htmlFor="emailSubject"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Sujet de l&apos;email :
+            {t("emailSubject")}
           </label>
           <input
             type="text"
@@ -482,20 +483,22 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
             onChange={(e) => setEmailSubject(e.target.value)}
             disabled={isSending}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-            placeholder="Sujet de l'email"
+            placeholder={t("emailSubjectPlaceholder")}
             required
           />
           {emailSentAt && (
             <p className="mt-1 text-xs text-amber-600">
-              ⚠️ Cet email a déjà été envoyé le {(() => {
-                const date = new Date(emailSentAt);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${day}/${month}/${year} à ${hours}:${minutes}`;
-              })()}. Le préfixe [UPDATE] a été ajouté automatiquement.
+              {t("emailAlreadySent", {
+                date: (() => {
+                  const date = new Date(emailSentAt);
+                  const day = String(date.getDate()).padStart(2, '0');
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const year = date.getFullYear();
+                  const hours = String(date.getHours()).padStart(2, '0');
+                  const minutes = String(date.getMinutes()).padStart(2, '0');
+                  return `${day}/${month}/${year} à ${hours}:${minutes}`;
+                })()
+              })}
             </p>
           )}
         </div>
@@ -528,7 +531,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
                   }`}
                 >
                   {recipient.name} {recipient.surname}
-                  {!recipient.isResolvable && " (Email Invalide/Manquant)"}
+                  {!recipient.isResolvable && ` ${t("invalidEmail")}`}
                 </label>
                 <p className="text-xs text-gray-500">{recipient.email}</p>
                 <div>
@@ -549,7 +552,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
                   disabled={isSending}
                   className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 cursor-pointer"
                 >
-                  Supprimer
+                  {t("remove")}
                 </button>
               )}
             </div>
@@ -561,7 +564,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
             htmlFor="customEmail"
             className="block text-sm font-medium text-gray-700"
           >
-            Ajouter un email personnalisé :
+            {t("addCustomEmail")}
           </label>
           <div className="mt-1 flex rounded-md shadow-sm">
             <input
@@ -572,7 +575,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
                 setNewEmail(e.target.value);
                 if (emailError) setEmailError("");
               }}
-              placeholder="adresse@example.com"
+              placeholder={t("emailPlaceholder")}
               disabled={isSending}
               className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:opacity-50 px-3"
             />
@@ -582,7 +585,7 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
               disabled={isSending}
               className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 rounded-r-md hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 cursor-pointer"
             >
-              Ajouter
+              {t("add")}
             </button>
           </div>
           {emailError && (
@@ -597,10 +600,10 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
             className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:opacity-70 cursor-pointer"
           >
             {isChromeOnMac
-              ? "PDF désactivé sur Chrome macOS"
+              ? t("chromeDisabled")
               : isSending
-                ? "Envoi en cours..."
-                : "Envoyer le PDF par Email"}
+                ? t("sending")
+                : t("sendButton")}
           </button>
         </div>
       </form>

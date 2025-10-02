@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { 
-  Activity, 
-  Calendar, 
-  Users, 
-  UserPlus, 
+import {
+  Activity,
+  Calendar,
+  Users,
+  UserPlus,
   Trophy,
   RefreshCw,
   Clock,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
+import {useTranslations} from "next-intl";
 
 type ActivityItem = {
   id: number;
@@ -57,6 +58,8 @@ type UserActivityModalProps = {
 };
 
 export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) => {
+  const t = useTranslations("modals.userActivity");
+
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [stats, setStats] = useState<ActivityStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,25 +68,25 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
 
   const fetchActivity = useCallback(async () => {
     if (!isOpen) return;
-    
+
     try {
       setLoading(true);
       const response = await fetch(`/api/admin/users/${userId}/activity`);
-      if (!response.ok) throw new Error("Erreur lors du chargement de l'activité");
-      
+      if (!response.ok) throw new Error(t("loadError"));
+
       const data = await response.json();
       setActivities(data.activities);
       setStats(data.stats);
     } catch {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger l'activité de l'utilisateur",
+        title: t("loadError"),
+        description: t("loadErrorDescription"),
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [isOpen, userId, toast]);
+  }, [isOpen, userId, toast, t]);
 
   useEffect(() => {
     if (isOpen) {
@@ -119,37 +122,38 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
     const place = eventData?.place;
     const startDate = eventData?.startDate;
     const endDate = eventData?.endDate;
-    
+
     if (place && startDate) {
       const dateDisplay = startDate === endDate ? startDate : `${startDate} → ${endDate}`;
       return `${place} (${dateDisplay})`;
     }
-    
+
     // Fallback sur d'autres propriétés possibles
     const eventName = eventData?.eventName || eventData?.eventTitle || eventData?.title;
     if (eventName) return eventName;
-    
+
     // Fallback final
-    return `Événement #${eventId || inscriptionId}`;
+    return `${t("event")} #${eventId || inscriptionId}`;
   };
 
   const getActivityDescription = (activity: ActivityItem) => {
     const eventName = getEventDisplayName(activity.eventData, activity.eventId, activity.inscriptionId);
-    
+
     switch (activity.type) {
       case "inscription":
-        return `Inscription créée pour '${eventName}'`;
+        return t("inscriptionCreated", {eventName});
       case "competitor":
-        const competitorName = activity.competitorFirstName && activity.competitorLastName 
+        const competitorName = activity.competitorFirstName && activity.competitorLastName
           ? `${activity.competitorFirstName} ${activity.competitorLastName}`
-          : `Compétiteur #${activity.competitorId}`;
+          : `${t("competitor")} #${activity.competitorId}`;
         const nation = activity.competitorNation ? ` (${activity.competitorNation})` : '';
         const codex = activity.codexNumber ? ` [${activity.codexNumber}]` : '';
-        return `Compétiteur ajouté : ${competitorName}${nation}${codex} dans '${eventName}'`;
+        return t("competitorAdded", {competitorName, nation, codex, eventName});
       case "coach":
-        return `Coach ajouté : ${activity.firstName} ${activity.lastName}${activity.team ? ` (${activity.team})` : ""} dans '${eventName}'`;
+        const team = activity.team ? ` (${activity.team})` : "";
+        return t("coachAdded", {firstName: activity.firstName || "", lastName: activity.lastName || "", team, eventName});
       default:
-        return "Activité inconnue";
+        return t("unknownActivity");
     }
   };
 
@@ -180,16 +184,16 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
           className="cursor-pointer"
         >
           <Activity className="h-4 w-4 mr-1" />
-          Activité
+          {t("button")}
         </Button>
       </DialogTrigger>
       <DialogContent className="!max-w-none !w-[85vw] max-h-[90vh] overflow-hidden flex flex-col" style={{ width: '85vw', maxWidth: 'none' }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Activité de {userName}
+            {t("title", {userName})}
             <Badge variant="secondary" className="ml-2">
-              30 derniers jours
+              {t("last30Days")}
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -205,13 +209,13 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
                       <Calendar className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm text-blue-700 font-medium">Inscriptions créées</p>
+                      <p className="text-sm text-blue-700 font-medium">{t("inscriptionsCreated")}</p>
                       <p className="text-3xl font-bold text-blue-900">{stats.inscriptionsCount}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
@@ -219,13 +223,13 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
                       <Users className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm text-green-700 font-medium">Compétiteurs ajoutés</p>
+                      <p className="text-sm text-green-700 font-medium">{t("competitorsAdded")}</p>
                       <p className="text-3xl font-bold text-green-900">{stats.competitorsCount}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
@@ -233,13 +237,13 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
                       <UserPlus className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm text-purple-700 font-medium">Coaches ajoutés</p>
+                      <p className="text-sm text-purple-700 font-medium">{t("coachesAdded")}</p>
                       <p className="text-3xl font-bold text-purple-900">{stats.coachesCount}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
@@ -247,7 +251,7 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
                       <Trophy className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm text-orange-700 font-medium">Total activités</p>
+                      <p className="text-sm text-orange-700 font-medium">{t("totalActivities")}</p>
                       <p className="text-3xl font-bold text-orange-900">{stats.totalActivities}</p>
                     </div>
                   </div>
@@ -259,7 +263,7 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
           {/* Timeline des activités */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-lg">Activités récentes</CardTitle>
+              <CardTitle className="text-lg">{t("recentActivities")}</CardTitle>
               <Button
                 variant="outline"
                 size="sm"
@@ -274,11 +278,11 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
               {loading ? (
                 <div className="text-center py-8">
                   <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  Chargement de l&apos;activité...
+                  {t("loading")}
                 </div>
               ) : activities.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  Aucune activité trouvée dans les 30 derniers jours
+                  {t("noActivity")}
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
@@ -296,12 +300,12 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
                             {getActivityDescription(activity)}
                           </p>
                           {getInscriptionLink(activity) && (
-                            <Link 
+                            <Link
                               href={getInscriptionLink(activity)!}
                               className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
                             >
                               <ExternalLink className="h-4 w-4" />
-                              Voir
+                              {t("view")}
                             </Link>
                           )}
                         </div>
@@ -314,8 +318,8 @@ export const UserActivityModal = ({ userId, userName }: UserActivityModalProps) 
                       </div>
                       <div className="flex-shrink-0">
                         <Badge className={`${getActivityBadgeColor(activity.type)} text-sm px-3 py-1`}>
-                          {activity.type === "inscription" ? "Inscription" :
-                           activity.type === "competitor" ? "Compétiteur" : "Coach"}
+                          {activity.type === "inscription" ? t("inscription") :
+                           activity.type === "competitor" ? t("competitor") : t("coach")}
                         </Badge>
                       </div>
                     </div>

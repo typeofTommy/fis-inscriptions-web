@@ -18,6 +18,8 @@ Rassemblez les informations suivantes pour la nouvelle organisation :
 - `code` : Code de l'organisation (ex: "RFEDI")
 - `name` : Nom complet (ex: "Real Federación Española de Deportes de Invierno")
 - `country` : Code pays ISO (ex: "ESP")
+- `baseUrl` : URL de base de l'application (ex: "https://inscripciones-rfedi.es")
+- `fromEmail` : Email d'envoi (ex: "Inscripciones RFEDI <noreply@inscripciones-rfedi.es>")
 - `logo` : URL du logo (optionnel)
 
 **Emails de notification :**
@@ -39,14 +41,45 @@ Rassemblez les informations suivantes pour la nouvelle organisation :
 ```json
 {
   "responsible_for_entry": {
-    "name": "Nom Responsable",
     "address": "Adresse complète avec code postal et ville",
-    "phone": "+34 XXX XXX XXX",
-    "email": "responsable@rfedi.es"
+    "men": {
+      "name": "Nom Responsable Hommes",
+      "phone": "+34 XXX XXX XXX",
+      "email": "responsable-hommes@rfedi.es"
+    },
+    "women": {
+      "name": "Nom Responsable Femmes",
+      "phone": "+34 XXX XXX XXX",
+      "email": "responsable-femmes@rfedi.es"
+    }
   },
   "signature": {
     "name": "Nom Signataire",
     "title": "Titre/Fonction"
+  }
+}
+```
+
+**Templates d'email (optionnel mais recommandé) :**
+```json
+{
+  "inscription_pdf": {
+    "subject_prefix": "Spanish 🇪🇸",
+    "contact_email": {
+      "men": "responsable-hommes@rfedi.es",
+      "women": "responsable-femmes@rfedi.es"
+    },
+    "signature_urls": {
+      "men": "https://i.imgur.com/signature-men.png",
+      "women": "https://i.imgur.com/signature-women.png"
+    }
+  },
+  "new_inscription": {
+    "recipients": ["contact@rfedi.es"]
+  },
+  "daily_recap": {
+    "recipients": ["contact@rfedi.es", "admin@rfedi.es"],
+    "cc": []
   }
 }
 ```
@@ -56,12 +89,15 @@ Rassemblez les informations suivantes pour la nouvelle organisation :
 **Ajouter l'organisation dans la table `organizations` :**
 
 ```sql
-INSERT INTO "organizations" ("code", "name", "country", "emails", "contacts") VALUES (
+INSERT INTO "organizations" ("code", "name", "country", "base_url", "from_email", "emails", "contacts", "email_templates") VALUES (
   'RFEDI',
   'Real Federación Española de Deportes de Invierno',
   'ESP',
+  'https://inscripciones-rfedi.es',
+  'Inscripciones RFEDI <noreply@inscripciones-rfedi.es>',
   '{"all_races": [{"email": "contact@rfedi.es", "name": "Contact RFEDI", "reason": "Automatique RFEDI"}], "women": [], "men": []}',
-  '{"responsible_for_entry": {"name": "Nom Responsable", "address": "Adresse complète", "phone": "+34 XXX XXX XXX", "email": "responsable@rfedi.es"}, "signature": {"name": "Nom Signataire", "title": "Directeur Sportif"}}'
+  '{"responsible_for_entry": {"address": "Adresse complète avec code postal et ville", "men": {"name": "Nom Responsable Hommes", "phone": "+34 XXX XXX XXX", "email": "responsable-hommes@rfedi.es"}, "women": {"name": "Nom Responsable Femmes", "phone": "+34 XXX XXX XXX", "email": "responsable-femmes@rfedi.es"}}, "signature": {"name": "Nom Signataire", "title": "Directeur Sportif"}}',
+  '{"inscription_pdf": {"subject_prefix": "Spanish 🇪🇸", "contact_email": {"men": "responsable-hommes@rfedi.es", "women": "responsable-femmes@rfedi.es"}, "signature_urls": {"men": "https://i.imgur.com/signature-men.png", "women": "https://i.imgur.com/signature-women.png"}}, "new_inscription": {"recipients": ["contact@rfedi.es"]}, "daily_recap": {"recipients": ["contact@rfedi.es", "admin@rfedi.es"], "cc": []}}'
 );
 ```
 

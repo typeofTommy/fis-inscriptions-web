@@ -329,131 +329,81 @@ export async function GET(req: NextRequest) {
 
 ---
 
-### 1.4 Internationalisation (i18n) - OBLIGATOIRE
+### 1.4 Internationalisation (i18n) - OBLIGATOIRE ✅ (EN COURS)
 
 **Pourquoi en Phase 1 ?** L'Espagne ne peut pas utiliser une interface en français !
 
-#### 1.4.1 Installation et configuration next-intl
+#### 1.4.1 Installation et configuration next-intl ✅
 
 ```bash
 pnpm add next-intl
 ```
 
-```typescript
-// next.config.ts
-import createNextIntlPlugin from "next-intl/plugin";
+**Fichiers créés/modifiés:**
+- ✅ `i18n/request.ts` - Configuration cookie-based locale
+- ✅ `i18n/routing.ts` - Configuration routing (en/fr/es)
+- ✅ `middleware.ts` - Détection langue navigateur + cookie
+- ✅ `next.config.ts` - Plugin next-intl ajouté
+- ✅ `app/layout.tsx` - Wrapper avec NextIntlClientProvider
+- ✅ `components/LanguageSwitcher.tsx` - Sélecteur de langue (FR/EN/ES avec drapeaux)
 
-const withNextIntl = createNextIntlPlugin();
-
-export default withNextIntl({
-  // Configuration Next.js existante
-});
-```
-
-```typescript
-// app/[locale]/layout.tsx
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-
-export default async function LocaleLayout({
-  children,
-  params: { locale }
-}: {
-  children: React.ReactNode;
-  params: { locale: string };
-}) {
-  const messages = await getMessages();
-
-  return (
-    <NextIntlClientProvider messages={messages}>
-      {children}
-    </NextIntlClientProvider>
-  );
-}
-```
-
-#### 1.4.2 Structure des traductions
+#### 1.4.2 Structure des traductions ✅
 
 ```
 /messages/
-  /fr/
-    common.json
-    inscriptions.json
-    competitors.json
-    emails.json
-  /es/
-    common.json
-    inscriptions.json
-    competitors.json
-    emails.json
-  /en/
-    common.json
-    inscriptions.json
-    competitors.json
-    emails.json
+  en.json  ✅ (Anglais complet)
+  fr.json  ✅ (Français complet)
+  es.json  ✅ (Espagnol complet)
 ```
 
-#### 1.4.3 Extraction des textes hardcodés
+**Sections traduites:**
+- ✅ `common` - Actions, loading, errors, success
+- ✅ `navigation` - Menu principal
+- ✅ `inscriptions` - Table, filtres, statuts, genre, rappels
+- ✅ `competitors` - Liste compétiteurs
+- ✅ `form` - Erreurs de formulaire
+- ✅ `modals.addCompetitor` - Modal ajout compétiteur
+- ✅ `modals.addCoach` - Modal ajout coach (avec validation dates)
+- ✅ `modals.contact` - Modal contact inscription
+- ✅ `modals.updateEvent` - Modal mise à jour données événement
+- ✅ `modals.userActivity` - Modal activité utilisateur (presque fini)
 
-**Exemples de traductions nécessaires:**
+#### 1.4.3 Composants traduits ✅
 
-```json
-// messages/fr/common.json
-{
-  "navigation": {
-    "inscriptions": "Inscriptions",
-    "competitors": "Compétiteurs",
-    "profile": "Profil"
-  },
-  "actions": {
-    "save": "Enregistrer",
-    "cancel": "Annuler",
-    "delete": "Supprimer",
-    "edit": "Modifier"
-  }
-}
+**Composants traduits (8/10):**
+- ✅ `app/page.tsx` - Navigation principale
+- ✅ `components/ui/Header.tsx` - En-tête et boutons
+- ✅ `components/InscriptionsTable.tsx` - Table complète (headers, filtres, badges)
+- ✅ `app/inscriptions/[id]/AddCompetitorModal.tsx` - Modal ajout compétiteur
+- ✅ `app/inscriptions/[id]/AddCoachModal.tsx` - Modal ajout coach
+- ✅ `app/inscriptions/[id]/ContactModal.tsx` - Modal contact
+- ✅ `app/inscriptions/[id]/UpdateEventDataModal.tsx` - Modal mise à jour
+- ⏸️ `components/UserActivityModal.tsx` - Modal activité (95% fait, reste 2-3 labels)
 
-// messages/fr/inscriptions.json
-{
-  "form": {
-    "eventName": "Nom de l'événement",
-    "startDate": "Date de début",
-    "endDate": "Date de fin",
-    "status": "Statut"
-  },
-  "status": {
-    "open": "Ouvert",
-    "validated": "Validé",
-    "email_sent": "Email envoyé",
-    "cancelled": "Annulé"
-  }
-}
-```
-
-**Utilisation dans les composants:**
-
-```typescript
-// Avant
-<h1>Inscriptions FIS</h1>
-<button>Enregistrer</button>
-
-// Après
-import { useTranslations } from 'next-intl';
-
-const t = useTranslations();
-
-<h1>{t('inscriptions.title')}</h1>
-<button>{t('common.actions.save')}</button>
-```
+**Composants à traduire (~10-15 restants):**
+- ⏳ `app/users/page.tsx` - Page utilisateurs
+- ⏳ `app/inscriptions/[id]/page.tsx` - Page détail inscription
+- ⏳ `app/inscriptions/[id]/pdf/` - Composants PDF
+- ⏳ `components/forms/` - Formulaires divers
+- ⏳ Messages de toast/notifications
+- ⏳ Autres composants avec texte hardcodé
 
 **Fichiers impactés:**
 
-- `next.config.ts`
-- `app/[locale]/layout.tsx` (nouveau)
-- `messages/` (nouveau dossier complet)
-- ~30 composants avec texte hardcodé
+- ✅ `next.config.ts`
+- ✅ `middleware.ts`
+- ✅ `i18n/request.ts` (nouveau)
+- ✅ `i18n/routing.ts` (nouveau)
+- ✅ `app/layout.tsx`
+- ✅ `messages/en.json` (nouveau)
+- ✅ `messages/fr.json` (nouveau)
+- ✅ `messages/es.json` (nouveau)
+- ✅ `components/LanguageSwitcher.tsx` (nouveau)
+- ✅ 8 composants traduits
+- ⏳ ~10-15 composants restants
 
-**Estimation:** 8-12 heures (extraction + traductions FR/ES/EN)
+**Progression:** 60% complété
+**Estimation restante:** 3-5 heures (extraction + traductions FR/ES/EN)
 
 ---
 
@@ -1089,13 +1039,28 @@ describe("Schema isolation", () => {
 1. ✅ **BACKUP** : Créer branch Neon + pg_dump local
 2. 🚧 **Implémenter les étapes de la Phase 1** (EN COURS)
    - ✅ 1.1 Table `organizations` créée et seedée avec FFS
+   - ✅ 1.1.1 Migration 0011 : Création table organizations avec seed FFS
+   - ✅ 1.1.2 Migration 0012 : Ajout email_templates (inscription_pdf, new_inscription, daily_recap)
+   - ✅ 1.1.3 Migration 0013 : Ajout baseUrl et fromEmail pour URLs dynamiques
+   - ✅ 1.1.4 Migration 0014 : Restructuration contacts pour gender-specific (men/women séparés)
    - ✅ 1.3 Helper `getDbTables()` créé (retourne ancien schema pour l'instant)
    - ✅ 1.3 Toutes les queries directes remplacées par `getDbTables()`
+   - 🚧 1.4 Internationalisation (i18n) - **60% complété**
+     - ✅ Configuration next-intl (cookie-based, FR/EN/ES)
+     - ✅ Messages FR/EN/ES créés avec structure complète
+     - ✅ LanguageSwitcher component
+     - ✅ 8 composants traduits (InscriptionsTable, tous les modals, Header, page principale)
+     - ⏳ ~10-15 composants restants (users page, PDF components, forms)
    - ✅ 1.5 API `/api/config/organization` créée
    - ✅ 1.5 Hook `useOrganization` avec TanStack Query créé
-   - 🚧 1.6 Remplacement valeurs hardcodées (EN COURS - RecipientManager fait)
+   - ✅ 1.6 Remplacement valeurs hardcodées (COMPLÉTÉ)
+     - ✅ RecipientManager.tsx - Emails dynamiques
+     - ✅ ResponsibleForEntryBlock.tsx - Contacts gender-specific
+     - ✅ NationalAssociationBlock.tsx - Logo et adresse
+     - ✅ Toutes API routes - baseUrl et fromEmail dynamiques
+     - ✅ scripts/daily-recap.ts - Configuration dynamique
    - ⏳ 1.2 Schema `ffs` + migration données (à faire en dernier pour zéro downtime)
-   - ⏳ 1.7 Tests adaptés
+   - ⏳ 1.7 Tests adaptés (après i18n)
 3. ⏳ Déployer progressivement et valider en prod
 4. ⏳ Valider que France fonctionne parfaitement
 
@@ -1108,32 +1073,34 @@ describe("Schema isolation", () => {
 
 ---
 
-### 🎯 Actions immédiates à finir (session actuelle)
+### 🎯 Travail effectué aujourd'hui (2025-10-01)
 
-**Finaliser le remplacement des valeurs hardcodées FRA/FFS :**
-- [x] `RecipientManager.tsx` - Emails dynamiques depuis organization
-- [x] `app/api/competitors/route.ts` - Code pays dynamique depuis organization
-- [x] `ResponsibleForEntryBlock.tsx` - Contact responsable depuis organization (+ migration 0014 pour contacts gender-specific)
-- [x] `NationalAssociationBlock.tsx` - Logo et nom depuis organization
-- [x] `TableFooter.tsx` - Signature depuis organization
-- [x] `send-inscription-pdf/route.ts` - baseUrl et fromEmail depuis organization
-- [x] `app/api/inscriptions/route.ts` - baseUrl et fromEmail depuis organization
-- [x] `app/api/contact-inscription/route.ts` - baseUrl et fromEmail depuis organization
-- [x] `scripts/daily-recap.ts` - baseUrl et fromEmail depuis organization
+**i18n - Internationalisation complétée à 60% :**
+- ✅ Installation et configuration next-intl (cookie-based, pas de changement d'URL)
+- ✅ Configuration i18n (request.ts, routing.ts, middleware.ts)
+- ✅ Création fichiers messages FR/EN/ES avec structure complète
+- ✅ LanguageSwitcher component avec drapeaux 🇫🇷 🇬🇧 🇪🇸
+- ✅ Traduction de 8 composants principaux:
+  - Header, page principale, InscriptionsTable
+  - Tous les modals (AddCompetitor, AddCoach, Contact, UpdateEventData)
+  - UserActivityModal (95% fait)
 
-**État actuel :**
-- ✅ Migration 0014 : Restructuration contacts pour supporter hommes/femmes séparément
-- ✅ Schema `organizations` mis à jour avec `baseUrl`, `fromEmail` et structure contacts gender-specific
-- ✅ Toutes les URLs et emails hardcodés remplacés par valeurs dynamiques
-- ✅ TypeScript compile sans erreurs
+### 🎯 Actions pour demain (session suivante)
 
-**Prochaines étapes avant déploiement :**
-- [ ] Tests manuels complets (création inscription, envoi PDF, emails)
+**Finaliser i18n (reste ~3-5 heures) :**
+- [ ] Finir UserActivityModal (2-3 labels restants)
+- [ ] Traduire page users (`app/users/page.tsx`)
+- [ ] Traduire page détail inscription (`app/inscriptions/[id]/page.tsx`)
+- [ ] Traduire composants PDF (`app/inscriptions/[id]/pdf/`)
+- [ ] Traduire formulaires et autres composants
+- [ ] Traduire messages toast/notifications
+
+**Ensuite :**
+- [ ] Tests manuels i18n (switcher langue, vérifier toutes les pages)
+- [ ] Adapter tests existants pour i18n (1.7)
+- [ ] Créer schema `ffs` et migrer données (1.2)
+- [ ] Tests manuels complets avant déploiement
 - [ ] Review complète du code avant push en production
-
-**Plus tard :**
-1. Créer schema `ffs` et basculer `getDbTables()` (1 ligne à changer)
-2. i18n (next-intl)
 
 ---
 
@@ -1164,5 +1131,5 @@ describe("Schema isolation", () => {
 ---
 
 **Document créé le:** 2025-09-27
-**Dernière mise à jour:** 2025-09-30
-**Version:** 3.3 (Migration 0014 : contacts gender-specific + toutes URLs/emails dynamiques)
+**Dernière mise à jour:** 2025-10-01
+**Version:** 3.4 (i18n: 60% complété - next-intl configuré, messages FR/EN/ES, 8 composants traduits)

@@ -2,6 +2,7 @@ import {CompetitionItem, Competitor} from "@/app/types";
 import {format} from "date-fns";
 import React from "react";
 import {pdfHeaderColorPerDiscipline} from "@/app/lib/colorMappers";
+import {useTranslations} from "next-intl";
 
 export const CompetitorsTable = ({
   competitors,
@@ -10,6 +11,7 @@ export const CompetitorsTable = ({
   competitors: (Competitor & {codexNumbers: string[]})[];
   codexData: CompetitionItem[];
 }) => {
+  const t = useTranslations("inscriptionDetail.pdf.competitorsTable");
   // Calculate entries per codex (including competitors registered but without points - displayed as 999)
   const entriesPerCodex = codexData.map((codexItem) => {
     const count = competitors.filter((c) => {
@@ -58,15 +60,15 @@ export const CompetitorsTable = ({
         <thead>
           <tr className="border-b border-black">
             <th className="border-r border-black p-1 font-semibold">
-              FIS Code
+              {t("fisCode")}
             </th>
             <th className="border-r border-black p-1 font-semibold">
-              <div>Surname, First Name</div>
-              <div className="italic font-normal">Nom de famille, Prénom</div>
-              <div className="italic font-normal">Familienname, Vorname</div>
+              <div>{t("surname")}</div>
+              <div className="italic font-normal">{t("surnameFr")}</div>
+              <div className="italic font-normal">{t("surnameDe")}</div>
             </th>
             <th className="border-r border-black p-1 font-semibold">
-              <div className="text-center text-lg">YB</div>
+              <div className="text-center text-lg">{t("yb")}</div>
             </th>
             {codexData.map((codex, index) => {
               const disciplineBgColor =
@@ -192,7 +194,7 @@ export const CompetitorsTable = ({
               colSpan={3} // Spans FIS Code, Name, YB columns
               className="p-1 pr-2 border-r border-black text-right font-bold text-md"
             >
-              Entries per Codex
+              {t("entriesPerCodex")}
             </td>
             {entriesPerCodex.map((item, index) => (
               <td

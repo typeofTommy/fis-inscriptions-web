@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {useTranslations} from "next-intl";
 
 interface CoachData {
   firstName: string;
@@ -82,6 +83,9 @@ export default function AddCoachModal({
   eventStartDate?: string;
   eventEndDate?: string;
 }) {
+  const t = useTranslations("modals.addCoach");
+  const tCommon = useTranslations("common");
+
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -139,13 +143,13 @@ export default function AddCoachModal({
   }, [firstName, lastName, startDate, endDate, eventStartDate, eventEndDate, gender]);
 
   const getDateError = () => {
-    if (!startDate || !endDate) return "Les dates sont obligatoires";
+    if (!startDate || !endDate) return t("datesRequired");
     if (startDate > endDate)
-      return "Le premier jour doit être avant le dernier jour";
+      return t("firstBeforeLast");
     if (eventStartDate && startDate < eventStartDate)
-      return "Le premier jour ne peut pas être avant le début de l'événement";
+      return t("firstAfterEventStart");
     if (eventEndDate && endDate > eventEndDate)
-      return "Le dernier jour ne peut pas être après la fin de l'événement";
+      return t("lastAfterEventEnd");
     return null;
   };
 
@@ -207,27 +211,27 @@ export default function AddCoachModal({
           className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-xs md:text-base px-2 md:px-4 py-2"
         >
           <span className="md:hidden">
-            {triggerTextMobile || triggerText || "+"}
+            {triggerTextMobile || triggerText || t("titleShort")}
           </span>
           <span className="hidden md:inline">
-            {triggerText || "Ajouter un coach"}
+            {triggerText || t("title")}
           </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Ajouter un coach</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {previousCoaches.length > 0 && (
             <div className="space-y-2">
-              <Label>Sélection rapide</Label>
+              <Label>{t("quickSelect")}</Label>
               <Select onValueChange={handleQuickSelect}>
                 <SelectTrigger className="cursor-pointer">
-                  <SelectValue placeholder="Choisir un coach précédemment ajouté" />
+                  <SelectValue placeholder={t("selectPrevious")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="manual">Saisie manuelle</SelectItem>
+                  <SelectItem value="manual">{t("manualEntry")}</SelectItem>
                   {previousCoaches.map((coach) => (
                     <SelectItem
                       key={`${coach.firstName}-${coach.lastName}`}
@@ -240,16 +244,16 @@ export default function AddCoachModal({
                 </SelectContent>
               </Select>
               <div className="text-xs text-gray-500">
-                Sélectionnez un coach pour pré-remplir les informations, ou choisissez &quot;Saisie manuelle&quot;
+                {t("quickSelectHint")}
               </div>
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="coach-firstname">Prénom</Label>
+              <Label htmlFor="coach-firstname">{t("firstName")}</Label>
               <Input
                 id="coach-firstname"
-                placeholder="Prénom"
+                placeholder={t("firstName")}
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -257,10 +261,10 @@ export default function AddCoachModal({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="coach-lastname">Nom</Label>
+              <Label htmlFor="coach-lastname">{t("lastName")}</Label>
               <Input
                 id="coach-lastname"
-                placeholder="Nom"
+                placeholder={t("lastName")}
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -268,17 +272,17 @@ export default function AddCoachModal({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="coach-team">Équipe (optionnel)</Label>
+            <Label htmlFor="coach-team">{t("team")}</Label>
             <Input
               id="coach-team"
-              placeholder="Nom de l'équipe"
+              placeholder={t("teamPlaceholder")}
               value={team}
               onChange={(e) => setTeam(e.target.value)}
               onKeyDown={handleKeyDown}
             />
           </div>
           <div className="space-y-2">
-            <Label>Genre *</Label>
+            <Label>{t("gender")}</Label>
             <RadioGroup
               value={gender}
               onValueChange={(value: "M" | "W" | "BOTH") => setGender(value)}
@@ -286,27 +290,27 @@ export default function AddCoachModal({
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="M" id="gender-m" />
-                <Label htmlFor="gender-m" className="cursor-pointer">Homme</Label>
+                <Label htmlFor="gender-m" className="cursor-pointer">{t("genderM")}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="W" id="gender-w" />
-                <Label htmlFor="gender-w" className="cursor-pointer">Femme</Label>
+                <Label htmlFor="gender-w" className="cursor-pointer">{t("genderW")}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="BOTH" id="gender-both" />
-                <Label htmlFor="gender-both" className="cursor-pointer">Homme et femme</Label>
+                <Label htmlFor="gender-both" className="cursor-pointer">{t("genderBoth")}</Label>
               </div>
             </RadioGroup>
             {(!gender && firstName && lastName) && (
-              <div className="text-sm text-red-600">Veuillez sélectionner un genre</div>
+              <div className="text-sm text-red-600">{t("genderRequired")}</div>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="coach-whatsapp">
-              Téléphone WhatsApp (recommandé)
+              {t("whatsapp")}
             </Label>
             <div className="text-xs text-gray-500 mb-1">
-              Pour créer un groupe WhatsApp avec les coachs automatiquement
+              {t("whatsappHint")}
             </div>
             <Input
               id="coach-whatsapp"
@@ -319,7 +323,7 @@ export default function AddCoachModal({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="coach-startdate">Premier jour *</Label>
+              <Label htmlFor="coach-startdate">{t("firstDay")}</Label>
               <Input
                 id="coach-startdate"
                 type="date"
@@ -331,7 +335,7 @@ export default function AddCoachModal({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="coach-enddate">Dernier jour *</Label>
+              <Label htmlFor="coach-enddate">{t("lastDay")}</Label>
               <Input
                 id="coach-enddate"
                 type="date"
@@ -349,14 +353,14 @@ export default function AddCoachModal({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Annuler</Button>
+            <Button variant="ghost">{tCommon("actions.cancel")}</Button>
           </DialogClose>
           <Button
             onClick={handleSave}
             disabled={!isFormValid() || saving}
             className="cursor-pointer"
           >
-            {saving ? "Ajout..." : "Ajouter"}
+            {saving ? t("adding") : t("add")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -17,6 +17,7 @@ import {useState, useMemo} from "react";
 import {Button} from "@/components/ui/button";
 import {Loader2, Mail} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
+import {useTranslations} from "next-intl";
 import {
   Select,
   SelectContent,
@@ -107,6 +108,13 @@ const CountrySelectItem = ({countryCode}: {countryCode: string}) => {
 };
 
 export function InscriptionsTable() {
+  const t = useTranslations("inscriptions.table");
+  const tHeaders = useTranslations("inscriptions.table.headers");
+  const tFilters = useTranslations("inscriptions.table.filters");
+  const tStatus = useTranslations("inscriptions.status");
+  const tGender = useTranslations("inscriptions.gender");
+  const tCommon = useTranslations("common");
+
   const [sorting, setSorting] = useState<SortingState>([
     {id: "startDate", desc: true},
   ]);
@@ -224,12 +232,12 @@ export function InscriptionsTable() {
               size="sm"
               className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-base px-2 py-1"
             >
-              Détails
+              {tCommon("actions.details")}
             </Button>
           </Link>
         );
       },
-      header: "Actions",
+      header: tHeaders("actions"),
     },
     {
       accessorFn: (row) => row.eventData.startDate,
@@ -247,7 +255,7 @@ export function InscriptionsTable() {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="cursor-pointer"
         >
-          Date
+          {tHeaders("date")}
         </Button>
       ),
       filterFn: (row, id, filterValue) => {
@@ -258,7 +266,7 @@ export function InscriptionsTable() {
     },
     {
       id: "reminder",
-      header: "Rappel",
+      header: tHeaders("reminder"),
       accessorFn: (row) => {
         const eventDate = new Date(row.eventData.startDate);
         const deadlineDate = new Date(eventDate);
@@ -285,30 +293,30 @@ export function InscriptionsTable() {
           return (
             <Badge className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1">
               <Mail className="w-3 h-3" />
-              ✓ Envoyé
+              ✓ {t("reminder.sent")}
             </Badge>
           );
         }
-        
+
         // Sinon on affiche le compte à rebours avec les couleurs appropriées
         let badgeClass = "";
         let text = "";
-        
+
         if (diffDays < 0) {
           badgeClass = "bg-gray-100 text-gray-800 border-gray-200";
-          text = `Passé (${Math.abs(diffDays)}j)`;
+          text = t("reminder.past", {days: Math.abs(diffDays)});
         } else if (diffDays === 0) {
           badgeClass = "bg-red-100 text-red-800 border-red-200";
-          text = "J-0 ⚠️";
+          text = t("reminder.warning");
         } else if (diffDays === 1) {
           badgeClass = "bg-orange-100 text-orange-800 border-orange-200";
-          text = "J-1";
+          text = "D-1";
         } else if (diffDays === 2) {
           badgeClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
-          text = "J-2";
+          text = "D-2";
         } else {
           badgeClass = "bg-green-100 text-green-800 border-green-200";
-          text = `J-${diffDays}`;
+          text = `D-${diffDays}`;
         }
         
         return (
@@ -332,7 +340,7 @@ export function InscriptionsTable() {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="cursor-pointer"
         >
-          Station
+          {tHeaders("station")}
         </Button>
       ),
       cell: ({row}) => {
@@ -367,7 +375,7 @@ export function InscriptionsTable() {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="cursor-pointer"
         >
-          Pays
+          {tHeaders("country")}
         </Button>
       ),
       cell: ({row}) => {
@@ -388,7 +396,7 @@ export function InscriptionsTable() {
     },
     {
       id: "codex",
-      header: "codex",
+      header: tHeaders("codex"),
       enableColumnFilter: true,
       accessorFn: (row) => row,
       cell: ({row}) => (
@@ -415,7 +423,7 @@ export function InscriptionsTable() {
     },
     {
       id: "discipline",
-      header: "Disciplines",
+      header: tHeaders("disciplines"),
       enableColumnFilter: true,
       accessorFn: (row) => row,
       cell: ({row}) => {
@@ -464,7 +472,7 @@ export function InscriptionsTable() {
     },
     {
       id: "raceLevel",
-      header: "Race Levels",
+      header: tHeaders("raceLevels"),
       enableColumnFilter: true,
       accessorFn: (row) => row,
       cell: ({row}) => {
@@ -506,7 +514,7 @@ export function InscriptionsTable() {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="cursor-pointer"
         >
-          Statut
+          {tHeaders("status")}
         </Button>
       ),
       cell: ({row}) => {
@@ -526,7 +534,7 @@ export function InscriptionsTable() {
     },
     {
       id: "sex",
-      header: "Sexe",
+      header: tHeaders("sex"),
       enableColumnFilter: true,
       accessorFn: (row) => row,
       cell: ({row}) => {
@@ -564,12 +572,12 @@ export function InscriptionsTable() {
     },
     {
       id: "competitorCount",
-      header: "Nb compétiteurs",
+      header: tHeaders("competitorCount"),
       cell: ({row}) => <CompetitorCountCell inscriptionId={row.original.id} />,
     },
     {
       id: "season",
-      header: "Saison",
+      header: tHeaders("season"),
       enableColumnFilter: true,
       accessorFn: (row) => getSeasonFromDate(new Date(row.eventData.startDate)),
       cell: ({row}) => {
@@ -625,7 +633,7 @@ export function InscriptionsTable() {
           variant="outline"
           className="w-full flex items-center justify-between"
         >
-          <span>Filtres</span>
+          <span>{tCommon("actions.filters")}</span>
           {showFilters ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -646,11 +654,11 @@ export function InscriptionsTable() {
               htmlFor="filter-season"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Saison
+              {tFilters("season")}
               {!!table.getColumn("season")?.getFilterValue() && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -668,10 +676,10 @@ export function InscriptionsTable() {
                 id="filter-season"
                 className="w-full md:w-[140px] cursor-pointer"
               >
-                <SelectValue placeholder="Saison" />
+                <SelectValue placeholder={tFilters("season")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="all">{tFilters("allSeasons")}</SelectItem>
                 {seasonOptions.map((season) => (
                   <SelectItem key={season} value={String(season)}>
                     {season}
@@ -685,11 +693,11 @@ export function InscriptionsTable() {
               htmlFor="filter-date"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Date
+              {tFilters("date")}
               {dateValue && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -702,7 +710,7 @@ export function InscriptionsTable() {
                   table.getColumn("startDate")?.setFilterValue(value);
                 }
               }}
-              placeholder="Date de la 1ère course"
+              placeholder={tFilters("datePlaceholder")}
               className="w-full md:w-[140px]"
             />
           </div>
@@ -711,11 +719,11 @@ export function InscriptionsTable() {
               htmlFor="filter-station"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Station
+              {tFilters("station")}
               {!!table.getColumn("location")?.getFilterValue() && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -733,10 +741,10 @@ export function InscriptionsTable() {
                 id="filter-station"
                 className="w-full md:w-[140px] cursor-pointer"
               >
-                <SelectValue placeholder="Station" />
+                <SelectValue placeholder={tFilters("station")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="all">{tFilters("allStations")}</SelectItem>
                 {locationOptions.map((loc) => (
                   <SelectItem key={loc.value} value={loc.value}>
                     {loc.label[0].toUpperCase() + loc.label.slice(1)}
@@ -750,11 +758,11 @@ export function InscriptionsTable() {
               htmlFor="filter-country"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Pays
+              {tFilters("country")}
               {!!table.getColumn("country")?.getFilterValue() && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -772,10 +780,10 @@ export function InscriptionsTable() {
                 id="filter-country"
                 className="w-full md:w-[140px] cursor-pointer"
               >
-                <SelectValue placeholder="Pays" />
+                <SelectValue placeholder={tFilters("country")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{tFilters("allCountries")}</SelectItem>
                 {countryOptions.map((countryCode) => (
                   <CountrySelectItem
                     key={countryCode}
@@ -790,11 +798,11 @@ export function InscriptionsTable() {
               htmlFor="filter-codex"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Codex
+              {tFilters("codex")}
               {!!table.getColumn("codex")?.getFilterValue() && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -812,10 +820,10 @@ export function InscriptionsTable() {
                 id="filter-codex"
                 className="w-full md:w-[140px] cursor-pointer"
               >
-                <SelectValue placeholder="Codex" />
+                <SelectValue placeholder={tFilters("codex")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{tFilters("allCodex")}</SelectItem>
                 {codexOptions.map((codex) => (
                   <SelectItem key={String(codex)} value={String(codex)}>
                     {codex}
@@ -829,11 +837,11 @@ export function InscriptionsTable() {
               htmlFor="filter-discipline"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Discipline
+              {tFilters("discipline")}
               {!!table.getColumn("discipline")?.getFilterValue() && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -851,10 +859,10 @@ export function InscriptionsTable() {
                 id="filter-discipline"
                 className="w-full md:w-[140px] cursor-pointer"
               >
-                <SelectValue placeholder="Discipline" />
+                <SelectValue placeholder={tFilters("discipline")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="all">{tFilters("allDisciplines")}</SelectItem>
                 {disciplineOptions.map((discipline) => (
                   <SelectItem key={discipline} value={discipline}>
                     {discipline}
@@ -868,11 +876,11 @@ export function InscriptionsTable() {
               htmlFor="filter-racelevel"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Race Level
+              {tFilters("raceLevel")}
               {!!table.getColumn("raceLevel")?.getFilterValue() && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -890,10 +898,10 @@ export function InscriptionsTable() {
                 id="filter-racelevel"
                 className="w-full md:w-[140px] cursor-pointer"
               >
-                <SelectValue placeholder="Race Level" />
+                <SelectValue placeholder={tFilters("raceLevel")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{tFilters("allRaceLevels")}</SelectItem>
                 {raceLevelOptions.map((raceLevel) => (
                   <SelectItem key={raceLevel} value={raceLevel}>
                     {raceLevel}
@@ -907,11 +915,11 @@ export function InscriptionsTable() {
               htmlFor="filter-status"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Statut
+              {tFilters("status")}
               {!!table.getColumn("status")?.getFilterValue() && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -931,14 +939,14 @@ export function InscriptionsTable() {
                 id="filter-status"
                 className="w-full md:w-[140px] cursor-pointer"
               >
-                <SelectValue placeholder="Statut" />
+                <SelectValue placeholder={tFilters("status")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="open">Ouverte</SelectItem>
-                <SelectItem value="validated">Validée</SelectItem>
-                <SelectItem value="email_sent">Email envoyé</SelectItem>
-                <SelectItem value="cancelled">Course annulée</SelectItem>
+                <SelectItem value="all">{tFilters("allStatuses")}</SelectItem>
+                <SelectItem value="open">{tStatus("open")}</SelectItem>
+                <SelectItem value="validated">{tStatus("validated")}</SelectItem>
+                <SelectItem value="email_sent">{tStatus("email_sent")}</SelectItem>
+                <SelectItem value="cancelled">{tStatus("cancelled")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -947,11 +955,11 @@ export function InscriptionsTable() {
               htmlFor="filter-sex"
               className="font-semibold text-sm flex items-center gap-2"
             >
-              Sexe
+              {tFilters("sex")}
               {!!table.getColumn("sex")?.getFilterValue() && (
                 <span
                   className="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                  title="Filtre actif"
+                  title={tFilters("activeFilter")}
                 ></span>
               )}
             </label>
@@ -967,13 +975,13 @@ export function InscriptionsTable() {
                 id="filter-sex"
                 className="w-full md:w-[140px] cursor-pointer"
               >
-                <SelectValue placeholder="Sexe" />
+                <SelectValue placeholder={tFilters("sex")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{tFilters("allGenders")}</SelectItem>
                 {sexOptions.map((sex) => (
                   <SelectItem key={sex} value={sex}>
-                    {sex === "M" ? "Homme" : "Femme"}
+                    {sex === "M" ? tGender("male") : tGender("female")}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1043,7 +1051,7 @@ export function InscriptionsTable() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  Pas de résultats.
+                  {tCommon("noResults")}
                 </TableCell>
               </TableRow>
             )}
@@ -1061,7 +1069,7 @@ export function InscriptionsTable() {
             ))
         ) : (
           <div className="text-center py-8 text-gray-500">
-            Pas de résultats.
+            {tCommon("noResults")}
           </div>
         )}
       </div>

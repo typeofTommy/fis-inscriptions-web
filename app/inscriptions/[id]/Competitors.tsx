@@ -30,6 +30,7 @@ import {InscriptionCompetitor} from "@/app/types";
 import {format} from "date-fns";
 import {CompetitionItem} from "@/app/types";
 import {CompetitorCodexCard} from "./CompetitorCodexCard";
+import {useTranslations} from "next-intl";
 
 export const useInscriptionCompetitors = (
   inscriptionId: string,
@@ -104,6 +105,7 @@ export const Competitors = ({
   discipline: string;
   genderFilter: "both" | "M" | "W";
 }) => {
+  const t = useTranslations("inscriptionDetail.competitors");
   const {
     data: competitorsData = [],
     isPending,
@@ -144,24 +146,21 @@ export const Competitors = ({
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="w-4 h-4 animate-spin" />
-        <p>Chargement des compétiteurs...</p>
+        <p>{t("loading")}</p>
       </div>
     );
   }
   if (error) {
-    return <div>Erreur lors du chargement des compétiteurs.</div>;
+    return <div>{t("loadError")}</div>;
   }
 
   if (!competitors?.length && !isPending) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         {inscription?.status !== "open" && (
-          <div className="text-xs text-slate-400 italic select-none">
-            L&apos;inscription / désincription n&apos;est possible que lorsque
-            l&apos;inscription est <b>ouverte</b>.
-          </div>
+          <div className="text-xs text-slate-400 italic select-none" dangerouslySetInnerHTML={{__html: t("editRestriction")}} />
         )}
-        <p>Aucun compétiteur présent pour ce codex pour le moment</p>
+        <p>{t("noCompetitors")}</p>
       </div>
     );
   }
@@ -169,24 +168,21 @@ export const Competitors = ({
   return (
     <div className="space-y-6">
       {inscription?.status !== "open" && (
-        <div className="text-xs text-slate-400 italic select-none">
-          L&apos;inscription / désincription n&apos;est possible que lorsque
-          l&apos;inscription est <b>ouverte</b>.
-        </div>
+        <div className="text-xs text-slate-400 italic select-none" dangerouslySetInnerHTML={{__html: t("editRestriction")}} />
       )}
-      
+
       {/* Vue desktop - table */}
       <div className="hidden md:block">
         <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nom</TableHead>
-            <TableHead>Prénom</TableHead>
-            <TableHead>Club</TableHead>
-            <TableHead>Année de naissance</TableHead>
-            <TableHead>Points FIS ({discipline})</TableHead>
-            <TableHead>Ajouté par</TableHead>
-            {permissionToEdit && <TableHead>Action</TableHead>}
+            <TableHead>{t("table.lastName")}</TableHead>
+            <TableHead>{t("table.firstName")}</TableHead>
+            <TableHead>{t("table.club")}</TableHead>
+            <TableHead>{t("table.birthYear")}</TableHead>
+            <TableHead>{t("table.points", {discipline})}</TableHead>
+            <TableHead>{t("table.addedBy")}</TableHead>
+            {permissionToEdit && <TableHead>{t("table.action")}</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -238,7 +234,7 @@ export const Competitors = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          title="Gérer les inscriptions"
+                          title={t("manage.title")}
                           className="cursor-pointer"
                           disabled={inscription?.status !== "open"}
                         >
@@ -248,13 +244,10 @@ export const Competitors = ({
                       <DialogContent>
                         <DialogHeader>
                           <DialogTitle>
-                            Gérer les inscriptions de {c.firstname} {c.lastname}
+                            {t("manage.modalTitle", {firstName: c.firstname || "", lastName: c.lastname || ""})}
                           </DialogTitle>
                           <DialogDescription className="mt-2">
-                            Cochez les codex auxquels vous souhaitez inscrire le
-                            compétiteur. Décochez ceux dont vous souhaitez le
-                            désinscrire. Les codex affichés sont filtrés selon
-                            le sexe du compétiteur.
+                            {t("manage.description")}
                           </DialogDescription>
                         </DialogHeader>
                         <DesinscriptionCodexList
@@ -272,7 +265,7 @@ export const Competitors = ({
                         <DialogFooter>
                           <DialogClose asChild>
                             <Button variant="ghost" className="cursor-pointer">
-                              Annuler
+                              {t("manage.cancel")}
                             </Button>
                           </DialogClose>
                           <Button
@@ -288,8 +281,8 @@ export const Competitors = ({
                             className="cursor-pointer"
                           >
                             {updating
-                              ? "Mise à jour..."
-                              : "Mettre à jour les inscriptions"}
+                              ? t("manage.updating")
+                              : t("manage.update")}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -333,13 +326,13 @@ export const Competitors = ({
           <DialogContent className="w-[95vw] md:w-auto max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-base md:text-lg">
-                Gérer les inscriptions de{" "}
-                {competitors?.find(c => c.competitorid === openDialog)?.firstname}{" "}
-                {competitors?.find(c => c.competitorid === openDialog)?.lastname}
+                {t("manage.modalTitle", {
+                  firstName: competitors?.find(c => c.competitorid === openDialog)?.firstname || "",
+                  lastName: competitors?.find(c => c.competitorid === openDialog)?.lastname || ""
+                })}
               </DialogTitle>
               <DialogDescription className="mt-2 text-sm">
-                Cochez les codex auxquels vous souhaitez inscrire le compétiteur.
-                Décochez ceux dont vous souhaitez le désinscrire.
+                {t("manage.descriptionMobile")}
               </DialogDescription>
             </DialogHeader>
             <DesinscriptionCodexList
@@ -355,7 +348,7 @@ export const Competitors = ({
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="ghost" className="cursor-pointer">
-                  Annuler
+                  {t("manage.cancel")}
                 </Button>
               </DialogClose>
               <Button
@@ -371,8 +364,8 @@ export const Competitors = ({
                 className="cursor-pointer"
               >
                 {updating
-                  ? "Mise à jour..."
-                  : "Mettre à jour les inscriptions"}
+                  ? t("manage.updating")
+                  : t("manage.update")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -398,6 +391,7 @@ function DesinscriptionCodexList({
   allEventCodexes: CompetitionItem[];
   genderFilterOfCompetitor?: string;
 }) {
+  const t = useTranslations("inscriptionDetail.competitors.manage");
   const [loading, setLoading] = useState(true);
 
   // Filter allEventCodexes
@@ -442,12 +436,12 @@ function DesinscriptionCodexList({
   }, [inscriptionId, competitorId, setSelectedCodex]);
 
   if (loading)
-    return <div>Chargement des informations d&apos;inscription...</div>;
+    return <div>{t("loadingInfo")}</div>;
 
   if (relevantEventCodexes.length === 0 && !loading) {
     return (
       <div>
-        Aucun codex compatible avec le sexe du compétiteur pour cet événement.
+        {t("noCompatibleCodex")}
       </div>
     );
   }
@@ -455,7 +449,7 @@ function DesinscriptionCodexList({
   return (
     <div className="space-y-2">
       <div className="mb-2 font-medium">
-        Sélectionnez les codex pour l&apos;inscription :
+        {t("selectCodex")}
       </div>
       <div className="flex flex-wrap gap-3 max-h-60 overflow-y-auto p-1">
         {relevantEventCodexes.map((eventCodexItem) => (

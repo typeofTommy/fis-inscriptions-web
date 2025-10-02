@@ -1,0 +1,560 @@
+{
+  "common": {
+    "actions": {
+      "details": "Detalles",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "close": "Cerrar",
+      "confirm": "Confirmar",
+      "search": "Buscar",
+      "filter": "Filtrar",
+      "filters": "Filtros",
+      "all": "Todos",
+      "add": "Añadir",
+      "remove": "Quitar",
+      "signIn": "Iniciar sesión"
+    },
+    "loading": "Cargando...",
+    "noResults": "Sin resultados.",
+    "error": "Se ha producido un error",
+    "success": "Éxito"
+  },
+  "navigation": {
+    "inscriptions": "Inscripciones",
+    "competitors": "Competidores",
+    "users": "Usuarios",
+    "profile": "Perfil"
+  },
+  "inscriptions": {
+    "title": "Inscripciones FIS extranjeros",
+    "titleShort": "Inscripciones FIS",
+    "new": "Nueva Solicitud",
+    "table": {
+      "headers": {
+        "actions": "Acciones",
+        "date": "Fecha",
+        "reminder": "Recordatorio",
+        "station": "Estación",
+        "country": "País",
+        "codex": "Codex",
+        "disciplines": "Disciplinas",
+        "raceLevels": "Niveles de carrera",
+        "status": "Estado",
+        "sex": "Sexo",
+        "competitorCount": "Nº competidores",
+        "season": "Temporada"
+      },
+      "filters": {
+        "season": "Temporada",
+        "date": "Fecha",
+        "datePlaceholder": "Fecha de la 1ª carrera",
+        "station": "Estación",
+        "country": "País",
+        "codex": "Codex",
+        "discipline": "Disciplina",
+        "raceLevel": "Nivel de carrera",
+        "status": "Estado",
+        "sex": "Sexo",
+        "allSeasons": "Todas",
+        "allStations": "Todas",
+        "allCountries": "Todos",
+        "allCodex": "Todos",
+        "allDisciplines": "Todas",
+        "allRaceLevels": "Todos",
+        "allStatuses": "Todos",
+        "allGenders": "Todos",
+        "activeFilter": "Filtro activo"
+      },
+      "reminder": {
+        "sent": "Enviado",
+        "warning": "D-0 ⚠️",
+        "past": "Pasado ({days}d)"
+      }
+    },
+    "status": {
+      "open": "Abierta",
+      "validated": "Validada",
+      "email_sent": "Email enviado",
+      "cancelled": "Carrera cancelada"
+    },
+    "gender": {
+      "M": "Hombres",
+      "W": "Mujeres",
+      "male": "Hombre",
+      "female": "Mujer"
+    }
+  },
+  "competitors": {
+    "title": "Competidores",
+    "search": "Buscar competidor...",
+    "notSpecified": "No especificado"
+  },
+  "inscriptionDetail": {
+    "loading": "Cargando...",
+    "error": "Error al cargar los detalles de la inscripción:",
+    "noData": "No se encontraron datos de inscripción.",
+    "inscriptionNotFound": "Inscripción no encontrada.",
+    "eventDataNotFound": "Datos del evento no encontrados para esta inscripción.",
+    "tabs": {
+      "recap": "Resumen",
+      "recapFull": "Resumen",
+      "codex": "Codex",
+      "codexFull": "Por codex",
+      "coaches": "Entrenadores/Staff",
+      "coachesFull": "Entrenadores/Staff"
+    },
+    "competitors": {
+      "loading": "Cargando competidores...",
+      "loadError": "Error al cargar los competidores.",
+      "loadCompetitorsError": "Error al cargar los corredores",
+      "updateError": "Error al actualizar las inscripciones del competidor",
+      "noCompetitors": "No hay competidores para este codex en este momento",
+      "editRestriction": "La inscripción / desinscripción solo es posible cuando la inscripción está <b>abierta</b>.",
+      "table": {
+        "lastName": "Apellido",
+        "firstName": "Nombre",
+        "club": "Club",
+        "birthYear": "Año de nacimiento",
+        "points": "Puntos FIS ({discipline})",
+        "addedBy": "Añadido por",
+        "action": "Acción"
+      },
+      "manage": {
+        "title": "Gestionar inscripciones",
+        "modalTitle": "Gestionar inscripciones de {firstName} {lastName}",
+        "description": "Marque los codex en los que desea inscribir al competidor. Desmarque aquellos de los que desea desinscribirlo. Los codex mostrados están filtrados según el sexo del competidor.",
+        "descriptionMobile": "Marque los codex en los que desea inscribir al competidor. Desmarque aquellos de los que desea desinscribirlo.",
+        "cancel": "Cancelar",
+        "updating": "Actualizando...",
+        "update": "Actualizar inscripciones",
+        "loadingInfo": "Cargando información de inscripción...",
+        "noCompatibleCodex": "No hay codex compatible con el sexo del competidor para este evento.",
+        "selectCodex": "Seleccione codex para la inscripción:"
+      }
+    },
+    "coaches": {
+      "title": "Entrenadores/Staff",
+      "description": "Lista de entrenadores que acompañan a la delegación",
+      "add": "Añadir un entrenador",
+      "addShort": "+ Coach",
+      "loading": "Cargando entrenadores...",
+      "loadError": "Error al cargar los entrenadores.",
+      "deleteError": "Error al eliminar el entrenador",
+      "noCoaches": "Aún no se han añadido entrenadores",
+      "noCoachesFiltered": "No hay entrenadores para {filter}",
+      "filterMen": "hombres",
+      "filterWomen": "mujeres",
+      "filterOther": "este filtro",
+      "editRestriction": "Agregar / eliminar entrenadores solo es posible cuando la inscripción está <b>abierta</b>.",
+      "table": {
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "team": "Equipo",
+        "gender": "Género",
+        "whatsapp": "WhatsApp",
+        "firstDay": "Primer día",
+        "lastDay": "Último día",
+        "addedBy": "Añadido por",
+        "addedAt": "Fecha de añadido",
+        "action": "Acción"
+      },
+      "gender": {
+        "men": "Hombres",
+        "women": "Mujeres",
+        "both": "Hombres y mujeres"
+      },
+      "delete": {
+        "title": "Eliminar entrenador",
+        "description": "¿Está seguro de que desea eliminar al entrenador <strong>{firstName} {lastName}</strong>? Esta acción es irreversible.",
+        "cancel": "Cancelar",
+        "confirm": "Eliminar"
+      },
+      "mobile": {
+        "team": "Equipo",
+        "whatsapp": "WhatsApp",
+        "period": "Período",
+        "addedBy": "Añadido por",
+        "addedOn": "El"
+      },
+      "whatsapp": {
+        "button": "Grupo de WhatsApp",
+        "buttonShort": "WhatsApp",
+        "modalTitle": "Crear un grupo de WhatsApp",
+        "instructions": "Siga estos pasos para crear su grupo de entrenadores",
+        "step1": "Abra WhatsApp y cree un nuevo grupo",
+        "step2": "Añada entrenadores uno por uno",
+        "step2Description": "Haga clic en \"Copiar\" para cada número, luego péguelo en la búsqueda de WhatsApp:",
+        "step3": "Nombre su grupo",
+        "suggestedName": "Nombre de grupo sugerido:",
+        "copy": "Copiar",
+        "close": "Cerrar",
+        "groupNamePrefix": "Entrenadores",
+        "dateSeparator": "al",
+        "defaultEventName": "Evento FIS",
+        "toasts": {
+          "noWhatsApp": "No hay números de WhatsApp",
+          "noWhatsAppDescription": "Ningún entrenador ha proporcionado su número de WhatsApp.",
+          "prepareError": "Error",
+          "prepareErrorDescription": "No se puede preparar el grupo de WhatsApp.",
+          "numberCopied": "¡Número copiado!",
+          "numberCopiedDescription": "{number} ({name}) copiado al portapapeles.",
+          "numberCopyError": "Error",
+          "numberCopyErrorDescription": "No se puede copiar el número.",
+          "nameCopied": "¡Nombre del grupo copiado!",
+          "nameCopiedDescription": "Ahora puede pegarlo en WhatsApp.",
+          "nameCopyError": "Error",
+          "nameCopyErrorDescription": "No se puede copiar el nombre del grupo."
+        }
+      }
+    },
+    "pdf": {
+      "recipientManager": {
+        "title": "Gestionar destinatarios y enviar PDF",
+        "emailSubject": "Asunto del correo:",
+        "emailSubjectPlaceholder": "Asunto del correo",
+        "emailAlreadySent": "⚠️ Este correo ya fue enviado el {date}. El prefijo [UPDATE] se ha añadido automáticamente.",
+        "invalidEmail": "(Email Inválido/Faltante)",
+        "addCustomEmail": "Añadir un correo personalizado:",
+        "emailPlaceholder": "direccion@ejemplo.com",
+        "add": "Añadir",
+        "remove": "Eliminar",
+        "sendButton": "Enviar PDF por correo",
+        "sending": "Enviando...",
+        "chromeDisabled": "PDF deshabilitado en Chrome macOS",
+        "errors": {
+          "enterEmail": "Por favor ingrese un correo electrónico",
+          "validEmail": "Por favor ingrese un correo electrónico válido",
+          "emailExists": "Este correo electrónico ya está agregado",
+          "selectRecipient": "Por favor seleccione al menos un destinatario.",
+          "sendError": "Error al enviar el correo",
+          "unknownError": "Ocurrió un error al enviar."
+        },
+        "toasts": {
+          "sending": "Enviando correo...",
+          "sendingDescription": "El PDF se está enviando a los destinatarios.",
+          "sent": "¡Correo enviado!",
+          "sentDescription": "El PDF se ha enviado correctamente a los destinatarios.",
+          "error": "Error al enviar",
+          "success": "¡PDF enviado con éxito! ID del correo: {emailId}"
+        },
+        "reasons": {
+          "customEmail": "Correo personalizado",
+          "manuallyAdded": "Correo añadido manualmente",
+          "unknownUser": "Usuario desconocido",
+          "noId": "ID no proporcionado",
+          "eventCreator": "Creador del evento",
+          "currentUser": "Usuario actual de la página",
+          "addedCompetitors": "Añadió competidores",
+          "eventContact": "Contacto específico del evento",
+          "competitionContact": "Contacto de la competición"
+        },
+        "unknownEmail": "Correo desconocido",
+        "unknownName": "Nombre desconocido",
+        "notConnected": "No conectado",
+        "notPrimaryEmail": "Correo principal no encontrado"
+      },
+      "competitorsTable": {
+        "fisCode": "FIS Code",
+        "surname": "Surname, First Name",
+        "surnameFr": "Nom de famille, Prénom",
+        "surnameDe": "Familienname, Vorname",
+        "yb": "YB",
+        "entriesPerCodex": "Entries per Codex"
+      },
+      "competition": {
+        "title": "Competition",
+        "subtitle": "(Name/Place) / (Manifestation/Nom/Lieu) / (Veranstaltung (Name/Ort)"
+      }
+    },
+    "actionsMenu": {
+      "button": "Acciones",
+      "changeStatus": "Cambiar estado",
+      "generatePdf": "Generar PDF",
+      "updateData": "Actualizar datos",
+      "delete": "Eliminar",
+      "edit": "Editar inscripción",
+      "statusDialog": {
+        "title": "Cambiar el estado de la inscripción",
+        "description": "Seleccione el nuevo estado deseado.",
+        "newStatus": "Nuevo estado:",
+        "choosePlaceholder": "Elegir un estado",
+        "applyTo": "Aplicar a:",
+        "men": "Hombres",
+        "women": "Mujeres",
+        "both": "Ambos",
+        "cancel": "Cancelar",
+        "confirm": "Confirmar"
+      },
+      "genderDialog": {
+        "title": "Seleccionar género para el PDF",
+        "description": "Este evento es mixto. Por favor, elija el género para el cual desea generar el PDF.",
+        "men": "Hombres",
+        "women": "Mujeres",
+        "noMen": "Ningún hombre inscrito. No se puede generar el PDF.",
+        "noWomen": "Ninguna mujer inscrita. No se puede generar el PDF."
+      },
+      "deleteDialog": {
+        "confirm": "¿Está seguro de que desea eliminar esta inscripción? Esta acción es irreversible."
+      },
+      "statusLabels": {
+        "open": "En curso (abierto)",
+        "validated": "Cerrado (validado)",
+        "email_sent": "Email enviado",
+        "cancelled": "Carrera cancelada"
+      },
+      "errors": {
+        "statusChange": "Error al cambiar el estado",
+        "delete": "Error al eliminar",
+        "loadCompetitors": "Error al cargar los competidores"
+      }
+    },
+    "details": {
+      "title": "Detalle de inscripción",
+      "titleFull": "Detalles de la inscripción",
+      "back": "Volver",
+      "eventDetails": "Detalles",
+      "eventDetailsFull": "Detalles del evento",
+      "location": {
+        "label": "Ubicación"
+      },
+      "period": {
+        "label": "Período",
+        "from": "Del",
+        "to": "al"
+      },
+      "creator": {
+        "text": "Creado por {email} el {date}",
+        "unknown": "Usuario desconocido"
+      },
+      "genderFilter": {
+        "title": "Filtrar por género",
+        "all": "Todos",
+        "men": "Hombres",
+        "women": "Mujeres",
+        "menShort": "H",
+        "womenShort": "M"
+      },
+      "errors": {
+        "loadData": "Se produjo un error al recuperar los datos"
+      }
+    },
+    "recap": {
+      "table": {
+        "name": "Nombre",
+        "club": "Club",
+        "addedBy": "Añadido por",
+        "actions": "Acciones",
+        "registered": "inscritos"
+      },
+      "addCompetitor": {
+        "female": "Añadir competidora",
+        "male": "Añadir competidor",
+        "femaleShort": "+ Mujer",
+        "maleShort": "+ Hombre",
+        "add": "Añadir un{gender}:",
+        "femaleGender": "a",
+        "maleGender": ""
+      },
+      "genderButtons": {
+        "female": "Mujer",
+        "male": "Hombre",
+        "femaleShort": "M",
+        "maleShort": "H"
+      },
+      "permissions": {
+        "noPermission": "No tiene permisos para añadir competidores a este evento.",
+        "closedInscription": "La inscripción / desinscripción solo es posible cuando la inscripción está <b>abierta</b>."
+      },
+      "manage": {
+        "title": "Gestionar inscripciones",
+        "modalTitle": "Gestionar inscripciones de {firstName} {lastName}",
+        "description": "Marque los códex en los que desea inscribir al competidor. Desmarque aquellos de los que desea desinscribirlo. Los códex mostrados están filtrados según el género del competidor.",
+        "selectCodex": "Seleccione los códex para la inscripción:",
+        "cancel": "Cancelar",
+        "update": "Actualizar inscripciones",
+        "updating": "Actualizando...",
+        "loadingInfo": "Cargando información de inscripción...",
+        "noCompatibleCodex": "Ningún códex compatible con el género del competidor para este evento."
+      },
+      "totals": {
+        "all": "Número total de inscripciones: <b>{count}</b>",
+        "women": "Número total de competidoras inscritas: <b>{count}</b>",
+        "men": "Número total de competidores inscritos: <b>{count}</b>"
+      },
+      "groups": {
+        "women": "Mujeres",
+        "men": "Hombres"
+      },
+      "errors": {
+        "loadData": "Error al cargar los datos.",
+        "loadCompetitors": "Error al cargar los competidores",
+        "updateRegistrations": "Error al actualizar las inscripciones del competidor",
+        "noCodex": "Ningún códex para este evento."
+      },
+      "loading": "Cargando datos..."
+    }
+  },
+  "form": {
+    "errors": {
+      "required": "Este campo es obligatorio",
+      "invalid": "Valor inválido"
+    }
+  },
+  "users": {
+    "title": "Gestión de usuarios",
+    "stats": {
+      "administrators": "Administradores",
+      "users": "Usuarios",
+      "recentlyActive": "Activos recientemente",
+      "total": "Total"
+    },
+    "invite": {
+      "title": "Invitar a un nuevo usuario",
+      "emailPlaceholder": "Email del usuario...",
+      "button": "Invitar",
+      "success": "Invitación enviada",
+      "successDescription": "Se ha enviado una invitación a {email}",
+      "error": "Error",
+      "errorDescription": "No se puede enviar la invitación"
+    },
+    "search": {
+      "title": "Buscar y filtrar",
+      "placeholder": "Buscar por nombre o email...",
+      "all": "Todos ({count})",
+      "admins": "Admins ({count})",
+      "users": "Usuarios ({count})"
+    },
+    "list": {
+      "title": "Usuarios ({filtered}/{total})",
+      "titleFiltered": "{role} ({count})",
+      "loading": "Cargando usuarios...",
+      "noResults": "No se encontraron usuarios",
+      "noResultsFiltered": "No se encontraron usuarios con estos criterios"
+    },
+    "user": {
+      "emailNotDefined": "Email no definido",
+      "recentlyActive": "Activo recientemente",
+      "admin": "Admin",
+      "user": "Usuario",
+      "registeredOn": "Registrado el {date}",
+      "lastSignIn": "Última conexión: {date}",
+      "demote": "Degradar",
+      "promote": "Promover",
+      "confirmDelete": "¿Está seguro de que desea eliminar {email}?"
+    },
+    "errors": {
+      "loadUsers": "Error al cargar usuarios",
+      "loadUsersDescription": "No se puede cargar la lista de usuarios",
+      "inviteError": "Error de invitación",
+      "roleChangeError": "Error al cambiar el rol",
+      "roleChangeErrorDescription": "No se puede cambiar el rol",
+      "deleteError": "Error al eliminar",
+      "deleteErrorDescription": "No se puede eliminar el usuario"
+    },
+    "success": {
+      "roleChanged": "Rol cambiado",
+      "roleChangedAdmin": "El usuario ahora es administrador",
+      "roleChangedUser": "El usuario ahora es usuario",
+      "userDeleted": "Usuario eliminado",
+      "userDeletedDescription": "{email} ha sido eliminado"
+    }
+  },
+  "modals": {
+    "addCompetitor": {
+      "title": "Inscribir un competidor",
+      "titleShort": "+",
+      "search": "Nombre o apellido (mín 7 caracteres)",
+      "searchResults": "Resultados de búsqueda",
+      "noResults": "Ningún competidor encontrado",
+      "selected": "Seleccionar un competidor",
+      "forWhichCodex": "¿Para qué codex? (carreras {gender})",
+      "saving": "Añadiendo..."
+    },
+    "addCoach": {
+      "title": "Añadir entrenador",
+      "titleShort": "+",
+      "quickSelect": "Selección rápida",
+      "selectPrevious": "Elegir un entrenador añadido anteriormente",
+      "manualEntry": "Entrada manual",
+      "quickSelectHint": "Seleccione un entrenador para rellenar automáticamente, o elija \"Entrada manual\"",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "team": "Equipo (opcional)",
+      "teamPlaceholder": "Nombre del equipo",
+      "gender": "Género *",
+      "genderM": "Hombre",
+      "genderW": "Mujer",
+      "genderBoth": "Hombre y mujer",
+      "genderRequired": "Por favor seleccione un género",
+      "whatsapp": "Teléfono WhatsApp (recomendado)",
+      "whatsappHint": "Para crear automáticamente un grupo de WhatsApp con los entrenadores",
+      "firstDay": "Primer día *",
+      "lastDay": "Último día *",
+      "datesRequired": "Las fechas son obligatorias",
+      "firstBeforeLast": "El primer día debe ser antes del último día",
+      "firstAfterEventStart": "El primer día no puede ser antes del inicio del evento",
+      "lastAfterEventEnd": "El último día no puede ser después del final del evento",
+      "adding": "Añadiendo...",
+      "add": "Añadir"
+    },
+    "contact": {
+      "title": "Hacer una pregunta",
+      "description": "Su mensaje será enviado a Philippe Martin y J.M Agnellet.",
+      "subject": "Asunto",
+      "subjectPlaceholder": "Asunto de su pregunta...",
+      "message": "Mensaje",
+      "messagePlaceholder": "Describa su pregunta o comentario...",
+      "send": "Enviar",
+      "sending": "Enviando...",
+      "success": "¡Su mensaje ha sido enviado con éxito!",
+      "fillAllFields": "Por favor, rellene todos los campos",
+      "sendError": "Error al enviar el mensaje",
+      "buttonText": "Contacto"
+    },
+    "updateEvent": {
+      "title": "Actualizar datos del evento",
+      "description": "Compare los datos actuales con la información más reciente de la FIS y actualice si es necesario. Codex: {codex}",
+      "loading": "Cargando datos FIS...",
+      "error": "Error al recuperar los datos FIS:",
+      "unknownError": "Error desconocido",
+      "changesDetected": "Cambios detectados:",
+      "old": "Anterior:",
+      "new": "Nuevo:",
+      "noDifferences": "No se detectaron diferencias con los datos FIS.",
+      "applyChanges": "Aplicar cambios",
+      "notDefined": "No definido",
+      "yes": "Sí",
+      "no": "No",
+      "newCompetition": "Nueva competición",
+      "deletedCompetition": "Competición eliminada",
+      "na": "N/A",
+      "updateError": "Error al actualizar los datos del evento.",
+      "errorPrefix": "Error:"
+    },
+    "userActivity": {
+      "title": "Actividad de {userName}",
+      "button": "Actividad",
+      "last30Days": "Últimos 30 días",
+      "inscriptionsCreated": "Inscripciones creadas",
+      "competitorsAdded": "Competidores añadidos",
+      "coachesAdded": "Entrenadores añadidos",
+      "totalActivities": "Total actividades",
+      "recentActivities": "Actividades recientes",
+      "loading": "Cargando actividad...",
+      "noActivity": "No se encontró actividad en los últimos 30 días",
+      "view": "Ver",
+      "inscriptionCreated": "Inscripción creada para '{eventName}'",
+      "competitorAdded": "Competidor añadido: {competitorName}{nation}{codex} en '{eventName}'",
+      "coachAdded": "Entrenador añadido: {firstName} {lastName}{team} en '{eventName}'",
+      "unknownActivity": "Actividad desconocida",
+      "event": "Evento",
+      "competitor": "Competidor",
+      "loadError": "Error al cargar la actividad",
+      "loadErrorDescription": "No se pudo cargar la actividad del usuario",
+      "inscription": "Inscripción",
+      "coach": "Entrenador"
+    }
+  }
+}

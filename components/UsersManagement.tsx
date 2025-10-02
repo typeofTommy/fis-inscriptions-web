@@ -5,17 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Mail, 
-  UserPlus, 
-  Trash2, 
-  Shield, 
+import {
+  Mail,
+  UserPlus,
+  Trash2,
+  Shield,
   ShieldCheck,
   RefreshCw,
   Search
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { UserActivityModal } from "@/components/UserActivityModal";
+import { useTranslations } from "next-intl";
 
 type User = {
   id: string;
@@ -34,6 +35,7 @@ type User = {
 };
 
 export const UsersManagement = () => {
+  const t = useTranslations("users");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -46,23 +48,23 @@ export const UsersManagement = () => {
     try {
       setLoading(true);
       const response = await fetch("/api/admin/users");
-      if (!response.ok) throw new Error("Erreur lors du chargement des utilisateurs");
+      if (!response.ok) throw new Error(t("errors.loadUsers"));
       const data = await response.json();
       setUsers(data);
     } catch {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger la liste des utilisateurs",
+        title: t("invite.error"),
+        description: t("errors.loadUsersDescription"),
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   const inviteUser = async () => {
     if (!inviteEmail.trim()) return;
-    
+
     try {
       setInviting(true);
       const response = await fetch("/api/admin/users/invite", {
@@ -70,23 +72,23 @@ export const UsersManagement = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: inviteEmail }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Erreur lors de l'invitation");
+        throw new Error(errorData.error || t("errors.inviteError"));
       }
-      
+
       setInviteEmail("");
       toast({
-        title: "Invitation envoyée",
-        description: `Une invitation a été envoyée à ${inviteEmail}`,
+        title: t("invite.success"),
+        description: t("invite.successDescription", { email: inviteEmail }),
       });
-      
+
       fetchUsers();
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible d'envoyer l'invitation",
+        title: t("invite.error"),
+        description: error instanceof Error ? error.message : t("invite.errorDescription"),
         variant: "destructive",
       });
     } finally {
@@ -96,51 +98,51 @@ export const UsersManagement = () => {
 
   const toggleUserRole = async (userId: string, currentRole?: string) => {
     const newRole = currentRole === "admin" ? "user" : "admin";
-    
+
     try {
       const response = await fetch(`/api/admin/users/${userId}/role`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
       });
-      
-      if (!response.ok) throw new Error("Erreur lors de la modification du rôle");
-      
+
+      if (!response.ok) throw new Error(t("errors.roleChangeError"));
+
       toast({
-        title: "Rôle modifié",
-        description: `L'utilisateur est maintenant ${newRole === "admin" ? "administrateur" : "utilisateur"}`,
+        title: t("success.roleChanged"),
+        description: newRole === "admin" ? t("success.roleChangedAdmin") : t("success.roleChangedUser"),
       });
-      
+
       fetchUsers();
     } catch {
       toast({
-        title: "Erreur",
-        description: "Impossible de modifier le rôle",
+        title: t("invite.error"),
+        description: t("errors.roleChangeErrorDescription"),
         variant: "destructive",
       });
     }
   };
 
   const deleteUser = async (userId: string, userEmail: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${userEmail} ?`)) return;
-    
+    if (!confirm(t("user.confirmDelete", { email: userEmail }))) return;
+
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: "DELETE",
       });
-      
-      if (!response.ok) throw new Error("Erreur lors de la suppression");
-      
+
+      if (!response.ok) throw new Error(t("errors.deleteError"));
+
       toast({
-        title: "Utilisateur supprimé",
-        description: `${userEmail} a été supprimé`,
+        title: t("success.userDeleted"),
+        description: t("success.userDeletedDescription", { email: userEmail }),
       });
-      
+
       fetchUsers();
     } catch {
       toast({
-        title: "Erreur",
-        description: "Impossible de supprimer l'utilisateur",
+        title: t("invite.error"),
+        description: t("errors.deleteErrorDescription"),
         variant: "destructive",
       });
     }
@@ -219,13 +221,13 @@ export const UsersManagement = () => {
                 <ShieldCheck className="h-4 w-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Administrateurs</p>
+                <p className="text-sm text-gray-600">{t("stats.administrators")}</p>
                 <p className="text-2xl font-bold">{stats.adminCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -233,13 +235,13 @@ export const UsersManagement = () => {
                 <Shield className="h-4 w-4 text-gray-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Utilisateurs</p>
+                <p className="text-sm text-gray-600">{t("stats.users")}</p>
                 <p className="text-2xl font-bold">{stats.userCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -247,13 +249,13 @@ export const UsersManagement = () => {
                 <div className="w-4 h-4 bg-green-500 rounded-full" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Actifs récemment</p>
+                <p className="text-sm text-gray-600">{t("stats.recentlyActive")}</p>
                 <p className="text-2xl font-bold">{stats.recentlyActiveCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -261,7 +263,7 @@ export const UsersManagement = () => {
                 <Mail className="h-4 w-4 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total</p>
+                <p className="text-sm text-gray-600">{t("stats.total")}</p>
                 <p className="text-2xl font-bold">{users.length}</p>
               </div>
             </div>
@@ -274,21 +276,21 @@ export const UsersManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5" />
-            Inviter un nouvel utilisateur
+            {t("invite.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-3">
             <Input
               type="email"
-              placeholder="Email de l'utilisateur..."
+              placeholder={t("invite.emailPlaceholder")}
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && inviteUser()}
               className="flex-1"
             />
-            <Button 
-              onClick={inviteUser} 
+            <Button
+              onClick={inviteUser}
               disabled={!inviteEmail.trim() || inviting}
               className="cursor-pointer"
             >
@@ -297,7 +299,7 @@ export const UsersManagement = () => {
               ) : (
                 <>
                   <Mail className="h-4 w-4 mr-2" />
-                  Inviter
+                  {t("invite.button")}
                 </>
               )}
             </Button>
@@ -310,14 +312,14 @@ export const UsersManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Rechercher et filtrer
+            {t("search.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Input
-                placeholder="Rechercher par nom ou email..."
+                placeholder={t("search.placeholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full"
@@ -330,7 +332,7 @@ export const UsersManagement = () => {
                 onClick={() => setRoleFilter("all")}
                 className="cursor-pointer"
               >
-                Tous ({users.length})
+                {t("search.all", { count: users.length })}
               </Button>
               <Button
                 variant={roleFilter === "admin" ? "default" : "outline"}
@@ -339,7 +341,7 @@ export const UsersManagement = () => {
                 className="cursor-pointer"
               >
                 <ShieldCheck className="h-4 w-4 mr-1" />
-                Admins ({users.filter(u => u.publicMetadata.role === "admin").length})
+                {t("search.admins", { count: users.filter(u => u.publicMetadata.role === "admin").length })}
               </Button>
               <Button
                 variant={roleFilter === "user" ? "default" : "outline"}
@@ -348,7 +350,7 @@ export const UsersManagement = () => {
                 className="cursor-pointer"
               >
                 <Shield className="h-4 w-4 mr-1" />
-                Utilisateurs ({users.filter(u => (u.publicMetadata.role || "user") === "user").length})
+                {t("search.users", { count: users.filter(u => (u.publicMetadata.role || "user") === "user").length })}
               </Button>
             </div>
           </div>
@@ -359,14 +361,17 @@ export const UsersManagement = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
-            {roleFilter === "all" 
-              ? `Utilisateurs (${filteredAndSortedUsers.length}/${users.length})`
-              : `${roleFilter === "admin" ? "Administrateurs" : "Utilisateurs"} (${filteredAndSortedUsers.length})`
+            {roleFilter === "all"
+              ? t("list.title", { filtered: filteredAndSortedUsers.length, total: users.length })
+              : t("list.titleFiltered", {
+                  role: roleFilter === "admin" ? t("stats.administrators") : t("stats.users"),
+                  count: filteredAndSortedUsers.length
+                })
             }
           </CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={fetchUsers}
             disabled={loading}
             className="cursor-pointer"
@@ -378,27 +383,27 @@ export const UsersManagement = () => {
           {loading ? (
             <div className="text-center py-8">
               <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-              Chargement des utilisateurs...
+              {t("list.loading")}
             </div>
           ) : filteredAndSortedUsers.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              {searchTerm || roleFilter !== "all" 
-                ? "Aucun utilisateur trouvé avec ces critères" 
-                : "Aucun utilisateur trouvé"
+              {searchTerm || roleFilter !== "all"
+                ? t("list.noResultsFiltered")
+                : t("list.noResults")
               }
             </div>
           ) : (
             <div className="space-y-3">
               {filteredAndSortedUsers.map((user) => {
-                const email = user.emailAddresses[0]?.emailAddress || user.username || "Email non défini";
-                const displayName = user.firstName && user.lastName 
-                  ? `${user.firstName} ${user.lastName}` 
+                const email = user.emailAddresses[0]?.emailAddress || user.username || t("user.emailNotDefined");
+                const displayName = user.firstName && user.lastName
+                  ? `${user.firstName} ${user.lastName}`
                   : email;
                 const role = user.publicMetadata.role || "user";
-                
+
                 return (
-                  <div 
-                    key={user.id} 
+                  <div
+                    key={user.id}
                     className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors ${
                       role === "admin" ? "border-l-4 border-l-blue-500 bg-blue-50/50" : ""
                     }`}
@@ -407,11 +412,11 @@ export const UsersManagement = () => {
                       <div className="flex items-center gap-3 mb-1">
                         <div className="flex items-center gap-2">
                           {isRecentlyActive(user.lastSignInAt) && (
-                            <div className="w-2 h-2 bg-green-500 rounded-full" title="Actif récemment" />
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title={t("user.recentlyActive")} />
                           )}
                           <span className="font-medium">{displayName}</span>
                         </div>
-                        <Badge 
+                        <Badge
                           variant={role === "admin" ? "default" : "secondary"}
                           className="flex items-center gap-1"
                         >
@@ -420,15 +425,15 @@ export const UsersManagement = () => {
                           ) : (
                             <Shield className="h-3 w-3" />
                           )}
-                          {role === "admin" ? "Admin" : "Utilisateur"}
+                          {role === "admin" ? t("user.admin") : t("user.user")}
                         </Badge>
                       </div>
                       <div className="text-sm text-gray-500">
                         {email !== displayName && <div>{email}</div>}
                         <div>
-                          Inscrit le {formatDate(user.createdAt)}
+                          {t("user.registeredOn", { date: formatDate(user.createdAt) })}
                           {user.lastSignInAt && (
-                            <> • Dernière connexion: {formatDate(user.lastSignInAt)}</>
+                            <> • {t("user.lastSignIn", { date: formatDate(user.lastSignInAt) })}</>
                           )}
                         </div>
                       </div>
@@ -444,7 +449,7 @@ export const UsersManagement = () => {
                         onClick={() => toggleUserRole(user.id, role)}
                         className="cursor-pointer"
                       >
-                        {role === "admin" ? "Rétrograder" : "Promouvoir"}
+                        {role === "admin" ? t("user.demote") : t("user.promote")}
                       </Button>
                       <Button
                         variant="destructive"

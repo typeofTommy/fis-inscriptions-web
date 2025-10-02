@@ -1,5 +1,7 @@
 import type {NextConfig} from "next";
-import withPWA from "next-pwa";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
   images: {
@@ -32,9 +34,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA({
-  dest: "public",
-  disable: true, // Temporairement désactivé pour accélérer les builds
-  register: true,
-  skipWaiting: true,
-})(nextConfig as any);
+export default withNextIntl(nextConfig);

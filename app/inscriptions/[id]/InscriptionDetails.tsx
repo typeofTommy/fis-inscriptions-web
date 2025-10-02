@@ -31,6 +31,7 @@ import {ContactModal} from "./ContactModal";
 import {useUser} from "@clerk/nextjs";
 import {useUserEmail} from "@/hooks/useUserEmail";
 import {StatusBadges} from "@/components/ui/status-badges";
+import {useTranslations} from "next-intl";
 
 interface InscriptionDetailsProps {
   id: string;
@@ -45,6 +46,12 @@ export const InscriptionDetails = ({
   setGenderFilterAction,
   isMixedEvent,
 }: InscriptionDetailsProps) => {
+  const t = useTranslations("inscriptionDetail.details");
+  const tLocation = useTranslations("inscriptionDetail.details.location");
+  const tPeriod = useTranslations("inscriptionDetail.details.period");
+  const tCreator = useTranslations("inscriptionDetail.details.creator");
+  const tGenderFilter = useTranslations("inscriptionDetail.details.genderFilter");
+
   const {data: inscription, isLoading, error} = useInscription(id);
   const {user} = useUser();
   const {data: creatorEmail} = useUserEmail(inscription?.createdBy);
@@ -69,7 +76,7 @@ export const InscriptionDetails = ({
   if (error) {
     return (
       <div className="text-red-500 text-center min-h-[400px] flex items-center justify-center">
-        Une erreur est survenue lors de la récupération des données
+        {t("errors.loadData")}
       </div>
     );
   }
@@ -93,16 +100,16 @@ export const InscriptionDetails = ({
                   className="cursor-pointer bg-transparent hover:bg-slate-100 text-slate-700"
                 >
                   <ArrowLeft className="h-5 w-5 mr-1" />
-                  Retour
+                  {t("back")}
                 </Button>
               </Link>
               <h1
                 className="text-lg md:text-2xl font-medium text-slate-800 flex flex-col md:flex-row md:items-center gap-2 md:gap-4"
                 style={{lineHeight: 1}}
               >
-                <span className="md:hidden">Détail inscription</span>
+                <span className="md:hidden">{t("title")}</span>
                 <span className="hidden md:inline">
-                  Détails de l&apos;inscription
+                  {t("titleFull")}
                 </span>
                 <StatusBadges inscription={inscription} />
               </h1>
@@ -119,15 +126,15 @@ export const InscriptionDetails = ({
                       className="cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shadow-sm flex-1 md:flex-none text-xs md:text-base py-2 px-2 md:px-4"
                     >
                       <InfoIcon className="h-4 w-4 mr-1 md:mr-2" />
-                      <span className="md:hidden">Détail</span>
+                      <span className="md:hidden">{t("eventDetails")}</span>
                       <span className="hidden md:inline">
-                        Détail de l&apos;événement
+                        {t("eventDetailsFull")}
                       </span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="w-[95vw] md:w-11/12 !max-w-none max-h-[90vh] overflow-y-auto">
                     <DialogTitle className="text-lg md:text-xl">
-                      Détails de l&apos;événement
+                      {t("eventDetailsFull")}
                     </DialogTitle>
                     <div className="mt-4">
                       <EventDetails
@@ -163,7 +170,7 @@ export const InscriptionDetails = ({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-sky-600 uppercase tracking-wider mb-1">
-                  Lieu
+                  {tLocation("label")}
                 </p>
                 <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-0">
                   <p className="text-base md:text-lg font-semibold text-slate-800 truncate">
@@ -194,14 +201,14 @@ export const InscriptionDetails = ({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-sky-600 uppercase tracking-wider mb-1">
-                  Période
+                  {tPeriod("label")}
                 </p>
                 <p className="text-base md:text-lg font-semibold text-slate-800">
-                  Du{" "}
+                  {tPeriod("from")}{" "}
                   {parseLocalDate(
                     inscription.eventData.startDate
                   )?.toLocaleDateString("fr-FR")}{" "}
-                  au{" "}
+                  {tPeriod("to")}{" "}
                   {parseLocalDate(
                     inscription.eventData.endDate
                   )?.toLocaleDateString("fr-FR")}
@@ -212,8 +219,7 @@ export const InscriptionDetails = ({
           {/* Creator and Date Info */}
           {inscription.createdBy && inscription.createdAt && (
             <p className="text-xs text-slate-400 mt-2 text-right">
-              Créé par {creatorEmail ?? inscription.createdBy ?? "Utilisateur inconnu"} le{" "}
-              {new Date(inscription.createdAt).toLocaleDateString("fr-FR")}
+              {tCreator("text", {email: creatorEmail ?? inscription.createdBy ?? tCreator("unknown"), date: new Date(inscription.createdAt).toLocaleDateString("fr-FR")})}
             </p>
           )}
         </div>
@@ -223,7 +229,7 @@ export const InscriptionDetails = ({
       {isMixedEvent && inscription && (
         <div className="container mx-auto px-4 py-4 md:py-6">
           <h2 className="text-base md:text-lg font-medium text-slate-700 mb-3">
-            Filtrer par genre
+            {tGenderFilter("title")}
           </h2>
           <RadioGroup
             value={genderFilter}
@@ -241,7 +247,7 @@ export const InscriptionDetails = ({
                 className="cursor-pointer text-sm md:text-base"
               >
                 <Badge className="bg-sky-100 text-sky-700 hover:bg-sky-200 px-1.5 md:px-3 py-1 text-xs md:text-sm">
-                  Tous
+                  {tGenderFilter("all")}
                 </Badge>
               </Label>
             </div>
@@ -261,8 +267,8 @@ export const InscriptionDetails = ({
                     " text-white px-1.5 md:px-3 py-1 text-xs md:text-sm"
                   }
                 >
-                  <span className="md:hidden">H</span>
-                  <span className="hidden md:inline">Hommes</span>
+                  <span className="md:hidden">{tGenderFilter("menShort")}</span>
+                  <span className="hidden md:inline">{tGenderFilter("men")}</span>
                 </Badge>
               </Label>
             </div>
@@ -282,8 +288,8 @@ export const InscriptionDetails = ({
                     " text-white px-1.5 md:px-3 py-1 text-xs md:text-sm"
                   }
                 >
-                  <span className="md:hidden">F</span>
-                  <span className="hidden md:inline">Femmes</span>
+                  <span className="md:hidden">{tGenderFilter("womenShort")}</span>
+                  <span className="hidden md:inline">{tGenderFilter("women")}</span>
                 </Badge>
               </Label>
             </div>

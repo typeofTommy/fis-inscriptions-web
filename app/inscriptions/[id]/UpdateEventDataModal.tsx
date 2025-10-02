@@ -14,6 +14,7 @@ import {Inscription, Competition, CompetitionItem} from "@/app/types";
 import {useCompetitionByCodex} from "@/app/fisApi"; // Assuming this hook exists and works as in InscriptionForm
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {Loader2} from "lucide-react";
+import {useTranslations} from "next-intl";
 
 interface UpdateEventDataModalProps {
   isOpen: boolean;
@@ -45,6 +46,9 @@ export const UpdateEventDataModal = ({
   onClose,
   inscription,
 }: UpdateEventDataModalProps) => {
+  const t = useTranslations("modals.updateEvent");
+  const tCommon = useTranslations("common");
+
   const queryClient = useQueryClient();
   const [differences, setDifferences] = useState<
     {
@@ -80,8 +84,8 @@ export const UpdateEventDataModal = ({
 
   // Function to compare two values and format them for display
   const formatValue = (value: unknown): string => {
-    if (value === null || value === undefined) return "Non défini";
-    if (typeof value === "boolean") return value ? "Oui" : "Non";
+    if (value === null || value === undefined) return t("notDefined");
+    if (typeof value === "boolean") return value ? t("yes") : t("no");
     if (Array.isArray(value)) return value.join(", ");
     if (typeof value === "object") return JSON.stringify(value);
     return String(value);
@@ -323,8 +327,8 @@ export const UpdateEventDataModal = ({
         newCompsMap.forEach((newComp, compId) => {
           if (!oldCompsMap.has(compId)) {
             diffs.push({
-              field: `Nouvelle competition`,
-              oldValue: "N/A",
+              field: t("newCompetition"),
+              oldValue: t("na"),
               newValue: `${newComp.eventDescription} (ID: ${compId})`,
             });
           }
@@ -334,9 +338,9 @@ export const UpdateEventDataModal = ({
         oldCompsMap.forEach((oldComp, compId) => {
           if (!newCompsMap.has(compId)) {
             diffs.push({
-              field: `Competition supprimée`,
+              field: t("deletedCompetition"),
               oldValue: `${oldComp.eventDescription} (ID: ${compId})`,
-              newValue: "N/A",
+              newValue: t("na"),
             });
           }
         });
@@ -364,8 +368,7 @@ export const UpdateEventDataModal = ({
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(
-          errorData.message ||
-            "Erreur lors de la mise à jour des données de l'événement."
+          errorData.message || t("updateError")
         );
       }
       return res.json();
@@ -382,7 +385,7 @@ export const UpdateEventDataModal = ({
     onError: (error: Error) => {
       // Handle error (e.g., show a toast notification)
       console.error("Update error:", error);
-      alert(`Erreur: ${error.message}`);
+      alert(`${t("errorPrefix")} ${error.message}`);
     },
   });
 
@@ -399,31 +402,30 @@ export const UpdateEventDataModal = ({
       <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>
-            Mettre à jour les données de l&apos;événement
+            {t("title")}
           </DialogTitle>
           <DialogDescription>
-            Comparez les données actuelles avec les dernières informations de la
-            FIS et mettez à jour si nécessaire. Codex: {codex}
+            {t("description", {codex})}
           </DialogDescription>
         </DialogHeader>
 
         {isLoadingFisData && (
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            <p className="ml-2">Chargement des données FIS...</p>
+            <p className="ml-2">{t("loading")}</p>
           </div>
         )}
 
         {fisError && (
           <div className="text-red-500 p-4 bg-red-50 rounded border border-red-200">
-            Erreur lors de la récupération des données FIS:{" "}
-            {"message" in fisError ? fisError.message : "Erreur inconnue"}
+            {t("error")}{" "}
+            {"message" in fisError ? fisError.message : t("unknownError")}
           </div>
         )}
 
         {!isLoadingFisData && !fisError && differences.length > 0 && (
           <div className="my-4 p-4 border rounded-md bg-gray-50 max-h-[400px] overflow-y-auto">
-            <h3 className="font-semibold mb-4">Modifications détectées :</h3>
+            <h3 className="font-semibold mb-4">{t("changesDetected")}</h3>
             <div className="space-y-4">
               {differences.map((diff, index) => (
                 <div key={index} className="bg-white p-3 rounded shadow-sm">
@@ -431,13 +433,13 @@ export const UpdateEventDataModal = ({
                   <div className="mt-1 grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-red-500 font-medium">
-                        Ancien :{" "}
+                        {t("old")}{" "}
                       </span>
                       <span className="text-red-700">{diff.oldValue}</span>
                     </div>
                     <div>
                       <span className="text-green-500 font-medium">
-                        Nouveau :{" "}
+                        {t("new")}{" "}
                       </span>
                       <span className="text-green-700">{diff.newValue}</span>
                     </div>
@@ -453,7 +455,7 @@ export const UpdateEventDataModal = ({
           differences.length === 0 &&
           fetchedEventData && (
             <p className="my-4 text-green-600">
-              Aucune différence détectée avec les données FIS.
+              {t("noDifferences")}
             </p>
           )}
 
@@ -463,7 +465,7 @@ export const UpdateEventDataModal = ({
             onClick={onClose}
             className="cursor-pointer"
           >
-            Annuler
+            {tCommon("actions.cancel")}
           </Button>
           <Button
             onClick={handleUpdate}
@@ -478,7 +480,7 @@ export const UpdateEventDataModal = ({
             {updateMutation.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
-            Appliquer les modifications
+            {t("applyChanges")}
           </Button>
         </DialogFooter>
       </DialogContent>

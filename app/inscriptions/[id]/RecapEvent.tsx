@@ -42,6 +42,7 @@ import {
 import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
 import {CompetitorCard} from "./CompetitorCard";
+import {useTranslations} from "next-intl";
 
 type InscriptionCompetitorWithCodex = InscriptionCompetitor & {
   codexNumbers: string[];
@@ -49,7 +50,7 @@ type InscriptionCompetitorWithCodex = InscriptionCompetitor & {
 };
 
 // Hook pour récupérer tous les compétiteurs de l'inscription (nouvelle structure)
-const useAllInscriptionCompetitors = (inscriptionId: string) => {
+const useAllInscriptionCompetitors = (inscriptionId: string, t: (key: string) => string) => {
   return useQuery<InscriptionCompetitor[]>({
     queryKey: ["inscription-competitors-all", inscriptionId],
     queryFn: async () => {
@@ -57,7 +58,7 @@ const useAllInscriptionCompetitors = (inscriptionId: string) => {
         `/api/inscriptions/${inscriptionId}/competitors/all`
       );
       if (!res.ok)
-        throw new Error("Erreur lors du chargement des compétiteurs");
+        throw new Error(t("errors.loadCompetitors"));
       // Nouvelle structure: retourne un tableau plat
       const data = await res.json();
       return data || [];
@@ -84,7 +85,7 @@ type CompetitorRow = {
 };
 
 // Copied from Competitors.tsx
-function useUpdateCompetitorRegistrations(inscriptionId: string) {
+function useUpdateCompetitorRegistrations(inscriptionId: string, t: (key: string) => string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -103,9 +104,7 @@ function useUpdateCompetitorRegistrations(inscriptionId: string) {
         }
       );
       if (!res.ok)
-        throw new Error(
-          "Erreur lors de la mise à jour des inscriptions du compétiteur"
-        );
+        throw new Error(t("errors.updateRegistrations"));
       return res.json();
     },
     onSuccess: (_data, variables) => {
@@ -143,6 +142,7 @@ function DesinscriptionCodexList({
   allEventCodexes: CompetitionItem[];
   genderFilterOfCompetitor?: string; // 'M', 'W', or undefined if unknown/not applicable
 }) {
+  const tManage = useTranslations("inscriptionDetail.recap.manage");
   const [loading, setLoading] = useState(true);
 
   // Filter allEventCodexes to show only those relevant to the competitor's gender
@@ -191,12 +191,12 @@ function DesinscriptionCodexList({
   }, [inscriptionId, competitorId]); // setSelectedCodex removed as it's a stable state setter
 
   if (loading)
-    return <div>Chargement des informations d&apos;inscription...</div>;
+    return <div>{tManage("loadingInfo")}</div>;
 
   if (relevantEventCodexes.length === 0 && !loading) {
     return (
       <div>
-        Aucun codex compatible avec le sexe du compétiteur pour cet événement.
+        {tManage("noCompatibleCodex")}
       </div>
     );
   }
@@ -204,7 +204,7 @@ function DesinscriptionCodexList({
   return (
     <div className="space-y-2">
       <div className="mb-2 font-medium">
-        Sélectionnez les codex pour l&apos;inscription :
+        {tManage("selectCodex")}
       </div>
       <div className="flex flex-wrap gap-3 max-h-60 overflow-y-auto p-1">
         {relevantEventCodexes.map((eventCodexItem) => (
@@ -275,6 +275,7 @@ const CompetitorRegistrationDialog = React.memo(
     inscriptionStatus: string;
     onUpdate: (competitorId: number, codexNumbers: number[]) => void;
   }) => {
+    const tManage = useTranslations("inscriptionDetail.recap.manage");
     const [selectedCodex, setSelectedCodex] = useState<number[]>([]);
     const [updating, setUpdating] = useState(false);
 
@@ -292,7 +293,7 @@ const CompetitorRegistrationDialog = React.memo(
           <Button
             variant="ghost"
             size="icon"
-            title="Gérer les inscriptions"
+            title={tManage("title")}
             className="cursor-pointer"
             disabled={inscriptionStatus !== "open" || updating}
           >
@@ -302,13 +303,10 @@ const CompetitorRegistrationDialog = React.memo(
         <DialogContent className="w-[95vw] md:w-auto max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base md:text-lg">
-              Gérer les inscriptions de {competitor.firstname}{" "}
-              {competitor.lastname}
+              {tManage("modalTitle", {firstName: competitor.firstname, lastName: competitor.lastname})}
             </DialogTitle>
             <DialogDescription className="mt-2 text-sm">
-              Cochez les codex auxquels vous souhaitez inscrire le compétiteur.
-              Décochez ceux dont vous souhaitez le désinscrire. Les codex
-              affichés sont filtrés selon le sexe du compétiteur.
+              {tManage("description")}
             </DialogDescription>
           </DialogHeader>
           <DesinscriptionCodexList
@@ -324,7 +322,7 @@ const CompetitorRegistrationDialog = React.memo(
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="ghost" className="cursor-pointer">
-                Annuler
+                {tManage("cancel")}
               </Button>
             </DialogClose>
             <Button
@@ -333,7 +331,7 @@ const CompetitorRegistrationDialog = React.memo(
               variant="default"
               className="cursor-pointer"
             >
-              {updating ? "Mise à jour..." : "Mettre à jour les inscriptions"}
+              {updating ? tManage("updating") : tManage("update")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -356,6 +354,13 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
   inscriptionId,
   genderFilter,
 }) => {
+  const t = useTranslations("inscriptionDetail.recap");
+  const tTable = useTranslations("inscriptionDetail.recap.table");
+  const tAdd = useTranslations("inscriptionDetail.recap.addCompetitor");
+  const tGenderButtons = useTranslations("inscriptionDetail.recap.genderButtons");
+  const tPermissions = useTranslations("inscriptionDetail.recap.permissions");
+  const tGroups = useTranslations("inscriptionDetail.recap.groups");
+
   const {
     data: inscription,
     isLoading: isLoadingInscription,
@@ -366,7 +371,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
     data: competitorsData = [],
     isPending,
     error,
-  } = useAllInscriptionCompetitors(inscriptionId);
+  } = useAllInscriptionCompetitors(inscriptionId, t);
 
   const [addGender, setAddGender] = useState<"W" | "M">("W");
   const [userDrivenSorting, setUserDrivenSorting] = useState<SortingState>([]);
@@ -374,7 +379,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
   // Dialog state for managing competitor registrations
   const [openDialog, setOpenDialog] = useState<null | number>(null); // Stores competitorId or null
   const {mutate: updateCompetitor} =
-    useUpdateCompetitorRegistrations(inscriptionId);
+    useUpdateCompetitorRegistrations(inscriptionId, t);
 
   const handleUpdateCompetitor = useCallback(
     (competitorId: number, codexNumbers: number[]) => {
@@ -448,14 +453,14 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
     () => [
       columnHelper.display({
         id: "name",
-        header: () => "Nom",
+        header: () => tTable("name"),
         cell: (info) =>
           `${info.row.original.lastname} ${info.row.original.firstname} `,
       }),
       // Static skiclub column
       columnHelper.accessor((row) => row.skiclub, {
         id: "skiclub",
-        header: () => "Club",
+        header: () => tTable("club"),
         cell: (info) => info.getValue(),
         enableSorting: true,
       }),
@@ -541,7 +546,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                       )}
                     </div>
                     <div className="text-xs text-slate-600 mt-1">
-                      ({countForThisCodex} inscrits)
+                      ({countForThisCodex} {tTable("registered")})
                     </div>
                   </div>
                 );
@@ -584,14 +589,14 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
       // Nouvelle colonne email ajouté par
       columnHelper.accessor((row) => row.addedByEmail ?? "-", {
         id: "addedByEmail",
-        header: () => "Ajouté par",
+        header: () => tTable("addedBy"),
         cell: (info) => <span>{info.getValue() || "-"}</span>,
         enableSorting: false,
       }),
       // Action column for managing registrations
       columnHelper.display({
         id: "actions",
-        header: () => "Actions",
+        header: () => tTable("actions"),
         cell: (info) => {
           const competitor = info.row.original;
           if (!permissionToEdit) return null;
@@ -622,6 +627,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
       openDialog,
       handleUpdateCompetitor,
       allCompetitors,
+      tTable,
     ]
   );
 
@@ -638,10 +644,10 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
   // Filter groups based on genderFilter
   const displayedGroups = useMemo(() => {
     const groups = [
-      {label: "Femmes", value: "W"},
-      {label: "Hommes", value: "M"},
+      {label: tGroups("women"), value: "W"},
+      {label: tGroups("men"), value: "M"},
     ];
-    
+
     if (genderFilter === "M") {
       return groups.filter((g) => g.value === "M");
     }
@@ -649,7 +655,7 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
       return groups.filter((g) => g.value === "W");
     }
     return groups; // For "both", show all defined groups
-  }, [genderFilter]);
+  }, [genderFilter, tGroups]);
 
   // Détection des sexes présents dans les codex de l'évènement
   const codexSexes = useMemo(() => {
@@ -667,15 +673,15 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="w-4 h-4 animate-spin" />
-        <p>Chargement des données...</p>
+        <p>{t("loading")}</p>
       </div>
     );
   }
   if (errorInscription || error) {
-    return <div>Erreur lors du chargement des données.</div>;
+    return <div>{t("errors.loadData")}</div>;
   }
   if (!inscription?.eventData.competitions?.length) {
-    return <div>Aucun codex pour cet évènement.</div>;
+    return <div>{t("errors.noCodex")}</div>;
   }
 
   // 5. Render Component (groupé par sexe)
@@ -699,8 +705,8 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                 defaultCodex={inscription?.eventData.competitions[0].codex}
                 gender="W"
                 codexData={inscription?.eventData.competitions || []}
-                triggerText="Ajouter une compétitrice"
-                triggerTextMobile="+ Femme"
+                triggerText={tAdd("female")}
+                triggerTextMobile={tAdd("femaleShort")}
               />
             ) : genderFilter === "M" ? (
               <AddCompetitorModal
@@ -708,8 +714,8 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                 defaultCodex={inscription?.eventData.competitions[0].codex}
                 gender="M"
                 codexData={inscription?.eventData.competitions || []}
-                triggerText="Ajouter un compétiteur"
-                triggerTextMobile="+ Homme"
+                triggerText={tAdd("male")}
+                triggerTextMobile={tAdd("maleShort")}
               />
             ) : // genderFilter === "both"
             codexSexes.length === 1 ? (
@@ -720,18 +726,18 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                 codexData={inscription?.eventData.competitions || []}
                 triggerText={
                   codexSexes[0] === "W"
-                    ? "Ajouter une compétitrice"
-                    : "Ajouter un compétiteur"
+                    ? tAdd("female")
+                    : tAdd("male")
                 }
                 triggerTextMobile={
-                  codexSexes[0] === "W" ? "+ Femme" : "+ Homme"
+                  codexSexes[0] === "W" ? tAdd("femaleShort") : tAdd("maleShort")
                 }
               />
             ) : (
               // genderFilter === "both" && codexSexes has multiple
               <>
                 <span className="text-xs md:text-sm hidden md:inline">
-                  Ajouter un{addGender === "W" ? "e" : ""} :
+                  {tAdd("add", {gender: addGender === "W" ? tAdd("femaleGender") : tAdd("maleGender")})}
                 </span>
                 <button
                   type="button"
@@ -742,8 +748,8 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                   }`}
                   onClick={() => setAddGender("W")}
                 >
-                  <span className="md:hidden">F</span>
-                  <span className="hidden md:inline">Femme</span>
+                  <span className="md:hidden">{tGenderButtons("femaleShort")}</span>
+                  <span className="hidden md:inline">{tGenderButtons("female")}</span>
                 </button>
                 <button
                   type="button"
@@ -754,8 +760,8 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                   }`}
                   onClick={() => setAddGender("M")}
                 >
-                  <span className="md:hidden">H</span>
-                  <span className="hidden md:inline">Homme</span>
+                  <span className="md:hidden">{tGenderButtons("maleShort")}</span>
+                  <span className="hidden md:inline">{tGenderButtons("male")}</span>
                 </button>
                 <AddCompetitorModal
                   inscriptionId={inscriptionId}
@@ -764,8 +770,8 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
                   codexData={inscription?.eventData.competitions || []}
                   triggerText={
                     addGender === "W"
-                      ? "Ajouter compétitrice"
-                      : "Ajouter compétiteur"
+                      ? tAdd("female")
+                      : tAdd("male")
                   }
                   triggerTextMobile="+"
                 />
@@ -773,14 +779,10 @@ export const RecapEvent: React.FC<RecapEventProps> = ({
             )
           ) : !permissionToEdit ? (
             <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
-              Vous n&apos;avez pas les droits pour ajouter des compétiteurs sur
-              cet évènement.
+              {tPermissions("noPermission")}
             </div>
           ) : (
-            <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2">
-              L&apos;inscription / désincription n&apos;est possible que lorsque
-              l&apos;inscription est <b>ouverte</b>.
-            </div>
+            <div className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded px-4 py-2" dangerouslySetInnerHTML={{__html: tPermissions("closedInscription")}} />
           )}
         </div>
       </div>
@@ -912,13 +914,15 @@ const TotalInscriptionsInfo: React.FC<TotalInscriptionsInfoProps> = ({
   filteredCount,
   genderFilter,
 }) => {
+  const tTotals = useTranslations("inscriptionDetail.recap.totals");
+
   let text = "";
   if (genderFilter === "both") {
-    text = `Nombre total d'inscriptions : <b>${filteredCount}</b>`;
+    text = tTotals("all", {count: filteredCount});
   } else if (genderFilter === "W") {
-    text = `Nombre total de compétitrices inscrites : <b>${filteredCount}</b>`;
+    text = tTotals("women", {count: filteredCount});
   } else if (genderFilter === "M") {
-    text = `Nombre total de compétiteurs inscrits : <b>${filteredCount}</b>`;
+    text = tTotals("men", {count: filteredCount});
   }
 
   return (
