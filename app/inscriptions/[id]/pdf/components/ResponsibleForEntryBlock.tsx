@@ -1,14 +1,14 @@
 import React from "react";
-import {useOrganization} from "@/hooks/useOrganization";
 
 type ResponsibleForEntryBlockProps = {
   gender: "M" | "W";
+  organization: any;
 };
 
 export const ResponsibleForEntryBlock = ({
   gender,
+  organization,
 }: ResponsibleForEntryBlockProps) => {
-  const {data: organization} = useOrganization();
 
   type Person = {name: string; phone: string; email: string};
   type MenWomen = {men: Person; women: Person};

@@ -20,6 +20,7 @@ import type {User} from "@clerk/nextjs/server";
 import type {Competition, CompetitionItem} from "@/app/types";
 import {getGenderStatus} from "@/app/lib/genderStatus";
 import {getTranslations} from "next-intl/server";
+import {getOrganization} from "@/app/lib/getUserOrganization";
 
 // Define more specific types based on common Clerk structures
 // You should ideally import these or more accurate types from Clerk packages
@@ -53,6 +54,9 @@ export default async function PdfPage({
     return <p>{tInscription("eventDataNotFound")}</p>;
   }
   const eventData = inscription.eventData as Competition;
+
+  // Fetch organization config
+  const organization = await getOrganization();
 
   // Fetch coaches for this inscription
   const coaches = await db
@@ -411,8 +415,8 @@ export default async function PdfPage({
           </div>
           {/* Responsible and Category Row */}
           <div className="flex border-b border-black">
-            <ResponsibleForEntryBlock gender={raceGender} />
-            <NationalAssociationBlock />
+            <ResponsibleForEntryBlock gender={raceGender} organization={organization} />
+            <NationalAssociationBlock organization={organization} />
           </div>
           <GenderRow gender={raceGender === "M" ? "M" : "W"} />
           <CompetitorsTable
@@ -420,7 +424,7 @@ export default async function PdfPage({
             codexData={filteredCodexData}
           />
           {filteredCoaches.length > 0 && <CoachesBlock coaches={filteredCoaches} />}
-          <TableFooter gender={raceGender} />
+          <TableFooter gender={raceGender} organization={organization} />
         </div>
         <Footer />
       </div>

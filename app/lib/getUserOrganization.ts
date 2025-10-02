@@ -1,4 +1,7 @@
 import { currentUser } from '@clerk/nextjs/server';
+import { db } from '@/app/db/inscriptionsDB';
+import { getDbTables } from '@/app/lib/getDbTables';
+import { eq } from 'drizzle-orm';
 
 /**
  * Gets the organization code for the current user
@@ -23,6 +26,31 @@ export async function getUserOrganizationCode(): Promise<string> {
   } catch (error) {
     console.warn('Error getting user organization, defaulting to FFS:', error);
     return 'FFS';
+  }
+}
+
+/**
+ * Gets the full organization config for a given organization code
+ * Server-side only function
+ */
+export async function getOrganization(code: string = 'FFS') {
+  try {
+    const { organizations } = getDbTables();
+
+    const organization = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.code, code))
+      .limit(1);
+
+    if (!organization || organization.length === 0) {
+      return null;
+    }
+
+    return organization[0];
+  } catch (error) {
+    console.error('Error fetching organization:', error);
+    return null;
   }
 }
 

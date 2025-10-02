@@ -1,13 +1,12 @@
 import React from "react";
 import Image from "next/image";
-import {useOrganization} from "@/hooks/useOrganization";
 
 type TableFooterProps = {
   gender: "M" | "W";
+  organization: any;
 };
 
-export const TableFooter = ({gender}: TableFooterProps) => {
-  const {data: organization} = useOrganization();
+export const TableFooter = ({gender, organization}: TableFooterProps) => {
   return (
     // Main container with top border separating from the new totals row in CompetitorsTable
     <div className="border-t border-black">

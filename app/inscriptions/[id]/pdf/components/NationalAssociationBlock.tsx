@@ -1,9 +1,11 @@
 import Image from "next/image";
 import React from "react";
-import {useOrganization} from "@/hooks/useOrganization";
 
-export const NationalAssociationBlock = () => {
-  const {data: organization} = useOrganization();
+type NationalAssociationBlockProps = {
+  organization: any;
+};
+
+export const NationalAssociationBlock = ({organization}: NationalAssociationBlockProps) => {
   return (
     <div className="w-1/2 p-2">
       <div className="flex">
