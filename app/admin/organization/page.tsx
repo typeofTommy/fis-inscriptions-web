@@ -819,7 +819,11 @@ export default function OrganizationAdminPage() {
                         emailTemplates: {
                           ...organization.emailTemplates,
                           inscription_pdf: {
-                            ...(organization.emailTemplates.inscription_pdf || {}),
+                            ...(organization.emailTemplates.inscription_pdf || {
+                              subject_prefix: "",
+                              contact_email: { men: "", women: "" },
+                              signature_urls: { men: "", women: "" },
+                            }),
                             subject_prefix: e.target.value,
                           },
                         },
@@ -840,9 +844,13 @@ export default function OrganizationAdminPage() {
                           emailTemplates: {
                             ...organization.emailTemplates,
                             inscription_pdf: {
-                              ...(organization.emailTemplates.inscription_pdf || {}),
+                              ...(organization.emailTemplates.inscription_pdf || {
+                                subject_prefix: "",
+                                contact_email: { men: "", women: "" },
+                                signature_urls: { men: "", women: "" },
+                              }),
                               contact_email: {
-                                ...(organization.emailTemplates.inscription_pdf?.contact_email || {}),
+                                ...(organization.emailTemplates.inscription_pdf?.contact_email || { men: "", women: "" }),
                                 men: e.target.value,
                               },
                             },
@@ -863,9 +871,13 @@ export default function OrganizationAdminPage() {
                           emailTemplates: {
                             ...organization.emailTemplates,
                             inscription_pdf: {
-                              ...(organization.emailTemplates.inscription_pdf || {}),
+                              ...(organization.emailTemplates.inscription_pdf || {
+                                subject_prefix: "",
+                                contact_email: { men: "", women: "" },
+                                signature_urls: { men: "", women: "" },
+                              }),
                               contact_email: {
-                                ...(organization.emailTemplates.inscription_pdf?.contact_email || {}),
+                                ...(organization.emailTemplates.inscription_pdf?.contact_email || { men: "", women: "" }),
                                 women: e.target.value,
                               },
                             },
@@ -888,9 +900,13 @@ export default function OrganizationAdminPage() {
                           emailTemplates: {
                             ...organization.emailTemplates,
                             inscription_pdf: {
-                              ...(organization.emailTemplates.inscription_pdf || {}),
+                              ...(organization.emailTemplates.inscription_pdf || {
+                                subject_prefix: "",
+                                contact_email: { men: "", women: "" },
+                                signature_urls: { men: "", women: "" },
+                              }),
                               signature_urls: {
-                                ...(organization.emailTemplates.inscription_pdf?.signature_urls || {}),
+                                ...(organization.emailTemplates.inscription_pdf?.signature_urls || { men: "", women: "" }),
                                 men: e.target.value,
                               },
                             },
@@ -911,9 +927,13 @@ export default function OrganizationAdminPage() {
                           emailTemplates: {
                             ...organization.emailTemplates,
                             inscription_pdf: {
-                              ...(organization.emailTemplates.inscription_pdf || {}),
+                              ...(organization.emailTemplates.inscription_pdf || {
+                                subject_prefix: "",
+                                contact_email: { men: "", women: "" },
+                                signature_urls: { men: "", women: "" },
+                              }),
                               signature_urls: {
-                                ...(organization.emailTemplates.inscription_pdf?.signature_urls || {}),
+                                ...(organization.emailTemplates.inscription_pdf?.signature_urls || { men: "", women: "" }),
                                 women: e.target.value,
                               },
                             },
@@ -1014,7 +1034,7 @@ export default function OrganizationAdminPage() {
                               emailTemplates: {
                                 ...organization.emailTemplates,
                                 daily_recap: {
-                                  ...(organization.emailTemplates.daily_recap || {}),
+                                  ...(organization.emailTemplates.daily_recap || { recipients: [], cc: [] }),
                                   recipients: updated,
                                 },
                               },
@@ -1034,7 +1054,7 @@ export default function OrganizationAdminPage() {
                               emailTemplates: {
                                 ...organization.emailTemplates,
                                 daily_recap: {
-                                  ...(organization.emailTemplates.daily_recap || {}),
+                                  ...(organization.emailTemplates.daily_recap || { recipients: [], cc: [] }),
                                   recipients: updated,
                                 },
                               },
@@ -1084,7 +1104,7 @@ export default function OrganizationAdminPage() {
                               emailTemplates: {
                                 ...organization.emailTemplates,
                                 daily_recap: {
-                                  ...(organization.emailTemplates.daily_recap || {}),
+                                  ...(organization.emailTemplates.daily_recap || { recipients: [], cc: [] }),
                                   cc: updated,
                                 },
                               },
@@ -1104,7 +1124,7 @@ export default function OrganizationAdminPage() {
                               emailTemplates: {
                                 ...organization.emailTemplates,
                                 daily_recap: {
-                                  ...(organization.emailTemplates.daily_recap || {}),
+                                  ...(organization.emailTemplates.daily_recap || { recipients: [], cc: [] }),
                                   cc: updated,
                                 },
                               },
