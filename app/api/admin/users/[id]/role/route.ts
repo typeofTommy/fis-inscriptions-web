@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { getCurrentUserRole } from "@/app/lib/checkRole";
 
 export const PATCH = async (
   req: NextRequest,
@@ -12,26 +13,40 @@ export const PATCH = async (
     }
 
     const client = await clerkClient();
-    
-    // Vérifier que l'utilisateur connecté est admin
-    const currentUser = await client.users.getUser(userId);
-    if (currentUser.publicMetadata.role !== "admin") {
+    const currentUserRole = await getCurrentUserRole();
+
+    // Only admins and super-admins can change roles
+    if (currentUserRole !== "admin" && currentUserRole !== "super-admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await params;
     const { role } = await req.json();
-    
-    if (!role || !["admin", "user"].includes(role)) {
-      return NextResponse.json({ 
-        error: "Role must be 'admin' or 'user'" 
+
+    if (!role || !["super-admin", "admin", "user"].includes(role)) {
+      return NextResponse.json({
+        error: "Role must be 'super-admin', 'admin' or 'user'"
       }, { status: 400 });
     }
 
-    // Empêcher un admin de se rétrograder lui-même
-    if (id === userId && role !== "admin") {
-      return NextResponse.json({ 
-        error: "Vous ne pouvez pas modifier votre propre rôle d'administrateur" 
+    // Only super-admins can assign super-admin role
+    if (role === "super-admin" && currentUserRole !== "super-admin") {
+      return NextResponse.json({
+        error: "Only super-admins can assign super-admin role"
+      }, { status: 403 });
+    }
+
+    // Prevent super-admin from demoting themselves
+    if (id === userId && currentUserRole === "super-admin" && role !== "super-admin") {
+      return NextResponse.json({
+        error: "Vous ne pouvez pas modifier votre propre rôle de super-administrateur"
+      }, { status: 400 });
+    }
+
+    // Prevent admin from demoting themselves
+    if (id === userId && currentUserRole === "admin" && role !== "admin" && role !== "super-admin") {
+      return NextResponse.json({
+        error: "Vous ne pouvez pas modifier votre propre rôle d'administrateur"
       }, { status: 400 });
     }
 

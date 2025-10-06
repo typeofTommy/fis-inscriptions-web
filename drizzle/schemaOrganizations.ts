@@ -57,6 +57,12 @@ export const organizations = pgTable("organizations", {
     daily_recap?: {
       recipients: string[],
       cc: string[]
+    },
+    contact_inscription?: {
+      recipients: string[]
+    },
+    event_data_updated?: {
+      recipients: string[]
     }
   }>().default({}).notNull(),
   createdAt: timestamp("created_at").defaultNow(),

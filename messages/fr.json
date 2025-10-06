@@ -25,7 +25,128 @@
     "inscriptions": "Inscriptions",
     "competitors": "Compétiteurs",
     "users": "Utilisateurs",
-    "profile": "Profil"
+    "profile": "Profil",
+    "organizationConfig": "Configuration"
+  },
+  "admin": {
+    "organizationConfig": {
+      "title": "Configuration de l'organisation",
+      "subtitle": "Gérer les paramètres de l'organisation et les modèles d'email",
+      "loading": "Chargement de l'organisation...",
+      "saving": "Enregistrement...",
+      "saveChanges": "Enregistrer les modifications",
+      "sections": {
+        "general": {
+          "title": "Informations générales",
+          "description": "Détails de base utilisés dans l'application (en-têtes PDF, signatures email, URLs)",
+          "fields": {
+            "code": {
+              "label": "Code",
+              "description": "Identifiant unique (ex: FFS, RFEDI) - ne peut pas être modifié"
+            },
+            "country": {
+              "label": "Pays (ISO 3 lettres)",
+              "description": "Utilisé pour le filtrage et l'affichage (ex: FRA, ESP, AND)",
+              "placeholder": "FRA"
+            },
+            "name": {
+              "label": "Nom de l'organisation",
+              "description": "Nom complet affiché dans les PDFs et emails",
+              "placeholder": "Fédération Française de Ski"
+            },
+            "logo": {
+              "label": "URL du logo",
+              "description": "Utilisé dans les en-têtes PDF et modèles d'email (URL publique)",
+              "placeholder": "https://exemple.com/logo.png"
+            },
+            "baseUrl": {
+              "label": "URL de base (Application)",
+              "description": "Utilisé dans tous les liens d'email pour rediriger les utilisateurs",
+              "placeholder": "https://inscriptions-fis-etranger.fr"
+            },
+            "fromEmail": {
+              "label": "Email expéditeur",
+              "description": "Affiché comme expéditeur dans tous les emails automatisés",
+              "placeholder": "Inscriptions FIS <noreply@ffs.fr>"
+            }
+          }
+        },
+        "emailRecipients": {
+          "title": "Destinataires des emails (PDF)",
+          "description": "Destinataires qui recevront les PDFs d'inscription envoyés depuis l'application",
+          "fields": {
+            "allRaces": {
+              "label": "Destinataires pour toutes les courses (JSON)",
+              "description": "Format: [{email, name, reason}] - Toujours en copie cachée sur tous les emails PDF"
+            },
+            "men": {
+              "label": "Destinataires hommes (JSON)",
+              "description": "Format: [{email, name, reason}] - En copie cachée uniquement sur les PDFs équipe hommes"
+            },
+            "women": {
+              "label": "Destinataires femmes (JSON)",
+              "description": "Format: [{email, name, reason}] - En copie cachée uniquement sur les PDFs équipe femmes"
+            }
+          }
+        },
+        "contacts": {
+          "title": "Contacts (PDF)",
+          "description": "Affichés dans la section \"Responsable des inscriptions\" au bas des PDFs générés",
+          "fields": {
+            "address": {
+              "label": "Adresse de la fédération",
+              "description": "Adresse postale complète de la fédération (affichée en pied de page PDF)",
+              "placeholder": "FFS - 50 avenue des Marquisats - 74000 ANNECY"
+            },
+            "menContact": {
+              "title": "Contact hommes",
+              "description": "Coordinateur d'équipe pour les courses hommes (affiché uniquement dans les PDFs hommes)",
+              "name": "Nom",
+              "phone": "Téléphone",
+              "email": "Email",
+              "placeholders": {
+                "name": "Philippe MARTIN",
+                "phone": "+33 6 12 34 56 78",
+                "email": "contact@federation.com"
+              }
+            },
+            "womenContact": {
+              "title": "Contact femmes",
+              "description": "Coordinatrice d'équipe pour les courses femmes (affiché uniquement dans les PDFs femmes)",
+              "name": "Nom",
+              "phone": "Téléphone",
+              "email": "Email",
+              "placeholders": {
+                "name": "Marie DUPONT",
+                "phone": "+33 6 12 34 56 78",
+                "email": "contact@federation.com"
+              }
+            },
+            "signature": {
+              "title": "Signature",
+              "description": "Signature officielle affichée en bas de tous les PDFs",
+              "name": {
+                "label": "Nom",
+                "description": "Nom complet de l'autorité signataire",
+                "placeholder": "David CHASTAN"
+              },
+              "title": {
+                "label": "Titre",
+                "description": "Titre ou poste officiel",
+                "placeholder": "Directeur Sportif Coupe du Monde"
+              }
+            }
+          }
+        },
+        "emailTemplates": {
+          "title": "Modèles d'email",
+          "description": "Configurer les modèles d'email pour les PDFs d'inscription, nouvelles inscriptions, récapitulatif quotidien, formulaires de contact et mises à jour d'événements",
+          "fields": {
+            "label": "Tous les modèles d'email (JSON)"
+          }
+        }
+      }
+    }
   },
   "inscriptions": {
     "title": "Inscriptions FIS étrangers",

@@ -60,9 +60,11 @@ export const PUT = async (
 
       const baseUrl = org[0]?.baseUrl || "https://www.inscriptions-fis-etranger.fr";
       const fromEmail = org[0]?.fromEmail;
+      const emailTemplates = org[0]?.emailTemplates;
+      const recipients = emailTemplates?.event_data_updated?.recipients || ["pmartin@ffs.fr"]; // fallback
 
       await sendNotificationEmail({
-        to: ["pmartin@ffs.fr"],
+        to: recipients,
         subject: `Mise à jour des données de l'événement (id: ${idNumber})`,
         html: `
           <div style='font-family: Arial, sans-serif; max-width:600px; margin:0 auto; background:#f9f9f9; padding:24px; border-radius:8px;'>

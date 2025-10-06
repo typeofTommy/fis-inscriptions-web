@@ -25,7 +25,128 @@
     "inscriptions": "Registrations",
     "competitors": "Competitors",
     "users": "Users",
-    "profile": "Profile"
+    "profile": "Profile",
+    "organizationConfig": "Configuration"
+  },
+  "admin": {
+    "organizationConfig": {
+      "title": "Organization Configuration",
+      "subtitle": "Manage organization settings and email templates",
+      "loading": "Loading organization...",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes",
+      "sections": {
+        "general": {
+          "title": "General Information",
+          "description": "Basic details used throughout the application (PDF headers, email signatures, URLs)",
+          "fields": {
+            "code": {
+              "label": "Code",
+              "description": "Unique identifier (e.g., FFS, RFEDI) - cannot be changed"
+            },
+            "country": {
+              "label": "Country (ISO 3-letter)",
+              "description": "Used for filtering and display (e.g., FRA, ESP, AND)",
+              "placeholder": "FRA"
+            },
+            "name": {
+              "label": "Organization Name",
+              "description": "Full name displayed in PDFs and emails",
+              "placeholder": "French Ski Federation"
+            },
+            "logo": {
+              "label": "Logo URL",
+              "description": "Used in PDF headers and email templates (publicly accessible URL)",
+              "placeholder": "https://example.com/logo.png"
+            },
+            "baseUrl": {
+              "label": "Base URL (Application)",
+              "description": "Used in all email links to redirect users",
+              "placeholder": "https://inscriptions-fis-etranger.fr"
+            },
+            "fromEmail": {
+              "label": "From Email (Sender)",
+              "description": "Displayed as sender in all automated emails",
+              "placeholder": "FIS Registrations <noreply@ffs.fr>"
+            }
+          }
+        },
+        "emailRecipients": {
+          "title": "Email Recipients (PDF)",
+          "description": "Recipients who will receive inscription PDFs when sent from the app",
+          "fields": {
+            "allRaces": {
+              "label": "All Races Recipients (JSON)",
+              "description": "Format: [{email, name, reason}] - Always BCC'd on all PDF emails"
+            },
+            "men": {
+              "label": "Men Recipients (JSON)",
+              "description": "Format: [{email, name, reason}] - Only BCC'd on men's team PDFs"
+            },
+            "women": {
+              "label": "Women Recipients (JSON)",
+              "description": "Format: [{email, name, reason}] - Only BCC'd on women's team PDFs"
+            }
+          }
+        },
+        "contacts": {
+          "title": "Contacts (PDF)",
+          "description": "Displayed in the \"Responsible for Entry\" section at the bottom of generated PDFs",
+          "fields": {
+            "address": {
+              "label": "Federation Address",
+              "description": "Full postal address of the federation (shown in PDF footer)",
+              "placeholder": "FFS - 50 avenue des Marquisats - 74000 ANNECY"
+            },
+            "menContact": {
+              "title": "Men Contact",
+              "description": "Team coordinator for men's races (shown in men's PDFs only)",
+              "name": "Name",
+              "phone": "Phone",
+              "email": "Email",
+              "placeholders": {
+                "name": "John DOE",
+                "phone": "+1 234 567 8900",
+                "email": "contact@federation.com"
+              }
+            },
+            "womenContact": {
+              "title": "Women Contact",
+              "description": "Team coordinator for women's races (shown in women's PDFs only)",
+              "name": "Name",
+              "phone": "Phone",
+              "email": "Email",
+              "placeholders": {
+                "name": "Jane SMITH",
+                "phone": "+1 234 567 8900",
+                "email": "contact@federation.com"
+              }
+            },
+            "signature": {
+              "title": "Signature",
+              "description": "Official signature displayed at the bottom of all PDFs",
+              "name": {
+                "label": "Name",
+                "description": "Full name of signing authority",
+                "placeholder": "David CHASTAN"
+              },
+              "title": {
+                "label": "Title",
+                "description": "Official job title or position",
+                "placeholder": "Sports Director World Cup"
+              }
+            }
+          }
+        },
+        "emailTemplates": {
+          "title": "Email Templates",
+          "description": "Configure email templates for inscription PDFs, new inscriptions, daily recap, contact forms, and event updates",
+          "fields": {
+            "label": "All Email Templates (JSON)"
+          }
+        }
+      }
+    }
   },
   "inscriptions": {
     "title": "FIS Foreign Registrations",

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import {PlusCircle, Snowflake, Users} from "lucide-react";
+import {PlusCircle, Snowflake, Users, Settings} from "lucide-react";
 import Link from "next/link";
 import {SignedIn, UserButton, useUser} from "@clerk/nextjs";
 import {Button} from "./button";
@@ -39,11 +39,19 @@ export const Header = () => {
                   {t("new")}
                 </Button>
               </Link>
-              {role === "admin" && (
+              {(role === "admin" || role === "super-admin") && (
                 <Link href="/users" className="w-full md:w-auto">
                   <Button className="w-full md:w-auto flex items-center justify-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
                     <Users className="mr-1 h-4 w-4" />
                     {tNav("users")}
+                  </Button>
+                </Link>
+              )}
+              {role === "super-admin" && (
+                <Link href="/admin/organization" className="w-full md:w-auto">
+                  <Button className="w-full md:w-auto flex items-center justify-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
+                    <Settings className="mr-1 h-4 w-4" />
+                    Config
                   </Button>
                 </Link>
               )}

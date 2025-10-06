@@ -96,13 +96,13 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
+    // Get recipients from organization config
+    const emailTemplates = org[0].emailTemplates;
+    const recipients = emailTemplates?.contact_inscription?.recipients || ["pmartin@ffs.fr"]; // fallback
+
     // Envoyer l'email
     await sendNotificationEmail({
-      to: [
-        "pmartin@ffs.fr",
-        "jmagnellet@orange.fr",
-        "tommymartin1234@gmail.com",
-      ],
+      to: recipients,
       subject: `[Contact Inscription] ${validatedData.subject}`,
       html: htmlContent,
       userId: user.id,

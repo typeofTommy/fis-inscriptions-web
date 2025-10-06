@@ -25,7 +25,132 @@
     "inscriptions": "Inscripciones",
     "competitors": "Competidores",
     "users": "Usuarios",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "organizationConfig": "Configuración"
+  },
+  "admin": {
+    "organizationConfig": {
+      "title": "Configuración de la Organización",
+      "subtitle": "Gestionar ajustes de la organización y plantillas de correo",
+      "loading": "Cargando organización...",
+      "saving": "Guardando...",
+      "saveChanges": "Guardar Cambios",
+      "sections": {
+        "general": {
+          "title": "Información General",
+          "description": "Detalles básicos utilizados en la aplicación (encabezados PDF, firmas de correo, URLs)",
+          "fields": {
+            "code": {
+              "label": "Código",
+              "description": "Identificador único (ej: FFS, RFEDI) - no se puede cambiar"
+            },
+            "country": {
+              "label": "País (ISO 3 letras)",
+              "description": "Usado para filtrado y visualización (ej: FRA, ESP, AND)",
+              "placeholder": "ESP"
+            },
+            "name": {
+              "label": "Nombre de la Organización",
+              "description": "Nombre completo mostrado en PDFs y correos",
+              "placeholder": "Real Federación Española de Deportes de Invierno"
+            },
+            "logo": {
+              "label": "URL del Logo",
+              "description": "Usado en encabezados PDF y plantillas de correo (URL pública)",
+              "placeholder": "https://ejemplo.com/logo.png"
+            },
+            "baseUrl": {
+              "label": "URL Base (Aplicación)",
+              "description": "Usado en todos los enlaces de correo para redirigir usuarios",
+              "placeholder": "https://inscripciones-fis-extranjero.es"
+            },
+            "fromEmail": {
+              "label": "Correo Remitente",
+              "description": "Mostrado como remitente en todos los correos automatizados",
+              "placeholder": "Inscripciones FIS <noreply@rfedi.es>"
+            }
+          }
+        },
+        "emailRecipients": {
+          "title": "Destinatarios de Correos (PDF)",
+          "description": "Destinatarios que recibirán los PDFs de inscripción enviados desde la aplicación",
+          "info": {
+            "allRaces": "Siempre incluidos (ej: administradores de la federación)",
+            "menWomen": "Solo incluidos al enviar PDFs específicos por género"
+          },
+          "fields": {
+            "allRaces": {
+              "label": "Destinatarios para Todas las Carreras (JSON)",
+              "description": "Formato: [{email, name, reason}] - Siempre en CCO en todos los correos PDF"
+            },
+            "men": {
+              "label": "Destinatarios Hombres (JSON)",
+              "description": "Formato: [{email, name, reason}] - Solo en CCO en PDFs de equipo masculino"
+            },
+            "women": {
+              "label": "Destinatarios Mujeres (JSON)",
+              "description": "Formato: [{email, name, reason}] - Solo en CCO en PDFs de equipo femenino"
+            }
+          }
+        },
+        "contacts": {
+          "title": "Contactos (PDF)",
+          "description": "Mostrados en la sección \"Responsable de Inscripción\" al final de los PDFs generados",
+          "fields": {
+            "address": {
+              "label": "Dirección de la Federación",
+              "description": "Dirección postal completa de la federación (mostrada en pie de página PDF)",
+              "placeholder": "RFEDI - Calle Ejemplo 123 - 28001 MADRID"
+            },
+            "menContact": {
+              "title": "Contacto Hombres",
+              "description": "Coordinador de equipo para carreras masculinas (mostrado solo en PDFs masculinos)",
+              "name": "Nombre",
+              "phone": "Teléfono",
+              "email": "Correo",
+              "placeholders": {
+                "name": "Juan PÉREZ",
+                "phone": "+34 6 12 34 56 78",
+                "email": "contacto@federacion.com"
+              }
+            },
+            "womenContact": {
+              "title": "Contacto Mujeres",
+              "description": "Coordinadora de equipo para carreras femeninas (mostrado solo en PDFs femeninos)",
+              "name": "Nombre",
+              "phone": "Teléfono",
+              "email": "Correo",
+              "placeholders": {
+                "name": "María GARCÍA",
+                "phone": "+34 6 12 34 56 78",
+                "email": "contacto@federacion.com"
+              }
+            },
+            "signature": {
+              "title": "Firma",
+              "description": "Firma oficial mostrada al final de todos los PDFs",
+              "name": {
+                "label": "Nombre",
+                "description": "Nombre completo de la autoridad firmante",
+                "placeholder": "David CHASTAN"
+              },
+              "title": {
+                "label": "Título",
+                "description": "Título o cargo oficial",
+                "placeholder": "Director Deportivo Copa del Mundo"
+              }
+            }
+          }
+        },
+        "emailTemplates": {
+          "title": "Plantillas de Correo",
+          "description": "Configurar plantillas de correo para PDFs de inscripción, nuevas inscripciones, resumen diario, formularios de contacto y actualizaciones de eventos",
+          "fields": {
+            "label": "Todas las Plantillas de Correo (JSON)"
+          }
+        }
+      }
+    }
   },
   "inscriptions": {
     "title": "Inscripciones FIS extranjeros",
