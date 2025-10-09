@@ -8,7 +8,7 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core";
 
-export const inscriptionsSchema = pgSchema("inscriptionsDB");
+export const inscriptionsSchema = pgSchema("ffs");
 
 export const inscriptionStatus = inscriptionsSchema.enum("status", [
   "open",

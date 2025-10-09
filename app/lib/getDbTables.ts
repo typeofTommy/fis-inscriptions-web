@@ -18,8 +18,8 @@ export type DbTables = {
   organizations: typeof organizations;
 };
 
-// Phase 1: Return current schema (inscriptionsDB) - ZERO DOWNTIME
-// Phase 2: Will be switched to return new schema (ffs) in a single line change
+// Phase 1: Return FFS schema (renamed from inscriptionsDB)
+// Phase 2: Will add logic to return RFEDI schema for Spanish users
 export const getDbTables = (): DbTables => {
   return {
     inscriptions,
