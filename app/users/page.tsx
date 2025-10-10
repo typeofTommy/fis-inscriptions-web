@@ -1,6 +1,6 @@
 "use client";
 
-import { useRole } from "@/app/lib/useRole";
+import { useRole, isAdminRole } from "@/app/lib/useRole";
 import { redirect } from "next/navigation";
 import { UsersManagement } from "@/components/UsersManagement";
 import { useTranslations } from "next-intl";
@@ -9,7 +9,7 @@ const UsersPage = () => {
   const t = useTranslations("users");
   const role = useRole();
 
-  if (role !== "admin") {
+  if (!isAdminRole(role)) {
     redirect("/");
   }
 

@@ -5,7 +5,7 @@ import {PlusCircle, Snowflake, Users, Settings} from "lucide-react";
 import Link from "next/link";
 import {SignedIn, UserButton, useUser} from "@clerk/nextjs";
 import {Button} from "./button";
-import {useRole} from "@/app/lib/useRole";
+import {useRole, isAdminRole, isSuperAdminRole} from "@/app/lib/useRole";
 import {LanguageSwitcher} from "@/components/LanguageSwitcher";
 import {useTranslations} from "next-intl";
 
@@ -39,7 +39,7 @@ export const Header = () => {
                   {t("new")}
                 </Button>
               </Link>
-              {(role === "admin" || role === "super-admin") && (
+              {isAdminRole(role) && (
                 <Link href="/users" className="w-full md:w-auto">
                   <Button className="w-full md:w-auto flex items-center justify-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
                     <Users className="mr-1 h-4 w-4" />
@@ -47,7 +47,7 @@ export const Header = () => {
                   </Button>
                 </Link>
               )}
-              {role === "super-admin" && (
+              {isSuperAdminRole(role) && (
                 <Link href="/admin/organization" className="w-full md:w-auto">
                   <Button className="w-full md:w-auto flex items-center justify-center bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] cursor-pointer text-sm md:text-base py-2 px-3 md:px-4">
                     <Settings className="mr-1 h-4 w-4" />

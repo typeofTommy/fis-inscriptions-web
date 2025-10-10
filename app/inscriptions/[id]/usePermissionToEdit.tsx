@@ -1,4 +1,4 @@
-import {useRole} from "@/app/lib/useRole";
+import {useRole, isAdminRole} from "@/app/lib/useRole";
 import {Inscription} from "@/app/types";
 import {useUser} from "@clerk/nextjs";
 import {getGenderStatus} from "@/app/lib/genderStatus";
@@ -16,7 +16,7 @@ export const usePermissionToEdit = (
   if (!inscription) return false;
 
   if (type === "actionsBtn") {
-    return role === "admin";
+    return isAdminRole(role);
   }
 
   if (type === "manageCompetitorInscriptions" || type === "manageCoaches") {
@@ -24,9 +24,9 @@ export const usePermissionToEdit = (
     const genderStatus = getGenderStatus(inscription, gender || null);
     const hasUserPermission = !!user.user;
     const canEditBasedOnStatus = genderStatus.canEdit;
-    
+
     return hasUserPermission && canEditBasedOnStatus;
   }
 
-  return role === "admin" || user.user?.id === inscription.createdBy;
+  return isAdminRole(role) || user.user?.id === inscription.createdBy;
 };

@@ -19,3 +19,11 @@ export const useRole = (): Role => {
 
   return "user";
 };
+
+export const isAdminRole = (role: Role): boolean => {
+  return role === "admin" || role === "super-admin";
+};
+
+export const isSuperAdminRole = (role: Role): boolean => {
+  return role === "super-admin";
+};

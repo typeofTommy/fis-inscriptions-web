@@ -132,17 +132,21 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
       const place = eventData.place || "";
       const nation = eventData.placeNationCode ? `(${eventData.placeNationCode})` : "";
       const subjectGender = gender === "M" ? "MEN" : gender === "W" ? "WOMEN" : "TEAM";
-      
-      let subjectLine = `French 🇫🇷 ${subjectGender} entries for ${shortDate} ➞ ${place} ${nation}-FIS`
+
+      const raceType = eventData.categoryCodes
+        ?.filter((code: string) => code !== "TRA")
+        .join("/") || "FIS";
+
+      let subjectLine = `French 🇫🇷 ${subjectGender} entries for ${shortDate} ➞ ${place} ${nation} - ${raceType}`
         .replace(/ +/g, " ")
         .replace(" ()", "")
         .trim();
-      
+
       // Add [UPDATE] prefix if email was already sent
       if (emailSentAt) {
         subjectLine = `[UPDATE] ${subjectLine}`;
       }
-      
+
       setEmailSubject(subjectLine);
     }
   }, [eventData, gender, emailSentAt]);
