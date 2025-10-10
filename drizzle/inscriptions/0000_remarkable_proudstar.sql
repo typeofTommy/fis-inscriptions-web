@@ -1,6 +1,7 @@
 CREATE SCHEMA "inscriptionsDB";
 --> statement-breakpoint
-CREATE TYPE "inscriptionsDB"."status" AS ENUM('open', 'validated');--> statement-breakpoint
+CREATE TYPE "inscriptionsDB"."status" AS ENUM('open', 'validated');
+--> statement-breakpoint
 CREATE TABLE "inscriptionsDB"."competitors" (
 	"listid" integer,
 	"listname" text,
@@ -54,5 +55,6 @@ CREATE TABLE "inscriptionsDB"."inscriptions" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "inscriptionsDB"."inscription_competitors" ADD CONSTRAINT "inscription_competitors_inscription_id_inscriptions_id_fk" FOREIGN KEY ("inscription_id") REFERENCES "inscriptionsDB"."inscriptions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "inscriptionsDB"."inscription_competitors" ADD CONSTRAINT "inscription_competitors_inscription_id_inscriptions_id_fk" FOREIGN KEY ("inscription_id") REFERENCES "inscriptionsDB"."inscriptions"("id") ON DELETE cascade ON UPDATE no action;
+--> statement-breakpoint
 ALTER TABLE "inscriptionsDB"."inscription_competitors" ADD CONSTRAINT "inscription_competitors_competitor_id_competitors_competitorid_fk" FOREIGN KEY ("competitor_id") REFERENCES "inscriptionsDB"."competitors"("competitorid") ON DELETE cascade ON UPDATE no action;

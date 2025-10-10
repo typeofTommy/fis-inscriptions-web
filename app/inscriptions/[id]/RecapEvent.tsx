@@ -925,10 +925,13 @@ const TotalInscriptionsInfo: React.FC<TotalInscriptionsInfoProps> = ({
     text = tTotals("men", {count: filteredCount});
   }
 
+  const parts = text.split(String(filteredCount));
+
   return (
-    <div
-      className="text-xl text-center text-slate-500 mt-8 mb-2 border-t border-slate-200 pt-2"
-      dangerouslySetInnerHTML={{__html: text}}
-    />
+    <div className="text-xl text-center text-slate-500 mt-8 mb-2 border-t border-slate-200 pt-2">
+      {parts[0]}
+      <b>{filteredCount}</b>
+      {parts[1]}
+    </div>
   );
 };

@@ -504,9 +504,9 @@
         "noCompatibleCodex": "Ningún códex compatible con el género del competidor para este evento."
       },
       "totals": {
-        "all": "Número total de inscripciones: <b>{count}</b>",
-        "women": "Número total de competidoras inscritas: <b>{count}</b>",
-        "men": "Número total de competidores inscritos: <b>{count}</b>"
+        "all": "Número total de inscripciones: {count}",
+        "women": "Número total de competidoras inscritas: {count}",
+        "men": "Número total de competidores inscritos: {count}"
       },
       "groups": {
         "women": "Mujeres",

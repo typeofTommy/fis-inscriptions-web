@@ -3,6 +3,8 @@ import {render, screen, fireEvent, waitFor} from "@testing-library/react";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import {InscriptionsTable} from "@/components/InscriptionsTable";
 import {vi, describe, it, expect, beforeEach, afterEach} from "vitest";
+import {NextIntlClientProvider} from "next-intl";
+import messages from "@/messages/fr.json";
 
 // Mock the hooks and dependencies
 vi.mock("@/hooks/useCountryInfo", () => ({
@@ -105,7 +107,9 @@ const createTestQueryClient = () => {
 const renderWithQueryClient = (component: React.ReactElement) => {
   const queryClient = createTestQueryClient();
   return render(
-    <QueryClientProvider client={queryClient}>{component}</QueryClientProvider>
+    <NextIntlClientProvider locale="fr" messages={messages}>
+      <QueryClientProvider client={queryClient}>{component}</QueryClientProvider>
+    </NextIntlClientProvider>
   );
 };
 
