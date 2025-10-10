@@ -1037,16 +1037,17 @@ describe("Schema isolation", () => {
 
 ## Prochaines étapes
 
-### Phase 1 (Abstraction) - EN COURS (80% complété)
+### Phase 1 (Abstraction) - EN COURS (90% complété)
 
 1. ✅ **BACKUP** : Créer branch Neon + pg_dump local
-2. 🚧 **Implémenter les étapes de la Phase 1** (EN COURS - 80% fait)
+2. 🚧 **Implémenter les étapes de la Phase 1** (EN COURS - 90% fait)
    - ✅ 1.1 Table `organizations` créée et seedée avec FFS
    - ✅ 1.1.1 Migration 0011 : Création table organizations avec seed FFS
    - ✅ 1.1.2 Migration 0012 : Ajout email_templates (inscription_pdf, new_inscription, daily_recap)
    - ✅ 1.1.3 Migration 0013 : Ajout baseUrl et fromEmail pour URLs dynamiques
    - ✅ 1.1.4 Migration 0014 : Restructuration contacts pour gender-specific (men/women séparés)
-   - ✅ 1.3 Helper `getDbTables()` créé (retourne ancien schema pour l'instant)
+   - ✅ 1.2 Schema `ffs` migré (COMPLÉTÉ - rename inscriptionsDB → ffs via Neon)
+   - ✅ 1.3 Helper `getDbTables()` créé et pointe vers schema ffs
    - ✅ 1.3 Toutes les queries directes remplacées par `getDbTables()`
    - ✅ 1.4 Internationalisation (i18n) - **100% COMPLÉTÉ ✅**
      - ✅ Configuration next-intl (cookie-based, FR/EN/ES)
@@ -1062,9 +1063,8 @@ describe("Schema isolation", () => {
      - ✅ NationalAssociationBlock.tsx - Logo et adresse
      - ✅ Toutes API routes - baseUrl et fromEmail dynamiques
      - ✅ scripts/daily-recap.ts - Configuration dynamique
-   - ⏳ 1.2 Schema `ffs` + migration données (à faire en dernier pour zéro downtime)
    - ⏳ 1.7 Tests adaptés (mocks i18n + tests unitaires/intégration)
-3. ✅ Déployé en production et validé (i18n fonctionnel)
+3. ✅ Déployé en production et validé (i18n + schema ffs fonctionnels)
 4. ⏳ Valider que France fonctionne parfaitement (tests exhaustifs à faire)
 
 ### Phase 2 (Espagne)

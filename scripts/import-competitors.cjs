@@ -199,7 +199,7 @@ const importCsvToDb = async (csvFilePath) => {
                   .join(", ")})`
             )
             .join(", ");
-          const sqlText = `INSERT INTO "inscriptionsDB"."competitors" (
+          const sqlText = `INSERT INTO "ffs"."competitors" (
             ${columns.map((col) => `"${col}"`).join(", ")}
           ) VALUES ${valuePlaceholders}
           ON CONFLICT (competitorid) DO UPDATE SET ${updateSet}`;

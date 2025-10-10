@@ -59,9 +59,9 @@ const main = async () => {
       c.lastname,
       ic.codex_number,
       ic.added_by
-    FROM "inscriptionsDB".inscription_competitors ic
-    JOIN "inscriptionsDB".competitors c ON ic.competitor_id = c.competitorid
-    JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
+    FROM "ffs".inscription_competitors ic
+    JOIN "ffs".competitors c ON ic.competitor_id = c.competitorid
+    JOIN "ffs".inscriptions i ON ic.inscription_id = i.id
     WHERE ic.created_at >= CURRENT_DATE
       AND ic.created_at < CURRENT_DATE + INTERVAL '1 day'
       AND ic.deleted_at IS NULL
@@ -85,9 +85,9 @@ const main = async () => {
       c.lastname,
       ic.codex_number,
       ic.added_by
-    FROM "inscriptionsDB".inscription_competitors ic
-    JOIN "inscriptionsDB".competitors c ON ic.competitor_id = c.competitorid
-    JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
+    FROM "ffs".inscription_competitors ic
+    JOIN "ffs".competitors c ON ic.competitor_id = c.competitorid
+    JOIN "ffs".inscriptions i ON ic.inscription_id = i.id
     WHERE ic.deleted_at >= CURRENT_DATE
       AND ic.deleted_at < CURRENT_DATE + INTERVAL '1 day'
       AND i.deleted_at IS NULL
@@ -106,7 +106,7 @@ const main = async () => {
       event_data->>'endDate' AS event_end_date,
       created_at,
       created_by
-    FROM "inscriptionsDB".inscriptions
+    FROM "ffs".inscriptions
     WHERE created_at >= CURRENT_DATE
       AND created_at < CURRENT_DATE + INTERVAL '1 day'
       AND deleted_at IS NULL
@@ -124,7 +124,7 @@ const main = async () => {
       event_data->>'endDate' AS event_end_date,
       deleted_at,
       created_by
-    FROM "inscriptionsDB".inscriptions
+    FROM "ffs".inscriptions
     WHERE deleted_at >= CURRENT_DATE
       AND deleted_at < CURRENT_DATE + INTERVAL '1 day'
     ORDER BY deleted_at ASC;
@@ -147,8 +147,8 @@ const main = async () => {
       ic.start_date,
       ic.end_date,
       ic.added_by
-    FROM "inscriptionsDB".inscription_coaches ic
-    JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
+    FROM "ffs".inscription_coaches ic
+    JOIN "ffs".inscriptions i ON ic.inscription_id = i.id
     WHERE ic.created_at >= CURRENT_DATE
       AND ic.created_at < CURRENT_DATE + INTERVAL '1 day'
       AND ic.deleted_at IS NULL
@@ -174,8 +174,8 @@ const main = async () => {
       ic.start_date,
       ic.end_date,
       ic.added_by
-    FROM "inscriptionsDB".inscription_coaches ic
-    JOIN "inscriptionsDB".inscriptions i ON ic.inscription_id = i.id
+    FROM "ffs".inscription_coaches ic
+    JOIN "ffs".inscriptions i ON ic.inscription_id = i.id
     WHERE ic.deleted_at >= CURRENT_DATE
       AND ic.deleted_at < CURRENT_DATE + INTERVAL '1 day'
       AND i.deleted_at IS NULL
@@ -198,7 +198,7 @@ const main = async () => {
       ((event_data->>'startDate')::date - INTERVAL '3 days') AS deadline_date,
       -- Calcul des jours restants jusqu'à la date limite
       ((event_data->>'startDate')::date - INTERVAL '3 days') - CURRENT_DATE AS days_until_deadline
-    FROM "inscriptionsDB".inscriptions
+    FROM "ffs".inscriptions
     WHERE deleted_at IS NULL
       AND status NOT IN ('email_sent', 'cancelled')
       AND email_sent_at IS NULL
