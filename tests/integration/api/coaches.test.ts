@@ -42,6 +42,7 @@ async function seedExtendedTestData(db: any) {
       firstName: 'John',
       lastName: 'Doe',
       team: 'Test Team A',
+      gender: 'M',
       startDate: '2024-01-15',
       endDate: '2024-01-20',
       addedBy: 'user_123',
@@ -52,6 +53,7 @@ async function seedExtendedTestData(db: any) {
       firstName: 'Jane',
       lastName: 'Smith',
       team: 'Test Team B',
+      gender: 'W',
       startDate: '2024-01-16',
       endDate: '2024-01-19',
       addedBy: 'user_456',
@@ -169,6 +171,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
         firstName: 'Michael',
         lastName: 'Johnson',
         team: 'New Team',
+        gender: 'BOTH',
         startDate: '2024-01-16',
         endDate: '2024-01-18',
       }
@@ -214,6 +217,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const requestBody = {
         firstName: 'Michael',
         lastName: 'Johnson',
+        gender: 'BOTH',
         startDate: '2024-01-16',
         endDate: '2024-01-18',
       }
@@ -236,6 +240,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const requestBody = {
         firstName: 'Michael',
         lastName: 'Johnson',
+        gender: 'BOTH',
         startDate: '2024-01-16',
         endDate: '2024-01-18',
       }
@@ -272,7 +277,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
 
       const requestBody = {
         firstName: 'Michael',
-        // Missing lastName, startDate, endDate
+        // Missing lastName, gender, startDate, endDate
       }
 
       const request = new NextRequest('http://localhost:3000/api/inscriptions/1/coaches', {
@@ -284,7 +289,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toBe('First name, last name, start date and end date are required')
+      expect(data.error).toBe('First name, last name, gender, start date and end date are required')
     })
 
     it('should return 400 for empty string fields', async () => {
@@ -293,6 +298,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const requestBody = {
         firstName: '   ',
         lastName: 'Johnson',
+        gender: 'BOTH',
         startDate: '2024-01-16',
         endDate: '2024-01-18',
       }
@@ -306,7 +312,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toBe('First name, last name, start date and end date are required')
+      expect(data.error).toBe('First name, last name, gender, start date and end date are required')
     })
 
     it('should return 404 for non-existent inscription', async () => {
@@ -315,6 +321,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const requestBody = {
         firstName: 'Michael',
         lastName: 'Johnson',
+        gender: 'BOTH',
         startDate: '2024-01-16',
         endDate: '2024-01-18',
       }
@@ -337,6 +344,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const requestBody = {
         firstName: 'Michael',
         lastName: 'Johnson',
+        gender: 'BOTH',
         startDate: 'invalid-date',
         endDate: '2024-01-18',
       }
@@ -359,6 +367,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const requestBody = {
         firstName: 'Michael',
         lastName: 'Johnson',
+        gender: 'BOTH',
         startDate: '2024-01-20',
         endDate: '2024-01-18',
       }
@@ -381,6 +390,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const requestBody = {
         firstName: 'Michael',
         lastName: 'Johnson',
+        gender: 'BOTH',
         startDate: '2024-01-10', // Before event start (2024-01-15)
         endDate: '2024-01-18',
       }
@@ -403,6 +413,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
       const requestBody = {
         firstName: 'Michael',
         lastName: 'Johnson',
+        gender: 'BOTH',
         startDate: '2024-01-16',
         endDate: '2024-01-30', // After event end (2024-01-25)
       }
@@ -426,6 +437,7 @@ describe('/api/inscriptions/[id]/coaches - PGLite Complete', () => {
         firstName: '  Michael  ',
         lastName: '  Johnson  ',
         team: '  Test Team  ',
+        gender: 'BOTH',
         startDate: '  2024-01-16  ',
         endDate: '  2024-01-18  ',
       }
