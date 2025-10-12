@@ -90,7 +90,7 @@ export function ContactModal({inscriptionId}: ContactModalProps) {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="bg-blue-600 hover:bg-blue-700 text-white hover:text-white shadow-md flex items-center gap-2 w-24 cursor-pointer"
+          className="bg-blue-600 hover:bg-blue-700 text-white hover:text-white shadow-md flex items-center gap-2 md:w-24 cursor-pointer"
         >
           <MessageCircle className="w-4 h-4" />
           <span className="hidden md:inline">{t("buttonText")}</span>

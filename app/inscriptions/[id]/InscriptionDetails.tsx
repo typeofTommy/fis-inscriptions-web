@@ -114,7 +114,7 @@ export const InscriptionDetails = ({
                 <StatusBadges inscription={inscription} />
               </h1>
             </div>
-            <div className="flex flex-row items-center gap-2 w-full md:w-auto">
+            <div className="flex flex-row flex-wrap items-center justify-end gap-2 w-full md:w-auto">
               {firstCodex !== undefined && (
                 <Dialog
                   open={isEventDetailsModalOpen}
@@ -123,11 +123,11 @@ export const InscriptionDetails = ({
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shadow-sm flex-1 md:flex-none text-xs md:text-base py-2 px-2 md:px-4"
+                      className="cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shadow-sm text-xs md:text-base py-2 px-2 md:px-4"
                     >
                       <InfoIcon className="h-4 w-4 mr-1 md:mr-2" />
-                      <span className="md:hidden">{t("eventDetails")}</span>
-                      <span className="hidden md:inline">
+                      <span className="lg:hidden">{t("eventDetails")}</span>
+                      <span className="hidden lg:inline">
                         {t("eventDetailsFull")}
                       </span>
                     </Button>
