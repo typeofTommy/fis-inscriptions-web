@@ -5,6 +5,7 @@ import {Badge} from "@/components/ui/badge";
 import {format, parseISO} from "date-fns";
 import {colorBadgePerDiscipline} from "@/app/lib/colorMappers";
 import {Competitor, CompetitorInscriptionDetail, CodexItem} from "@/app/types";
+import {useTranslations} from "next-intl";
 
 function useAllCompetitorsWithInscriptions() {
   return useQuery<Competitor[], Error>({
@@ -21,6 +22,7 @@ function useAllCompetitorsWithInscriptions() {
 }
 
 export function CompetitorEventsTab() {
+  const t = useTranslations("competitorEventsTab");
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [gender, setGender] = useState<"M" | "W" | undefined>(undefined);
   const {data: allResults = [], isLoading: loadingAll} =
@@ -74,7 +76,7 @@ export function CompetitorEventsTab() {
             onChange={() => setGender("M")}
             className="cursor-pointer"
           />
-          Homme
+          {t("gender.male")}
         </label>
         <label className="flex items-center gap-2">
           <input
@@ -85,7 +87,7 @@ export function CompetitorEventsTab() {
             onChange={() => setGender("W")}
             className="cursor-pointer"
           />
-          Femme
+          {t("gender.female")}
         </label>
       </div>
       {gender ? (
@@ -98,10 +100,10 @@ export function CompetitorEventsTab() {
           >
             <option value="" disabled>
               {loadingAll
-                ? "Chargement..."
+                ? t("loading.competitors")
                 : results.length === 0
-                ? "Aucun compétiteur trouvé"
-                : "Sélectionner un compétiteur"}
+                ? t("select.noCompetitors")
+                : t("select.placeholder")}
             </option>
             {results
               .sort((a: Competitor, b: Competitor) =>
@@ -116,7 +118,7 @@ export function CompetitorEventsTab() {
         </>
       ) : null}
       {loadingCompetitor && (
-        <div className="mt-4">Chargement du compétiteur...</div>
+        <div className="mt-4">{t("loading.competitorDetails")}</div>
       )}
       {competitor && (
         <div className="mt-4 p-4 bg-slate-50 rounded border">
@@ -125,7 +127,9 @@ export function CompetitorEventsTab() {
             {competitor.nationcode})
           </div>
           <div className="text-sm text-slate-600 mb-2">
-            FIS: {competitor.fiscode} | Sexe: {competitor.gender} | Naissance:{" "}
+            {t("competitorInfo.fis")}: {competitor.fiscode} |{" "}
+            {t("competitorInfo.gender")}: {competitor.gender} |{" "}
+            {t("competitorInfo.birthdate")}:{" "}
             {competitor.birthdate
               ? format(parseISO(competitor.birthdate), "dd/MM/yyyy")
               : "N/A"}
@@ -133,18 +137,20 @@ export function CompetitorEventsTab() {
         </div>
       )}
       {loadingInscriptions && (
-        <div className="mt-4">Chargement des évènements...</div>
+        <div className="mt-4">{t("loading.events")}</div>
       )}
       {inscriptions && inscriptions.length > 0 && (
         <div className="mt-6">
           <h3 className="font-semibold mb-2">
-            Évènements et codex où le compétiteur est inscrit :
-            {` (${inscriptions.length} événement${
-              inscriptions.length !== 1 ? "s" : ""
+            {t("eventsTitle")}
+            {` (${inscriptions.length} ${
+              inscriptions.length === 1
+                ? t("eventCount.event_one")
+                : t("eventCount.event_other")
             }, ${inscriptions.reduce(
               (acc, curr) => acc + curr.codexList.length,
               0
-            )} codex)`}
+            )} ${t("eventCount.codex")})`}
           </h3>
           <ul className="space-y-4">
             {[...(inscriptions ?? [])]
@@ -206,9 +212,7 @@ export function CompetitorEventsTab() {
         inscriptions.length === 0 &&
         selectedId &&
         !loadingInscriptions && (
-          <div className="mt-4 text-slate-500">
-            Aucune inscription trouvée pour ce compétiteur.
-          </div>
+          <div className="mt-4 text-slate-500">{t("noInscriptions")}</div>
         )}
     </div>
   );

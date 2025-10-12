@@ -216,6 +216,33 @@
     "search": "Buscar competidor...",
     "notSpecified": "No especificado"
   },
+  "competitorEventsTab": {
+    "gender": {
+      "male": "Hombre",
+      "female": "Mujer"
+    },
+    "loading": {
+      "competitors": "Cargando...",
+      "competitorDetails": "Cargando competidor...",
+      "events": "Cargando eventos..."
+    },
+    "select": {
+      "noCompetitors": "Ningún competidor encontrado",
+      "placeholder": "Seleccionar un competidor"
+    },
+    "competitorInfo": {
+      "fis": "FIS",
+      "gender": "Sexo",
+      "birthdate": "Fecha de nacimiento"
+    },
+    "eventsTitle": "Eventos y codex donde el competidor está inscrito:",
+    "eventCount": {
+      "event_one": "evento",
+      "event_other": "eventos",
+      "codex": "codex"
+    },
+    "noInscriptions": "No se encontró inscripción para este competidor."
+  },
   "inscriptionDetail": {
     "loading": "Cargando...",
     "error": "Error al cargar los detalles de la inscripción:",
