@@ -1,7 +1,7 @@
 -- Update contacts structure to support gender-specific responsible_for_entry
 -- This migration restructures the contacts JSONB field to have separate men/women contacts
 
-UPDATE organizations
+UPDATE public.organizations
 SET contacts = jsonb_build_object(
   'responsible_for_entry', jsonb_build_object(
     'address', COALESCE(contacts->'responsible_for_entry'->>'address', 'FFS - 50 avenue des Marquisats - 74000 ANNECY'),

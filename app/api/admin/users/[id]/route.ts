@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { isAdmin } from "@/app/lib/checkRole";
 
 export const DELETE = async (
   req: NextRequest,
@@ -11,13 +12,11 @@ export const DELETE = async (
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const client = await clerkClient();
-    
-    // Vérifier que l'utilisateur connecté est admin
-    const currentUser = await client.users.getUser(userId);
-    if (currentUser.publicMetadata.role !== "admin") {
+    if (!(await isAdmin())) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    const client = await clerkClient();
 
     const { id } = await params;
     

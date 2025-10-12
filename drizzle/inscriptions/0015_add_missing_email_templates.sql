@@ -2,7 +2,7 @@
 -- These templates were previously hardcoded in API routes
 
 -- Add contact_inscription template
-UPDATE organizations
+UPDATE public.organizations
 SET email_templates = jsonb_set(
   COALESCE(email_templates, '{}'::jsonb),
   '{contact_inscription}',
@@ -12,7 +12,7 @@ WHERE code = 'FFS'
 AND (email_templates->'contact_inscription' IS NULL);
 
 -- Add event_data_updated template
-UPDATE organizations
+UPDATE public.organizations
 SET email_templates = jsonb_set(
   COALESCE(email_templates, '{}'::jsonb),
   '{event_data_updated}',

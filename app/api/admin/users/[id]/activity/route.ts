@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { and, desc, eq, gte, isNull } from "drizzle-orm";
 import {getDbTables} from "@/app/lib/getDbTables";
+import { isAdmin } from "@/app/lib/checkRole";
 
 const pool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL,
@@ -22,11 +23,7 @@ export const GET = async (
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const client = await clerkClient();
-    
-    // Vérifier que l'utilisateur connecté est admin
-    const currentUser = await client.users.getUser(userId);
-    if (currentUser.publicMetadata.role !== "admin") {
+    if (!(await isAdmin())) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

@@ -1,8 +1,8 @@
 -- Add email_templates column to organizations table (if not exists)
-ALTER TABLE organizations ADD COLUMN IF NOT EXISTS email_templates JSONB DEFAULT '{}'::jsonb NOT NULL;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS email_templates JSONB DEFAULT '{}'::jsonb NOT NULL;
 
 -- Update FFS organization with current email templates (only if not already set)
-UPDATE organizations
+UPDATE public.organizations
 SET email_templates = '{
   "inscription_pdf": {
     "subject_prefix": "French 🇫🇷",
