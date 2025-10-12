@@ -34,23 +34,23 @@ export const Header = () => {
   const showSuperAdminItems = isSuperAdminRole(role);
 
   return (
-    <header className="relative z-10 py-3 md:py-4 lg:py-6">
-      <div className="flex items-center justify-between gap-3 px-4">
-        <Link href="/" className="flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <Snowflake className="h-6 w-6 md:h-7 md:w-7" />
-            <h1 className="text-lg md:text-2xl lg:text-3xl font-bold">
+    <header className="relative z-10 py-2 md:py-4 lg:py-6">
+      <div className="flex items-center justify-between gap-2 px-2 sm:px-4 sm:gap-3">
+        <Link href="/" className="flex-shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Snowflake className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 flex-shrink-0" />
+            <h1 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-bold truncate">
               <span className="md:hidden">{t("titleShort")}</span>
               <span className="hidden md:inline">{t("title")}</span>
             </h1>
           </div>
         </Link>
 
-        <div className="flex items-center gap-1.5 md:gap-2">
+        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0">
           {/* Mobile: New request button (always visible when signed in) */}
           <SignedIn>
             <Link href="/inscriptions/new" className="md:hidden">
-              <Button size="sm" className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] h-9">
+              <Button size="sm" className="bg-white text-[#3d7cf2] hover:bg-[#f0f7ff] h-8 w-8 sm:w-auto sm:h-9 p-0 sm:px-3">
                 <PlusCircle className="h-4 w-4 sm:mr-1.5" />
                 <span className="hidden sm:inline">{t("new")}</span>
               </Button>
@@ -148,7 +148,7 @@ export const Header = () => {
             {(showAdminItems || showSuperAdminItems) && (
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button size="sm" variant="ghost" className="md:hidden hover:bg-white/10 h-9 w-9 p-0">
+                  <Button size="sm" variant="ghost" className="md:hidden hover:bg-white/10 h-8 w-8 sm:h-9 sm:w-9 p-0">
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>

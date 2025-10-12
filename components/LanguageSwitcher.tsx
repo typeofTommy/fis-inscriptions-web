@@ -51,7 +51,7 @@ export const LanguageSwitcher = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="h-9 px-2 hover:bg-white/10"
+          className="h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-white/10"
           aria-label="Change language"
         >
           <Languages className="h-4 w-4" />
