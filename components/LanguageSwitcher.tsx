@@ -1,25 +1,26 @@
 "use client";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import Flag from "react-world-flags";
+import { Languages } from "lucide-react";
 
 type Locale = "en" | "fr" | "es";
 
-const locales: { value: Locale; label: string; flag: string }[] = [
-  { value: "en", label: "English", flag: "🇬🇧" },
-  { value: "fr", label: "Français", flag: "🇫🇷" },
-  { value: "es", label: "Español", flag: "🇪🇸" },
+const locales: { value: Locale; label: string; countryCode: string }[] = [
+  { value: "en", label: "English", countryCode: "GB" },
+  { value: "fr", label: "Français", countryCode: "FR" },
+  { value: "es", label: "Español", countryCode: "ES" },
 ];
 
 const getDefaultLocale = (): Locale => {
-  // Read from cookie
   if (typeof document !== "undefined") {
     const cookieValue = document.cookie
       .split("; ")
@@ -38,34 +39,43 @@ export const LanguageSwitcher = () => {
   const currentLocale = getDefaultLocale();
 
   const handleLocaleChange = (newLocale: string) => {
-    // Set cookie
-    document.cookie = `locale=${newLocale}; path=/; max-age=${60 * 60 * 24 * 365}`; // 1 year
-
-    // Refresh the page to apply the new locale
+    document.cookie = `locale=${newLocale}; path=/; max-age=${60 * 60 * 24 * 365}`;
     startTransition(() => {
       router.refresh();
     });
   };
 
   return (
-    <Select value={currentLocale} onValueChange={handleLocaleChange}>
-      <SelectTrigger className="w-[160px] cursor-pointer">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 px-2 hover:bg-white/10"
+          aria-label="Change language"
+        >
+          <Languages className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[180px]">
         {locales.map((locale) => (
-          <SelectItem
+          <DropdownMenuItem
             key={locale.value}
-            value={locale.value}
-            className="cursor-pointer"
+            onClick={() => handleLocaleChange(locale.value)}
+            className="cursor-pointer gap-3 py-2"
           >
-            <span className="flex items-center gap-2">
-              <span>{locale.flag}</span>
-              <span>{locale.label}</span>
-            </span>
-          </SelectItem>
+            <Flag
+              code={locale.countryCode}
+              className="w-5 h-5 rounded flex-shrink-0"
+              style={{ width: 20, height: 20 }}
+            />
+            <span className="flex-1">{locale.label}</span>
+            {locale.value === currentLocale && (
+              <span className="text-xs text-muted-foreground">✓</span>
+            )}
+          </DropdownMenuItem>
         ))}
-      </SelectContent>
-    </Select>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
