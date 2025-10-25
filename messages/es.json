@@ -557,6 +557,7 @@
   "users": {
     "title": "Gestión de usuarios",
     "stats": {
+      "superAdministrators": "Super Administradores",
       "administrators": "Administradores",
       "users": "Usuarios",
       "recentlyActive": "Activos recientemente",
@@ -575,6 +576,7 @@
       "title": "Buscar y filtrar",
       "placeholder": "Buscar por nombre o email...",
       "all": "Todos ({count})",
+      "superAdmins": "Super Admins ({count})",
       "admins": "Admins ({count})",
       "users": "Usuarios ({count})"
     },
@@ -588,6 +590,7 @@
     "user": {
       "emailNotDefined": "Email no definido",
       "recentlyActive": "Activo recientemente",
+      "superAdmin": "Super Admin",
       "admin": "Admin",
       "user": "Usuario",
       "registeredOn": "Registrado el {date}",
@@ -607,6 +610,7 @@
     },
     "success": {
       "roleChanged": "Rol cambiado",
+      "roleChangedSuperAdmin": "El usuario ahora es super administrador",
       "roleChangedAdmin": "El usuario ahora es administrador",
       "roleChangedUser": "El usuario ahora es usuario",
       "userDeleted": "Usuario eliminado",

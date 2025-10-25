@@ -12,7 +12,8 @@ import {
   Shield,
   ShieldCheck,
   RefreshCw,
-  Search
+  Search,
+  Crown
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { UserActivityModal } from "@/components/UserActivityModal";
@@ -28,7 +29,7 @@ type User = {
   lastName?: string;
   username?: string;
   publicMetadata: {
-    role?: "admin" | "user";
+    role?: "super-admin" | "admin" | "user";
   };
   createdAt: number;
   lastSignInAt?: number;
@@ -41,7 +42,7 @@ export const UsersManagement = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "user">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "super-admin" | "admin" | "user">("all");
   const { toast } = useToast();
 
   const fetchUsers = useCallback(async () => {
@@ -97,7 +98,15 @@ export const UsersManagement = () => {
   };
 
   const toggleUserRole = async (userId: string, currentRole?: string) => {
-    const newRole = currentRole === "admin" ? "user" : "admin";
+    // Cycle through roles: user -> admin -> super-admin -> user
+    let newRole: "super-admin" | "admin" | "user";
+    if (currentRole === "super-admin") {
+      newRole = "user";
+    } else if (currentRole === "admin") {
+      newRole = "super-admin";
+    } else {
+      newRole = "admin";
+    }
 
     try {
       const response = await fetch(`/api/admin/users/${userId}/role`, {
@@ -106,18 +115,27 @@ export const UsersManagement = () => {
         body: JSON.stringify({ role: newRole }),
       });
 
-      if (!response.ok) throw new Error(t("errors.roleChangeError"));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || t("errors.roleChangeError"));
+      }
+
+      const descriptionKey = newRole === "super-admin"
+        ? "success.roleChangedSuperAdmin"
+        : newRole === "admin"
+        ? "success.roleChangedAdmin"
+        : "success.roleChangedUser";
 
       toast({
         title: t("success.roleChanged"),
-        description: newRole === "admin" ? t("success.roleChangedAdmin") : t("success.roleChangedUser"),
+        description: t(descriptionKey),
       });
 
       fetchUsers();
-    } catch {
+    } catch (error) {
       toast({
         title: t("invite.error"),
-        description: t("errors.roleChangeErrorDescription"),
+        description: error instanceof Error ? error.message : t("errors.roleChangeErrorDescription"),
         variant: "destructive",
       });
     }
@@ -168,15 +186,19 @@ export const UsersManagement = () => {
       return matchesSearch && matchesRole;
     });
     
-    // Tri : admins en premier, puis par date de création
+    // Tri : super-admins en premier, puis admins, puis par date de création
     return filtered.sort((a, b) => {
       const aRole = a.publicMetadata.role || "user";
       const bRole = b.publicMetadata.role || "user";
-      
-      // Les admins en premier
+
+      // Les super-admins en premier
+      if (aRole === "super-admin" && bRole !== "super-admin") return -1;
+      if (bRole === "super-admin" && aRole !== "super-admin") return 1;
+
+      // Les admins en second
       if (aRole === "admin" && bRole !== "admin") return -1;
       if (bRole === "admin" && aRole !== "admin") return 1;
-      
+
       // Ensuite par date de création (plus récent en premier)
       return b.createdAt - a.createdAt;
     });
@@ -203,17 +225,32 @@ export const UsersManagement = () => {
   };
 
   const stats = useMemo(() => {
+    const superAdminCount = users.filter(u => u.publicMetadata.role === "super-admin").length;
     const adminCount = users.filter(u => u.publicMetadata.role === "admin").length;
     const userCount = users.filter(u => (u.publicMetadata.role || "user") === "user").length;
     const recentlyActiveCount = users.filter(u => isRecentlyActive(u.lastSignInAt)).length;
-    
-    return { adminCount, userCount, recentlyActiveCount };
+
+    return { superAdminCount, adminCount, userCount, recentlyActiveCount };
   }, [users]);
 
   return (
     <div className="space-y-6">
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Crown className="h-4 w-4 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">{t("stats.superAdministrators")}</p>
+                <p className="text-2xl font-bold">{stats.superAdminCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -325,7 +362,7 @@ export const UsersManagement = () => {
                 className="w-full"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant={roleFilter === "all" ? "default" : "outline"}
                 size="sm"
@@ -333,6 +370,15 @@ export const UsersManagement = () => {
                 className="cursor-pointer"
               >
                 {t("search.all", { count: users.length })}
+              </Button>
+              <Button
+                variant={roleFilter === "super-admin" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setRoleFilter("super-admin")}
+                className="cursor-pointer"
+              >
+                <Crown className="h-4 w-4 mr-1" />
+                {t("search.superAdmins", { count: users.filter(u => u.publicMetadata.role === "super-admin").length })}
               </Button>
               <Button
                 variant={roleFilter === "admin" ? "default" : "outline"}
@@ -405,7 +451,11 @@ export const UsersManagement = () => {
                   <div
                     key={user.id}
                     className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors ${
-                      role === "admin" ? "border-l-4 border-l-blue-500 bg-blue-50/50" : ""
+                      role === "super-admin"
+                        ? "border-l-4 border-l-purple-600 bg-purple-50/50"
+                        : role === "admin"
+                        ? "border-l-4 border-l-blue-500 bg-blue-50/50"
+                        : ""
                     }`}
                   >
                     <div className="flex-1">
@@ -417,15 +467,23 @@ export const UsersManagement = () => {
                           <span className="font-medium">{displayName}</span>
                         </div>
                         <Badge
-                          variant={role === "admin" ? "default" : "secondary"}
-                          className="flex items-center gap-1"
+                          variant={role === "super-admin" || role === "admin" ? "default" : "secondary"}
+                          className={`flex items-center gap-1 ${
+                            role === "super-admin" ? "bg-purple-600 hover:bg-purple-700" : ""
+                          }`}
                         >
-                          {role === "admin" ? (
+                          {role === "super-admin" ? (
+                            <Crown className="h-3 w-3" />
+                          ) : role === "admin" ? (
                             <ShieldCheck className="h-3 w-3" />
                           ) : (
                             <Shield className="h-3 w-3" />
                           )}
-                          {role === "admin" ? t("user.admin") : t("user.user")}
+                          {role === "super-admin"
+                            ? t("user.superAdmin")
+                            : role === "admin"
+                            ? t("user.admin")
+                            : t("user.user")}
                         </Badge>
                       </div>
                       <div className="text-sm text-gray-500">
