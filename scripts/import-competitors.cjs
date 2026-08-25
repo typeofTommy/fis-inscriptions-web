@@ -5,11 +5,28 @@ const path = require("path");
 const {parse} = require("csv-parse");
 const {neon} = require("@neondatabase/serverless");
 
-const BASE_URL =
-  "https://data.fis-ski.com/fis_athletes/ajax/fispointslistfunctions/export_fispointslist.html?export_csv=true&sectorcode=AL&seasoncode=2025&listid=";
+const EXPORT_URL =
+  "https://www.fis-ski.com/DB/fis_athletes/ajax/fispointslistfunctions/export_fispointslist.html";
+const SECTOR_CODE = "AL";
+const USER_AGENT = "fis-inscriptions-web/import-competitors";
 const LAST_LISTID_FILE = path.join(__dirname, ".last-listid");
 const CSV_FILENAME = process.argv[2] || "FIS-points-list.csv";
 const MAX_ATTEMPTS = 50; // Sécurité pour éviter une boucle infinie
+const MAX_REDIRECTS = 5;
+
+// FIS resolves a points list by its listid alone: the id is global and never
+// reused across seasons. seasoncode is sent to mirror what the FIS website
+// does, but it does not filter the result, so it is derived from the current
+// date rather than pinned to a season that would silently go stale.
+const currentSeasonCode = (date = new Date()) => {
+  // A FIS season is named after the year it ends in and rolls over in July.
+  const year = date.getUTCFullYear();
+  return date.getUTCMonth() >= 6 ? year + 1 : year;
+};
+
+const buildExportUrl = (listid) =>
+  `${EXPORT_URL}?export_csv=true&sectorcode=${SECTOR_CODE}` +
+  `&seasoncode=${currentSeasonCode()}&listid=${listid}`;
 
 // Check for database URL
 defaultEnvCheck();
@@ -23,17 +40,37 @@ function defaultEnvCheck() {
   }
 }
 
-const fetchCsv = (listid) => {
+// https.get does not follow redirects. FIS moved the export endpoint from
+// data.fis-ski.com to www.fis-ski.com/DB behind a permanent redirect, so
+// without this the response body is a 162 byte nginx page, not a CSV.
+const httpGet = (url, redirectsLeft = MAX_REDIRECTS) => {
   return new Promise((resolve, reject) => {
-    const url = BASE_URL + listid;
     https
-      .get(url, (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => resolve(data));
+      .get(url, {headers: {"User-Agent": USER_AGENT}}, (res) => {
+        const {statusCode, headers} = res;
+        if (statusCode >= 300 && statusCode < 400 && headers.location) {
+          res.resume();
+          if (redirectsLeft === 0) {
+            reject(new Error(`Too many redirects while fetching ${url}`));
+            return;
+          }
+          const target = new URL(headers.location, url).toString();
+          resolve(httpGet(target, redirectsLeft - 1));
+          return;
+        }
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => resolve({statusCode, body}));
       })
       .on("error", reject);
   });
+};
+
+// Describes what came back instead of a CSV, so a failure is diagnosable from
+// the CI logs alone.
+const describeResponse = (statusCode, body) => {
+  const preview = body.replace(/\s+/g, " ").trim().slice(0, 200);
+  return `HTTP ${statusCode}, ${body.length} bytes: ${preview || "<empty body>"}`;
 };
 
 const isValidCsv = (csv, expectedListid) => {
@@ -53,6 +90,21 @@ const isValidCsv = (csv, expectedListid) => {
   const firstCell = firstData.split(",")[0];
   if (String(firstCell).trim() !== String(expectedListid)) return false;
   return true;
+};
+
+const fetchList = async (listid) => {
+  const url = buildExportUrl(listid);
+  const {statusCode, body} = await httpGet(url);
+  if (statusCode !== 200) {
+    return {csv: null, reason: describeResponse(statusCode, body)};
+  }
+  if (!isValidCsv(body, listid)) {
+    return {
+      csv: null,
+      reason: `response is not a points list for listid ${listid} (${describeResponse(statusCode, body)})`,
+    };
+  }
+  return {csv: body, reason: null};
 };
 
 const readLastListId = () => {
@@ -220,30 +272,44 @@ const importCsvToDb = async (csvFilePath) => {
 
 const main = async () => {
   // 1. Recherche du dernier listid valide et téléchargement du CSV
-  let listid = readLastListId();
-  let lastValidListId = listid;
-  let lastValidCsv = "";
-  let attempts = 0;
-  while (attempts < MAX_ATTEMPTS) {
-    const csv = await fetchCsv(listid);
-    if (isValidCsv(csv, listid)) {
-      lastValidListId = listid;
-      lastValidCsv = csv;
-      listid++;
-      attempts++;
-    } else {
+  const knownListId = readLastListId();
+
+  // The list imported last time must always still be downloadable. When it is
+  // not, the endpoint is broken rather than simply having no newer list, and
+  // the two cases need to be distinguished: treating an outage as "nothing new"
+  // is what let a moved URL look like a missing points list.
+  const known = await fetchList(knownListId);
+  if (!known.csv) {
+    throw new Error(
+      `Could not download the last known FIS points list (listid ${knownListId}).\n` +
+        `URL: ${buildExportUrl(knownListId)}\n` +
+        `Response: ${known.reason}`
+    );
+  }
+
+  let lastValidListId = knownListId;
+  let lastValidCsv = known.csv;
+
+  // 2. Avance tant que FIS publie des listes plus récentes
+  for (let attempt = 1; attempt < MAX_ATTEMPTS; attempt++) {
+    const nextListId = lastValidListId + 1;
+    const next = await fetchList(nextListId);
+    if (!next.csv) {
+      console.log(
+        `No points list beyond listid ${lastValidListId} yet (${next.reason})`
+      );
       break;
     }
+    lastValidListId = nextListId;
+    lastValidCsv = next.csv;
   }
-  if (!lastValidCsv) {
-    throw new Error("Aucune version valide du CSV trouvée.");
-  }
+
   fs.writeFileSync(CSV_FILENAME, lastValidCsv, "utf8");
   writeLastListId(lastValidListId);
   console.log(
-    `Dernier listid valide: ${lastValidListId}. CSV sauvegardé dans ${CSV_FILENAME}`
+    `Latest valid listid: ${lastValidListId}. CSV saved to ${CSV_FILENAME}`
   );
-  // 2. Import du CSV dans la base de données
+  // 3. Import du CSV dans la base de données
   await importCsvToDb(CSV_FILENAME);
 };
 
